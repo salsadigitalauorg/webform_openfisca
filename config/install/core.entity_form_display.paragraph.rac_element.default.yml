@@ -1,0 +1,29 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.paragraph.rac_element.field_value
+    - field.field.paragraph.rac_element.field_variable
+    - paragraphs.paragraphs_type.rac_element
+id: paragraph.rac_element.default
+targetEntityType: paragraph
+bundle: rac_element
+mode: default
+content:
+  field_value:
+    type: options_buttons
+    weight: 1
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  field_variable:
+    type: string_textfield
+    weight: 0
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+hidden:
+  created: true
+  status: true

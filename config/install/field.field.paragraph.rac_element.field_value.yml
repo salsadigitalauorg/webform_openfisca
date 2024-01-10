@@ -1,0 +1,23 @@
+uuid: a54881ef-9d80-46c1-bd1d-6fad9b6b03e0
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_value
+    - paragraphs.paragraphs_type.rac_element
+id: paragraph.rac_element.field_value
+field_name: field_value
+entity_type: paragraph
+bundle: rac_element
+label: Value
+description: ''
+required: true
+translatable: false
+default_value:
+  -
+    value: 0
+default_value_callback: ''
+settings:
+  on_label: 'True'
+  off_label: 'False'
+field_type: boolean

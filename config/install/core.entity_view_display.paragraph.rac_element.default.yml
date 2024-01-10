@@ -1,0 +1,31 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.paragraph.rac_element.field_value
+    - field.field.paragraph.rac_element.field_variable
+    - paragraphs.paragraphs_type.rac_element
+id: paragraph.rac_element.default
+targetEntityType: paragraph
+bundle: rac_element
+mode: default
+content:
+  field_value:
+    type: boolean
+    label: above
+    settings:
+      format: default
+      format_custom_false: ''
+      format_custom_true: ''
+    third_party_settings: {  }
+    weight: 1
+    region: content
+  field_variable:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    weight: 0
+    region: content
+hidden: {  }

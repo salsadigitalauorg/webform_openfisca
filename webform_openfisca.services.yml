@@ -1,0 +1,11 @@
+services:
+  # OpenFiscaConnectorService
+  webform_openfisca.open_fisca_connector_service:
+    class: Drupal\webform_openfisca\OpenFiscaConnectorService
+    arguments: ['@http_client', '@config.factory']
+
+  #OpenFiscaRouteSubscriber
+  webform_openfisca.open_fisca_route_subscriber_service:
+    class: \Drupal\webform_openfisca\Routing\OpenFiscaRouteSubscriber
+    tags:
+      - { name: event_subscriber }

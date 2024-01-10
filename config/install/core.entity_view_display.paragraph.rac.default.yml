@@ -1,0 +1,32 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.paragraph.rac.field_rac_element
+    - field.field.paragraph.rac.field_redirect_to
+    - paragraphs.paragraphs_type.rac
+  module:
+    - entity_reference_revisions
+id: paragraph.rac.default
+targetEntityType: paragraph
+bundle: rac
+mode: default
+content:
+  field_rac_element:
+    type: entity_reference_revisions_entity_view
+    label: visually_hidden
+    settings:
+      view_mode: default
+      link: ''
+    third_party_settings: {  }
+    weight: 0
+    region: content
+  field_redirect_to:
+    type: entity_reference_label
+    label: inline
+    settings:
+      link: true
+    third_party_settings: {  }
+    weight: 1
+    region: content
+hidden: {  }

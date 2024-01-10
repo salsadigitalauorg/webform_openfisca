@@ -1,0 +1,25 @@
+langcode: en
+status: false
+dependencies:
+  module:
+    - system
+  theme:
+    - rac
+_core:
+  default_config_hash: IaV-GUjZIOCgOblkC8T4RA76NpKD6Y3v2YBhSSAS1Yg
+id: rac_breadcrumbs
+theme: rac
+region: banner
+weight: -3
+provider: null
+plugin: system_breadcrumb_block
+settings:
+  id: system_breadcrumb_block
+  label: Breadcrumbs
+  label_display: '0'
+  provider: system
+visibility:
+  request_path:
+    id: request_path
+    negate: true
+    pages: '<front>'
