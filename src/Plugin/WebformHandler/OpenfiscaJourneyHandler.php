@@ -242,7 +242,7 @@ class OpenfiscaJourneyHandler extends WebformHandlerBase {
           '#markup' => 'confirmation_url<br>' . $confirmation_url,
           '#prefix' => '<pre>',
           '#suffix' => '</pre>',
-        ]
+        ],
       ];
       $message = $this->renderer->renderPlain($build);
 
@@ -265,7 +265,7 @@ class OpenfiscaJourneyHandler extends WebformHandlerBase {
         'type' => 'rac',
         'field_webform' => $form_id,
       ]);
-    // If there are no nodes found exit early
+    // If there are no nodes found exit early.
     if (empty($nodes)) {
       return;
     }
@@ -319,7 +319,7 @@ class OpenfiscaJourneyHandler extends WebformHandlerBase {
    * @return string
    */
   private function format_variable_period($fisca_variables, $variable, $period_date) {
-    // suchi - do we need this?
+    // Suchi - do we need this?
     $fisca_variable = $fisca_variables[$variable];
     $definition_period = $fisca_variable['definitionPeriod'];
     $date = date_create($period_date);
@@ -369,5 +369,3 @@ class OpenfiscaJourneyHandler extends WebformHandlerBase {
   }
 
 }
-
-

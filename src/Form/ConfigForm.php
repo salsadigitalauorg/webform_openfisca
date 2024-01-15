@@ -11,7 +11,7 @@ use Drupal\Core\Form\FormStateInterface;
 class ConfigForm extends ConfigFormBase {
 
   /**
-   * @inheritDoc
+   * {@inheritDoc}
    */
   protected function getEditableConfigNames() {
     return ['webform_openfisca.settings'];
@@ -93,7 +93,7 @@ class ConfigForm extends ConfigFormBase {
   }
 
   /**
-   * @inheritDoc
+   * {@inheritDoc}
    */
   public function getFormId() {
     return 'webform_openfisca_form';
