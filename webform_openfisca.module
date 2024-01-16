@@ -168,9 +168,11 @@ function _webform_openfisca_form_element_submit(array &$form, FormStateInterface
     $entity->setThirdPartySetting('webform_openfisca', 'fisca_field_mappings', json_encode($field_mappings));
 
     $api_endpoint = $entity->getThirdPartySetting('webform_openfisca', 'fisca_api_endpoint') ?? '';
-    $fisca_variable = $open_fisca_client->openFiscaGetVariable($api_endpoint, $fisca_machine_name);
     $fisca_variables = json_decode($entity->getThirdPartySetting('webform_openfisca', 'fisca_variables'), TRUE) ?? [];
-    $fisca_variables[$fisca_machine_name] = $fisca_variable;
+    if(!in_array($fisca_machine_name, ['period', '_nil', 'name_key' ])) {
+      $fisca_variable = $open_fisca_client->openFiscaGetVariable($api_endpoint, $fisca_machine_name);
+      $fisca_variables[$fisca_machine_name] = $fisca_variable;
+    }
 
     $entity->setThirdPartySetting('webform_openfisca', 'fisca_variables', json_encode($fisca_variables));
 
@@ -204,7 +206,7 @@ function webform_openfisca_form_alter(&$form, FormStateInterface $form_state, $f
         $fisca_vars['name_key'] = 'Name';
         $fisca_vars['period'] = 'Period';
         foreach ($vars as $k => $var) {
-          $fisca_vars[$k] = $k . ": " . $var->description;
+          $fisca_vars[$k] = $k . ": " . $var['description'];
         }
       }
 

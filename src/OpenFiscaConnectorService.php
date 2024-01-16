@@ -92,11 +92,9 @@ class OpenFiscaConnectorService {
    */
   public function openFiscaGetAttributeDetails($href) {
 
-    if (isset($href)) {
-      $response = $this->httpClient->request('GET', $href);
+    $response = $this->httpClient->request('GET', $href);
 
-      return json_decode($response->getBody(), TRUE);
-    }
+    return json_decode($response->getBody(), TRUE);
   }
 
 }
