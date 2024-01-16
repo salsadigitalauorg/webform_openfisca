@@ -13,7 +13,6 @@ This module integrates Drupal Webform functionality with the OpenFisca API, allo
 ## Installation
 
 1. Install the module as you would any other Drupal module.
-2. Configure the OpenFisca API endpoint and other settings in the Drupal configuration (`/admin/config/webform_openfisca/settings`).
 
 ## Usage
 
@@ -23,13 +22,10 @@ This module integrates Drupal Webform functionality with the OpenFisca API, allo
 
 ## Configuration
 
-### OpenFisca Connector Settings
-
-- Configure the OpenFisca API endpoint and other settings at `/admin/config/webform_openfisca/settings`.
-
 ### Webform Fields Configuration
 
 - Map Webform fields to OpenFisca variables through the Webform UI.
+- Configure the OpenFisca API endpoint and other settings.
 
 ### Redirect Rules Configuration
 

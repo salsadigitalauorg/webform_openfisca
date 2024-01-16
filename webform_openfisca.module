@@ -2,8 +2,7 @@
 
 /**
  * @file
- * Provides a form element to collect valid location information using Google Maps API's
- * Geocoding and Places Autocomplete.
+ * Hooks implemented by the webform_openfisca module.
  */
 
 use Drupal\Core\Form\FormStateInterface;
@@ -210,29 +209,28 @@ function webform_openfisca_form_alter(&$form, FormStateInterface $form_state, $f
 function webform_openfisca_token_info() {
   $open_fisca_client = \Drupal::service('webform_openfisca.open_fisca_connector_service');
 
-  // Get all parameters.
   $config = \Drupal::configFactory()->get('webform_openfisca.settings');
   $api_endpoint = $config->get('webform_openfisca.api_endpoint');
 
-  $parameters = $open_fisca_client->OpenfiscaGetParameters($api_endpoint);
-  foreach ($parameters as $key => $parameter) {
-    $parameter1 = str_replace(".", "/", $key);
-    $info['tokens']['site'][$key] = [
-      'name' => $parameter['description'],
-      'description' => $parameter['description'],
-    ];
-  }
+  if (!empty($api_endpoint)) {
+    // Get all parameters.
+    $parameters = $open_fisca_client->OpenfiscaGetParameters($api_endpoint);
+    foreach ($parameters as $key => $parameter) {
+      // $parameter1 = str_replace(".", "/", $key);
+      $info['tokens']['site'][$key] = [
+        'name' => $parameter['description'],
+        'description' => $parameter['description'],
+      ];
+    }
 
-  // Get all variables.
-  $config = \Drupal::configFactory()->get('webform_openfisca.settings');
-  $api_endpoint = $config->get('webform_openfisca.api_endpoint');
-
-  $variables = $open_fisca_client->openFiscaGetVariables($api_endpoint);
-  foreach ($variables as $key => $variable) {
-    $info['tokens']['site'][$key] = [
-      'name' => $variable['description'],
-      'description' => $variable['description'],
-    ];
+    // Get all variables.
+    $variables = $open_fisca_client->openFiscaGetVariables($api_endpoint);
+    foreach ($variables as $key => $variable) {
+      $info['tokens']['site'][$key] = [
+        'name' => $variable['description'],
+        'description' => $variable['description'],
+      ];
+    }
   }
 
   return $info;
@@ -246,13 +244,14 @@ function webform_openfisca_tokens($type, $tokens, array $data, array $options, B
   $open_fisca_client = \Drupal::service('webform_openfisca.open_fisca_connector_service');
 
   $replacements = [];
-  foreach ($tokens as $name => $original) {
 
-    // Get all parameters.
-    $config = \Drupal::configFactory()->get('webform_openfisca.settings');
-    $api_endpoint = $config->get('webform_openfisca.api_endpoint');
+  $config = \Drupal::configFactory()->get('webform_openfisca.settings');
+  $api_endpoint = $config->get('webform_openfisca.api_endpoint');
 
-    if (!empty($api_endpoint)) {
+  if (!empty($api_endpoint)) {
+    foreach ($tokens as $name => $original) {
+
+      // Get all parameters.
       $parameters = array_keys($open_fisca_client->OpenfiscaGetParameters($api_endpoint));
       foreach ($parameters as $parameter) {
         $parameter1 = str_replace(".", "/", $parameter);
@@ -263,13 +262,8 @@ function webform_openfisca_tokens($type, $tokens, array $data, array $options, B
           $replacements[$original] = Markup::create((string) $replacement);
         }
       }
-    }
 
-    // Get all variables.
-    $config = \Drupal::configFactory()->get('webform_openfisca.settings');
-    $api_endpoint = $config->get('webform_openfisca.api_endpoint');
-
-    if (!empty($api_endpoint)) {
+      // Get all variables.
       $variables = $open_fisca_client->openFiscaGetVariables($api_endpoint);
       foreach ($variables as $variable) {
         if ($name == $variable) {
@@ -279,8 +273,8 @@ function webform_openfisca_tokens($type, $tokens, array $data, array $options, B
           $replacements[$original] = Markup::create((string) $replacement);
         }
       }
-    }
 
+    }
   }
   return $replacements;
 }
