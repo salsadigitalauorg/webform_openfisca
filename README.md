@@ -6,14 +6,14 @@ This module integrates Drupal Webform functionality with the OpenFisca API, allo
 
 ## Features
   - Handles communication with the OpenFisca API through Guzzle HTTP client.
-  - Provides methods to post data, retrieve variables, parameters, and details from the OpenFisca API.
+  - Provides methods to post data, retrieve variables, parameters, and calculations from the OpenFisca API.
   - Webform handler for processing submissions and interacting with OpenFisca API.
-  - Provides a mechanism for finding redirect rules based on OpenFisca calculations.
+  - Provides a mechanism for creating redirect rules based on OpenFisca responses.
 
 ## Installation
 
 1. Install the module as you would any other Drupal module.
-2. Configure the OpenFisca API endpoint and other settings in the Drupal configuration (`webform_openfisca.settings`).
+2. Configure the OpenFisca API endpoint and other settings in the Drupal configuration (`/admin/config/webform_openfisca/settings`).
 
 ## Usage
 
@@ -25,7 +25,7 @@ This module integrates Drupal Webform functionality with the OpenFisca API, allo
 
 ### OpenFisca Connector Settings
 
-- Configure the OpenFisca API endpoint and other settings in `webform_openfisca.settings` at `/admin/config/webform_openfisca/settings`.
+- Configure the OpenFisca API endpoint and other settings at `/admin/config/webform_openfisca/settings`.
 
 ### Webform Fields Configuration
 

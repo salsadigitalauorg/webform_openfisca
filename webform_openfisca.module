@@ -210,58 +210,6 @@ function webform_openfisca_form_alter(&$form, FormStateInterface $form_state, $f
 function webform_openfisca_token_info() {
   $open_fisca_client = \Drupal::service('webform_openfisca.open_fisca_connector_service');
 
-  $info['tokens']['site']['booking_link'] = [
-    'name' => t('Booking link'),
-    'description' => t('Booking link'),
-  ];
-  $info['tokens']['site']['health_link'] = [
-    'name' => t('Link to the health department website.'),
-    'description' => t('Link to the health department website'),
-  ];
-  $info['tokens']['site']['num_next_dose'] = [
-    'name' => t('Number of the next dose'),
-    'description' => t('Number of the next dose'),
-  ];
-  // covid_vaccination_doses_recommendation_up_to_date.
-  $info['tokens']['site']['covid_vaccination_doses_recommendation_up_to_date'] = [
-    'name' => t('Recommended number of doses - update'),
-    'description' => t('Recommended number of doses - extracted from URL query string'),
-  ];
-  // covid_vaccination_age_eligibility.
-  $info['tokens']['site']['covid_vaccination_age_eligibility'] = [
-    'name' => t('Age eligibility for COVID vaccination'),
-    'description' => t('Age eligibility for COVID vaccination - extracted from URL query string'),
-  ];
-  // covid_vaccination_eligibility.
-  $info['tokens']['site']['covid_vaccination_eligibility'] = [
-    'name' => t('Eligibility for COVID vaccination'),
-    'description' => t('Eligibility for COVID vaccination - extracted from URL query string'),
-  ];
-  // covid_vaccination_up_to_date.
-  $info['tokens']['site']['covid_vaccination_up_to_date'] = [
-    'name' => t('Is the vaccination uptodate'),
-    'description' => t('Is the vaccination uptodate - extracted from URL query string'),
-  ];
-  // covid_vaccination_work_recommanded_doses.
-  $info['tokens']['site']['covid_vaccination_work_recommanded_doses'] = [
-    'name' => t('Recommended doses for work'),
-    'description' => t('Recommended doses for work - extracted from URL query string'),
-  ];
-  // covid_vaccination_recommended_vaccines.
-  $info['tokens']['site']['covid_vaccination_recommended_vaccines'] = [
-    'name' => t('COVID vaccination recommended primary vaccines for your age'),
-    'description' => t('COVID vaccination recommended primary vaccines for your age - extracted from URL query string'),
-  ];
-  // covid_vaccination_approved_vaccines.
-  $info['tokens']['site']['covid_vaccination_approved_vaccines'] = [
-    'name' => t('COVID vaccination recommended booster vaccines for your age'),
-    'description' => t('COVID vaccination recommended booster vaccines for your age - extracted from URL query string'),
-  ];
-  // Change.
-  $info['tokens']['site']['change'] = [
-    'name' => t('Is this a change management workflow?'),
-  ];
-
   // Get all parameters.
   $config = \Drupal::configFactory()->get('webform_openfisca.settings');
   $api_endpoint = $config->get('webform_openfisca.api_endpoint');
@@ -299,158 +247,21 @@ function webform_openfisca_tokens($type, $tokens, array $data, array $options, B
 
   $replacements = [];
   foreach ($tokens as $name => $original) {
-    $config = \Drupal::configFactory()->get('webform_openfisca.settings');
-    switch ($name) {
-      case 'booking_link':
-        $url = $config->get('webform_openfisca.booking_link');
-        $text = $config->get('webform_openfisca.booking_text');
-        $indigenous = \Drupal::request()->query->get('indigenous');
-
-        if ($indigenous == "yes") {
-          $url .= "?tag=indigenous";
-        }
-        $replacement = "<a href='$url'>$text</a>";
-        $replacements[$original] = Markup::create((string) $replacement);
-        break;
-
-      case 'health_link':
-        $state = \Drupal::request()->query->get('work_location');
-        if (isset($state)) {
-          $text = ucwords(str_replace("_", " ", $state));
-
-          $health_var = $state . "_health_url";
-          $url = $config->get("webform_openfisca.$health_var");
-          $replacement = "<a href='$url'>$text health department website</a>";
-          $replacements[$original] = Markup::create((string) $replacement);
-        }
-        else {
-          $replacements[$original] = '';
-        }
-
-        break;
-
-      case 'covid_vaccination_doses_recommendation_up_to_date':
-        $replacement = "<mark>";
-        $replacement .= \Drupal::request()->query->get('covid_vaccination_doses_recommendation_up_to_date');
-        $replacement .= "</mark>";
-        $replacements[$original] = Markup::create((string) $replacement);
-        break;
-
-      case 'change':
-        $replacements[$original] = "<mark>";
-        $replacements[$original] .= \Drupal::request()->query->get('change');
-        $replacements[$original] .= "</mark>";
-        $replacements[$original] = Markup::create((string) $replacements[$original]);
-        break;
-
-      case 'covid_vaccination_age_eligibility':
-        $replacements[$original] = "<mark>";
-        $replacements[$original] .= \Drupal::request()->query->get('covid_vaccination_age_eligibility');
-        $replacements[$original] .= "</mark>";
-        $replacements[$original] = Markup::create((string) $replacements[$original]);
-        break;
-
-      case 'covid_vaccination_eligibility':
-        $replacements[$original] = "<mark>";
-        $replacements[$original] .= \Drupal::request()->query->get('covid_vaccination_eligibility');
-        $replacements[$original] .= "</mark>";
-        $replacements[$original] = Markup::create((string) $replacements[$original]);
-        break;
-
-      case 'covid_vaccination_up_to_date':
-        $replacements[$original] = "<mark>";
-        $replacements[$original] .= \Drupal::request()->query->get('covid_vaccination_up_to_date');
-        $replacements[$original] .= "</mark>";
-        $replacements[$original] = Markup::create((string) $replacements[$original]);
-        break;
-
-      case 'covid_vaccination_work_recommanded_doses':
-        $replacements[$original] = "<mark>";
-        $replacements[$original] .= \Drupal::request()->query->get('covid_vaccination_work_recommanded_doses');
-        $replacements[$original] .= "</mark>";
-        $replacements[$original] = Markup::create((string) $replacements[$original]);
-        break;
-
-      case 'covid_vaccination_recommended_vaccines':
-        $recommended_primary = \Drupal::request()->query->get('covid_vaccination_recommended_vaccines');
-        if (isset($recommended_primary)) {
-          $replacement = "<ul><li><mark>";
-          if (strpos($recommended_primary, ",")) {
-            $replacement .= implode("</mark></li><li><mark>", (explode(",", $recommended_primary)));
-          }
-          else {
-            $replacement .= $recommended_primary;
-          }
-          $replacement .= "</mark></li></ul>";
-          $replacements[$original] = Markup::create((string) $replacement);
-        }
-        break;
-
-      case 'covid_vaccination_approved_vaccines':
-        // TBC - Hardcoding logic here - not recommended.
-        $age = \Drupal::request()->query->get('age');
-        $min_age = $open_fisca_client->openFiscaGetApiValues('covid_vaccinations.min_age_adult_approved_vaccines');
-
-        if ($age < $min_age) {
-          $replacements[$original] = '';
-        }
-        else {
-          $replacement = "Given you’re <mark>$min_age</mark> years old or over you can also have these approved vaccines:";
-          $links = [
-            'Novavax' => "<a href='https://www.health.gov.au/initiatives-and-programs/covid-19-vaccines/approved-vaccines/novavax'>more information about Novavax</a>",
-            'AstraZeneca' => "<a href='https://www.health.gov.au/initiatives-and-programs/covid-19-vaccines/approved-vaccines/astrazeneca'>more information about AstraZeneca</a>",
-          ];
-          $recommended_booster = \Drupal::request()->query->get('covid_vaccination_approved_vaccines');
-          if (isset($recommended_booster)) {
-            $replacement .= "<ul>";
-            if (strpos($recommended_booster, ",")) {
-              $approved_vaccines = explode(",", $recommended_booster);
-              foreach ($approved_vaccines as $approved_vaccine) {
-                if (isset($links[$approved_vaccine])) {
-                  $replacement .= "<li><mark>" . $approved_vaccine . "</mark> - " . $links[$approved_vaccine] . "</li>";
-                }
-                else {
-                  $replacement .= "<li><mark>" . $approved_vaccine . "</mark></li>";
-                }
-              }
-            }
-            else {
-              if (isset($links[$recommended_booster])) {
-                $replacement .= "<li><mark>" . $recommended_booster . "</mark> - " . $links[$recommended_booster] . "</li>";
-              }
-              else {
-                $replacement .= "<li><mark>" . $recommended_booster . "</mark></li>";
-              }
-            }
-            $replacement .= "</ul>";
-            $replacements[$original] = Markup::create((string) $replacement);
-          }
-        }
-        break;
-
-      case 'num_next_dose':
-        $vaccine_doses = \Drupal::request()->query->get('vaccine_doses');
-        $num_next_dose = $vaccine_doses + 1;
-
-        $replacements[$original] = "<mark>";
-        $replacements[$original] .= ordinal($num_next_dose);
-        $replacements[$original] .= "</mark>";
-        $replacements[$original] = Markup::create((string) $replacements[$original]);
-        break;
-    }
 
     // Get all parameters.
     $config = \Drupal::configFactory()->get('webform_openfisca.settings');
     $api_endpoint = $config->get('webform_openfisca.api_endpoint');
 
-    $parameters = array_keys($open_fisca_client->OpenfiscaGetParameters($api_endpoint));
-    foreach ($parameters as $parameter) {
-      $parameter1 = str_replace(".", "/", $parameter);
-      if ($name == $parameter) {
-        $replacement = "<mark>";
-        $replacement .= getAPIValues($parameter1);
-        $replacement .= "</mark>";
-        $replacements[$original] = Markup::create((string) $replacement);
+    if (!empty($api_endpoint)) {
+      $parameters = array_keys($open_fisca_client->OpenfiscaGetParameters($api_endpoint));
+      foreach ($parameters as $parameter) {
+        $parameter1 = str_replace(".", "/", $parameter);
+        if ($name == $parameter) {
+          $replacement = "<mark>";
+          $replacement .= getAPIValues($parameter1);
+          $replacement .= "</mark>";
+          $replacements[$original] = Markup::create((string) $replacement);
+        }
       }
     }
 
@@ -458,33 +269,18 @@ function webform_openfisca_tokens($type, $tokens, array $data, array $options, B
     $config = \Drupal::configFactory()->get('webform_openfisca.settings');
     $api_endpoint = $config->get('webform_openfisca.api_endpoint');
 
-    $variables = $open_fisca_client->openFiscaGetVariables($api_endpoint);
-    foreach ($variables as $variable) {
-      if ($name == $variable) {
-        $replacement = "<mark>";
-        $replacement .= \Drupal::request()->query->get($variable);
-        $replacement .= "</mark>";
-        $replacements[$original] = Markup::create((string) $replacement);
+    if (!empty($api_endpoint)) {
+      $variables = $open_fisca_client->openFiscaGetVariables($api_endpoint);
+      foreach ($variables as $variable) {
+        if ($name == $variable) {
+          $replacement = "<mark>";
+          $replacement .= \Drupal::request()->query->get($variable);
+          $replacement .= "</mark>";
+          $replacements[$original] = Markup::create((string) $replacement);
+        }
       }
     }
 
   }
   return $replacements;
-}
-
-/**
- * Helper function.
- *
- * @param $number
- *
- * @return string
- */
-function ordinal($number) {
-  $ends = ['th', 'st', 'nd', 'rd', 'th', 'th', 'th', 'th', 'th', 'th'];
-  if ((($number % 100) >= 11) && (($number % 100) <= 13)) {
-    return $number . 'th';
-  }
-  else {
-    return $number . $ends[$number % 10];
-  }
 }

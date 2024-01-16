@@ -29,6 +29,8 @@ class OpenFiscaConnectorService {
    *
    * @param \GuzzleHttp\ClientInterface $http_client
    *   A Guzzle client object.
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
+   *   The factory for configuration objects.
    */
   public function __construct(ClientInterface $http_client, ConfigFactoryInterface $configFactory) {
     $this->httpClient = $http_client;
