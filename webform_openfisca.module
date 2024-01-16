@@ -5,9 +5,11 @@
  * Hooks implemented by the webform_openfisca module.
  */
 
+use Drupal\Core\Cache\Cache;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Render\BubbleableMetadata;
 use Drupal\Core\Render\Markup;
+use Drupal\Core\Routing\RouteMatchInterface;
 
 /**
  * Implements hook_webform_admin_third_party_settings_form_alter().
@@ -31,7 +33,7 @@ function webform_openfisca_webform_admin_third_party_settings_form_alter(&$form,
   $form['third_party_settings']['webform_openfisca']['fisca_enabled'] = [
     '#type' => 'checkbox',
     '#title' => t('Enable OpenFisca RaC integration'),
-    '#description' => t(''),
+    '#description' => '',
     '#default_value' => $default_fisca_enabled,
   ];
   $form['third_party_settings']['webform_openfisca']['fisca_api_endpoint'] = [
@@ -91,7 +93,7 @@ function webform_openfisca_webform_third_party_settings_form_alter(&$form, FormS
   $form['third_party_settings']['webform_openfisca']['fisca_enabled'] = [
     '#type' => 'checkbox',
     '#title' => t('Enable OpenFisca RaC integration'),
-    '#description' => t(''),
+    '#description' => '',
     '#default_value' => $default_fisca_enabled,
   ];
   $form['third_party_settings']['webform_openfisca']['fisca_api_endpoint'] = [
@@ -121,6 +123,26 @@ function webform_openfisca_webform_third_party_settings_form_alter(&$form, FormS
 
   // @todo Should be a submit handler.
   $form['#validate'][] = '_webform_openfisca_form_submit';
+}
+
+/**
+ * Submit callback for clearing library_info cache.
+ *
+ * @param array $form
+ *   An associative array containing the structure of the form.
+ * @param \Drupal\Core\Form\FormStateInterface $form_state
+ *   The current state of the form.
+ *
+ * @see \Drupal\webform_entity_print\Plugin\Derivative\WebformEntityPrintWebformExporterDeriver
+ */
+function _webform_openfisca_form_submit(array &$form, FormStateInterface $form_state) {
+
+  if (!$form_state->hasAnyErrors()) {
+    // Invalidate library_info cache tag.
+    // @see webform_entity_print_library_info_build()
+    Cache::invalidateTags(['library_info']);
+  }
+
 }
 
 /**
@@ -202,79 +224,136 @@ function webform_openfisca_form_alter(&$form, FormStateInterface $form_state, $f
 }
 
 /**
- * Implements hook_token_info()
- *
- * Suchi: Generalise this maybe? Use a list of all variables and tokenise them like we are doing parameters?
+ * Helper to load all enabled fisca endpoints.
+ */
+function _webform_openfisca_get_all_endpoints() {
+  $endpoints = [];
+  // Get the webform storage service.
+  $webformStorage = \Drupal::entityTypeManager()->getStorage('webform');
+
+  // Load all webforms.
+  $webforms = $webformStorage->loadMultiple();
+
+  // Loop through each webform.
+  foreach ($webforms as $webform) {
+    // Check if the webform has the 'openfisca' enabled.
+    $fiscaEnabled = $webform->getThirdPartySetting('webform_openfisca', 'fisca_enabled', FALSE);
+
+    // Check if the 'fisca_api_endpoint' is not empty.
+    $fiscaApiEndpoint = $webform->getThirdPartySetting('webform_openfisca', 'fisca_api_endpoint', '');
+
+    if ($fiscaEnabled && !empty($fiscaApiEndpoint)) {
+      $endpoints[] = $fiscaApiEndpoint;
+    }
+  }
+  return $endpoints;
+}
+
+/**
+ * Implements hook_token_info().
  */
 function webform_openfisca_token_info() {
   $open_fisca_client = \Drupal::service('webform_openfisca.open_fisca_connector_service');
 
-  $config = \Drupal::configFactory()->get('webform_openfisca.settings');
-  $api_endpoint = $config->get('webform_openfisca.api_endpoint');
+  $endpoints = _webform_openfisca_get_all_endpoints();
 
-  if (!empty($api_endpoint)) {
-    // Get all parameters.
-    $parameters = $open_fisca_client->OpenfiscaGetParameters($api_endpoint);
-    foreach ($parameters as $key => $parameter) {
-      // $parameter1 = str_replace(".", "/", $key);
-      $info['tokens']['site'][$key] = [
-        'name' => $parameter['description'],
-        'description' => $parameter['description'],
-      ];
-    }
+  if (!empty($endpoints)) {
+    foreach ($endpoints as $api_endpoint) {
+      // Get all parameters.
+      $parameters = $open_fisca_client->OpenfiscaGetParameters($api_endpoint);
+      foreach ($parameters as $key => $parameter) {
+        // $parameter1 = str_replace(".", "/", $key);
+        $info['tokens']['webform_openfisca'][$key] = [
+          'name' => $parameter['description'],
+          'description' => $parameter['description'],
+        ];
+      }
 
-    // Get all variables.
-    $variables = $open_fisca_client->openFiscaGetVariables($api_endpoint);
-    foreach ($variables as $key => $variable) {
-      $info['tokens']['site'][$key] = [
-        'name' => $variable['description'],
-        'description' => $variable['description'],
-      ];
+      // Get all variables.
+      $variables = $open_fisca_client->openFiscaGetVariables($api_endpoint);
+      foreach ($variables as $key => $variable) {
+        $info['tokens']['webform_openfisca'][$key] = [
+          'name' => $variable['description'],
+          'description' => $variable['description'],
+        ];
+      }
     }
   }
+  $info['types']['webform_openfisca'] = [
+    'name' => t('Webform openfisca'),
+    'description' => t('Tokens related to webform openfisca.'),
+    'needs-data' => 'webform_openfisca',
+  ];
 
   return $info;
 }
 
 /**
- * Implements hook_tokens()
- * Suchi: Generalise this maybe? Use a list of all variables and tokenise them like we are doing parameters?
+ * Implements hook_tokens().
  */
 function webform_openfisca_tokens($type, $tokens, array $data, array $options, BubbleableMetadata $bubbleable_metadata) {
   $open_fisca_client = \Drupal::service('webform_openfisca.open_fisca_connector_service');
 
   $replacements = [];
 
-  $config = \Drupal::configFactory()->get('webform_openfisca.settings');
-  $api_endpoint = $config->get('webform_openfisca.api_endpoint');
+  $endpoints = _webform_openfisca_get_all_endpoints();
+  if (!empty($endpoints)) {
+    foreach ($endpoints as $api_endpoint) {
+      foreach ($tokens as $name => $original) {
 
-  if (!empty($api_endpoint)) {
-    foreach ($tokens as $name => $original) {
-
-      // Get all parameters.
-      $parameters = array_keys($open_fisca_client->OpenfiscaGetParameters($api_endpoint));
-      foreach ($parameters as $parameter) {
-        $parameter1 = str_replace(".", "/", $parameter);
-        if ($name == $parameter) {
-          $replacement = "<mark>";
-          $replacement .= getAPIValues($parameter1);
-          $replacement .= "</mark>";
-          $replacements[$original] = Markup::create((string) $replacement);
+        // Get all parameters.
+        $parameters = array_keys($open_fisca_client->OpenfiscaGetParameters($api_endpoint));
+        foreach ($parameters as $parameter) {
+          $formated_parameter = str_replace(".", "/", $parameter);
+          $replacement = FALSE;
+          if ($name == $parameter) {
+            $parameter_endpoint_url = $api_endpoint . '/parameter/' . $formated_parameter;
+            $replacement_details = $open_fisca_client->openFiscaGetAttributeDetails($parameter_endpoint_url);
+            if (!empty($replacement_details)) {
+              $period = \Drupal::request()->query->get('period');
+              if (isset($period) && isset($replacement_details->values->$period)) {
+                $replacement = $replacement_details->values->$period;
+              }
+              if (!$replacement) {
+                $replacement = reset($replacement_details->values);
+              }
+              $replacements[$original] = Markup::create((string) $replacement);
+            }
+          }
         }
-      }
 
-      // Get all variables.
-      $variables = $open_fisca_client->openFiscaGetVariables($api_endpoint);
-      foreach ($variables as $variable) {
-        if ($name == $variable) {
-          $replacement = "<mark>";
-          $replacement .= \Drupal::request()->query->get($variable);
-          $replacement .= "</mark>";
-          $replacements[$original] = Markup::create((string) $replacement);
+        // Get all variables.
+        $variables = $open_fisca_client->openFiscaGetVariables($api_endpoint);
+        foreach ($variables as $variable) {
+          if ($name == $variable) {
+            $replacement = \Drupal::request()->query->get($variable);
+            $replacements[$original] = Markup::create((string) $replacement);
+          }
         }
-      }
 
+      }
     }
   }
   return $replacements;
+}
+
+/**
+ * Implements hook_help().
+ */
+function webform_openfisca_help($route_name, RouteMatchInterface $route_match) {
+  if ($route_name == 'help.page.webform_openfisca') {
+    $token_tree = \Drupal::service('token.tree_builder')->buildRenderable(['webform_openfisca'], [
+      'click_insert' => FALSE,
+      'show_restricted' => TRUE,
+      'show_nested' => FALSE,
+      'global_types' => FALSE,
+    ]);
+    $output = '<h3>' . t('About') . '</h3>';
+    $output .= '<p>' . t('The <a href=":project">Webform OpenFisca Integration</a> module integrates Drupal Webform functionality with the OpenFisca API, allowing for seamless communication and calculation based on OpenFisca rules.', [':project' => 'https://www.drupal.org/project/webform_openfisca']) . '</p>';
+    $output .= '<dl>';
+    $output .= '<dt>' . t('The list of the currently available tokens provided by this module are shown below.') . '</dt>';
+    $output .= '<dd>' . \Drupal::service('renderer')->render($token_tree) . '</dd>';
+    $output .= '</dl>';
+    return $output;
+  }
 }

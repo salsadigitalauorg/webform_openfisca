@@ -6,7 +6,7 @@ use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 
 /**
- *
+ * Configure webform OpenFisca integration settings for this site.
  */
 class ConfigForm extends ConfigFormBase {
 
@@ -26,12 +26,6 @@ class ConfigForm extends ConfigFormBase {
     // Default settings.
     $config = $this->config('webform_openfisca.settings');
 
-    $form['api_endpoint'] = [
-      '#type' => 'url',
-      '#title' => $this->t('Endpoint for the Open Fisca API'),
-      '#default_value' => $config->get('webform_openfisca.api_endpoint'),
-      '#description' => $this->t('Endpoint for the Open Fisca API.'),
-    ];
     $form['debug'] = [
       '#type' => 'checkbox',
       '#title' => t('Debug?.'),
@@ -46,7 +40,6 @@ class ConfigForm extends ConfigFormBase {
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $config = $this->config('webform_openfisca.settings');
-    $config->set('webform_openfisca.api_endpoint', $form_state->getValue('api_endpoint'));
     $config->set('webform_openfisca.debug', $form_state->getValue('debug'));
     $config->save();
     return parent::submitForm($form, $form_state);

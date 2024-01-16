@@ -9,9 +9,7 @@
         "php": "^7.3 || ^8.0",
         "drupal/core": "^8.8 || ^9 || ^10",
         "drupal/paragraphs": "~1.0",
-        "drupal/webform": "^6.2"
-    },
-    "require-dev": {
+        "drupal/webform": "^6.2",
         "drupal/token": "^1.0"
     }
 }

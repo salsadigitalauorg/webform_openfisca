@@ -78,46 +78,24 @@ class OpenFiscaConnectorService {
   }
 
   /**
-   * Get Open Fisca Variable details.
+   * Get OpenFisca parameter.
    */
-  public function openFiscaGetvariableDetails(array $variable) {
+  public function openFiscaGetParameter($api_endpoint, $parameter) {
 
-    if (isset($variable['href'])) {
-      $response = $this->httpClient->request('GET', $variable['href']);
+    $response = $this->httpClient->request('GET', $api_endpoint . '/parameter/' . $parameter);
 
-      return json_decode($response->getBody(), TRUE);
-    }
+    return json_decode($response->getBody(), TRUE);
   }
 
   /**
-   * Get Open Fisca API values.
+   * Get Open Fisca attribute details.
    */
-  public function openFiscaGetApiValues($variable) {
+  public function openFiscaGetAttributeDetails($href) {
 
-    $config = $this->configFactory->get('webform_openfisca.settings');
-    $api_url = $config->get('webform_openfisca.api_endpoint');
+    if (isset($href)) {
+      $response = $this->httpClient->request('GET', $href);
 
-    // $period = '2022-07';
-    $period_query = \Drupal::request()->query->get('period');
-    if (isset($period_query)) {
-      $period = $period_query;
-      $query_append['period'] = $period;
-    }
-    else {
-      $period_default = $period = '2022-08-01';
-    }
-    $period_default = '2022-08-01';
-
-    $request = $this->httpClient->get($api_url . '/parameter/' . $variable);
-    $response = json_decode($request->getBody(), TRUE);
-
-    if (isset($response->values->$period)) {
-      // TBC - add error handling.
-      return $response->values->$period;
-    }
-    else {
-      // TBC - add error handling.
-      return $response->values->$period_default;
+      return json_decode($response->getBody(), TRUE);
     }
   }
 

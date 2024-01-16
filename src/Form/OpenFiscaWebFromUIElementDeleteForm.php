@@ -6,7 +6,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\webform_ui\Form\WebformUiElementDeleteForm;
 
 /**
- *
+ * Submit Handler to reset values after delete of Elements.
  */
 class OpenFiscaWebFromUIElementDeleteForm extends WebformUiElementDeleteForm {
 
