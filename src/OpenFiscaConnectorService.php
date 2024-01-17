@@ -97,4 +97,14 @@ class OpenFiscaConnectorService {
     return json_decode($response->getBody(), TRUE);
   }
 
+  /**
+   * Get OpenFisca Entities.
+   */
+  public function openFiscaGetEntities($api_endpoint) {
+
+    $response = $this->httpClient->request('GET', $api_endpoint . '/entities');
+
+    return json_decode($response->getBody(), TRUE);
+  }
+
 }

@@ -5,7 +5,6 @@
  * Hooks implemented by the webform_openfisca module.
  */
 
-use Drupal\Core\Cache\Cache;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Render\BubbleableMetadata;
 use Drupal\Core\Render\Markup;
@@ -24,6 +23,7 @@ function webform_openfisca_webform_admin_third_party_settings_form_alter(&$form,
   $default_fisca_return_key = $third_party_settings_manager->getThirdPartySetting('webform_openfisca', 'fisca_return_key');
   $default_fisca_mappings = $third_party_settings_manager->getThirdPartySetting('webform_openfisca', 'fisca_field_mappings');
   $fisca_variables = $third_party_settings_manager->getThirdPartySetting('webform_openfisca', 'fisca_variables');
+  $fisca_entity_roles = $third_party_settings_manager->getThirdPartySetting('webform_openfisca', 'fisca_entity_roles');
 
   $form['third_party_settings']['webform_openfisca'] = [
     '#type' => 'details',
@@ -59,6 +59,12 @@ function webform_openfisca_webform_admin_third_party_settings_form_alter(&$form,
     '#title' => t('OpenFisca Variables'),
     '#description' => t('Specify the variables from OpenFisca API'),
     '#default_value' => $fisca_variables,
+  ];
+  $form['third_party_settings']['webform_openfisca']['fisca_entity_roles'] = [
+    '#type' => 'textarea',
+    '#title' => t('OpenFisca Field Entity Roles'),
+    '#description' => t('Specify the field entity roles for OpenFisca API'),
+    '#default_value' => $fisca_entity_roles,
   ];
 }
 
@@ -75,6 +81,7 @@ function webform_openfisca_webform_third_party_settings_form_alter(&$form, FormS
   $default_fisca_return_key = $third_party_settings_manager->getThirdPartySetting('webform_openfisca', 'fisca_return_key') ?: [];
   $default_fisca_mappings = $third_party_settings_manager->getThirdPartySetting('webform_openfisca', 'fisca_field_mappings') ?: [];
   $fisca_variables = $third_party_settings_manager->getThirdPartySetting('webform_openfisca', 'fisca_variables') ?: [];
+  $fisca_entity_roles = $third_party_settings_manager->getThirdPartySetting('webform_openfisca', 'fisca_entity_roles') ?: [];
 
   /** @var \Drupal\webform\WebformInterface $entity */
   if ($entity = $form_state->getFormObject()->getEntity()) {
@@ -83,6 +90,7 @@ function webform_openfisca_webform_third_party_settings_form_alter(&$form, FormS
     $default_fisca_return_key = $entity->getThirdPartySetting('webform_openfisca', 'fisca_return_key') ?? $default_fisca_return_key;
     $default_fisca_mappings = $entity->getThirdPartySetting('webform_openfisca', 'fisca_field_mappings') ?? $default_fisca_mappings;
     $fisca_variables = $entity->getThirdPartySetting('webform_openfisca', 'fisca_variables') ?? $fisca_variables;
+    $fisca_entity_roles = $entity->getThirdPartySetting('webform_openfisca', 'fisca_entity_roles') ?? $fisca_entity_roles;
   }
 
   $form['third_party_settings']['webform_openfisca'] = [
@@ -120,29 +128,12 @@ function webform_openfisca_webform_third_party_settings_form_alter(&$form, FormS
     '#description' => t('Specify the variables from OpenFisca API'),
     '#default_value' => $fisca_variables,
   ];
-
-  // @todo Should be a submit handler.
-  $form['#validate'][] = '_webform_openfisca_form_submit';
-}
-
-/**
- * Submit callback for clearing library_info cache.
- *
- * @param array $form
- *   An associative array containing the structure of the form.
- * @param \Drupal\Core\Form\FormStateInterface $form_state
- *   The current state of the form.
- *
- * @see \Drupal\webform_entity_print\Plugin\Derivative\WebformEntityPrintWebformExporterDeriver
- */
-function _webform_openfisca_form_submit(array &$form, FormStateInterface $form_state) {
-
-  if (!$form_state->hasAnyErrors()) {
-    // Invalidate library_info cache tag.
-    // @see webform_entity_print_library_info_build()
-    Cache::invalidateTags(['library_info']);
-  }
-
+  $form['third_party_settings']['webform_openfisca']['fisca_entity_roles'] = [
+    '#type' => 'textarea',
+    '#title' => t('OpenFisca Field Entity Roles'),
+    '#description' => t('Specify the field entity roles for OpenFisca API'),
+    '#default_value' => $fisca_entity_roles,
+  ];
 }
 
 /**
@@ -159,22 +150,86 @@ function _webform_openfisca_form_element_submit(array &$form, FormStateInterface
   $open_fisca_client = \Drupal::service('webform_openfisca.open_fisca_connector_service');
 
   if ($entity = $form_state->getFormObject()->getWebform()) {
+    // Get OpenFisca settings.
+    $fisca_field_mappings = json_decode($entity->getThirdPartySetting('webform_openfisca', 'fisca_field_mappings'), TRUE) ?? [];
+    $fisca_variables = json_decode($entity->getThirdPartySetting('webform_openfisca', 'fisca_variables'), TRUE) ?? [];
+    $fisca_entity_roles = json_decode($entity->getThirdPartySetting('webform_openfisca', 'fisca_entity_roles'), TRUE) ?? [];
+    $api_endpoint = $entity->getThirdPartySetting('webform_openfisca', 'fisca_api_endpoint') ?? '';
 
+    // Get form values.
     $key = $form_state->getValue('key');
     $fisca_machine_name = $form_state->getValue('fisca_machine_name');
-    $field_mappings = json_decode($entity->getThirdPartySetting('webform_openfisca', 'fisca_field_mappings'), TRUE) ?? [];
-    $field_mappings[$key] = $fisca_machine_name;
+    $fisca_entity_key = $form_state->getValue('fisca_entity_key');
+    $fisca_entity_role = $form_state->getValue('fisca_entity_role');
+    $fisca_entity_role_array = $form_state->getValue('fisca_entity_role_array');
 
-    $entity->setThirdPartySetting('webform_openfisca', 'fisca_field_mappings', json_encode($field_mappings));
-
-    $api_endpoint = $entity->getThirdPartySetting('webform_openfisca', 'fisca_api_endpoint') ?? '';
-    $fisca_variables = json_decode($entity->getThirdPartySetting('webform_openfisca', 'fisca_variables'), TRUE) ?? [];
-    if(!in_array($fisca_machine_name, ['period', '_nil', 'name_key' ])) {
+    if (!in_array($fisca_machine_name, ['period', '_nil', 'name_key'])) {
+      // Get OpenFisca Entities.
+      $fisca_entities = $open_fisca_client->openFiscaGetEntities($api_endpoint);
+      // Get OpenFisca variable.
       $fisca_variable = $open_fisca_client->openFiscaGetVariable($api_endpoint, $fisca_machine_name);
+      // Get OpenFisca Entity from variable.
+      $fisca_entity = $fisca_entities[$fisca_variable['entity']];
+
+      // Create field mapping in format
+      // variable_entity.entity_key.variable_name eg. persons.personA.age.
+      $fisca_field_mapping = implode('.', [
+        $fisca_entity['plural'],
+        $fisca_entity_key,
+        $fisca_machine_name,
+      ]);
+
+      // Add/Update OpenFisca field mappings.
+      $fisca_field_mappings[$key] = $fisca_field_mapping;
+      // Add/Update OpenFisca variable.
       $fisca_variables[$fisca_machine_name] = $fisca_variable;
+
+      // Remove any entity role.
+      if (isset($fisca_entity_roles[$key])) {
+        unset($fisca_entity_roles[$key]);
+      }
+    }
+    elseif (!empty($fisca_entity_role)) {
+      // Add/Update OpenFisca entity roles
+      // Get OpenFisca entity role and save as
+      // object in format {"role": "children", is_array; true}.
+      $fisca_entity_roles[$key]['role'] = $fisca_entity_role;
+      $fisca_entity_roles[$key]['is_array'] = $fisca_entity_role_array;
+
+      // Remove the field_mapping for this key.
+      if (isset($fisca_field_mappings[$key])) {
+        $fisca_field_mapping = explode('.', $fisca_field_mappings[$key]);
+        // Fisca variable is at the end eg.eg. persons.personA.age.
+        $fisca_variable = array_pop($fisca_field_mapping);
+        unset($fisca_field_mappings[$key]);
+        // Remove the fisca_variables for this key.
+        if (isset($fisca_variables[$fisca_variable])) {
+          unset($fisca_variables[$fisca_variable]);
+        }
+      }
+    }
+    else {
+      // Remove the field_mapping for this key.
+      if (isset($fisca_field_mappings[$key])) {
+        $fisca_field_mapping = explode('.', $fisca_field_mappings[$key]);
+        // Fisca variable is at the end eg.eg. persons.personA.age.
+        $fisca_variable = array_pop($fisca_field_mapping);
+        unset($fisca_field_mappings[$key]);
+        // Remove the fisca_variables for this key.
+        if (isset($fisca_variables[$fisca_variable])) {
+          unset($fisca_variables[$fisca_variable]);
+        }
+      }
+      // Remove any entity role.
+      if (isset($fisca_entity_roles[$key])) {
+        unset($fisca_entity_roles[$key]);
+      }
     }
 
-    $entity->setThirdPartySetting('webform_openfisca', 'fisca_variables', json_encode($fisca_variables));
+    // Save OpenFisca settings.
+    $entity->setThirdPartySetting('webform_openfisca', 'fisca_field_mappings', json_encode($fisca_field_mappings, JSON_PRETTY_PRINT));
+    $entity->setThirdPartySetting('webform_openfisca', 'fisca_variables', json_encode($fisca_variables, JSON_PRETTY_PRINT));
+    $entity->setThirdPartySetting('webform_openfisca', 'fisca_entity_roles', json_encode($fisca_entity_roles, JSON_PRETTY_PRINT));
 
     $entity->save();
   }
@@ -193,6 +248,7 @@ function webform_openfisca_form_alter(&$form, FormStateInterface $form_state, $f
       $enabled = $entity->getThirdPartySetting('webform_openfisca', 'fisca_enabled') ?? FALSE;
       $api_endpoint = $entity->getThirdPartySetting('webform_openfisca', 'fisca_api_endpoint') ?? '';
       $field_mappings = json_decode($entity->getThirdPartySetting('webform_openfisca', 'fisca_field_mappings'), TRUE) ?? [];
+      $fisca_entity_roles = json_decode($entity->getThirdPartySetting('webform_openfisca', 'fisca_entity_roles'), TRUE) ?? [];
 
       $fObject = $form_state->getFormObject();
       $key = $fObject->getKey();
@@ -205,18 +261,49 @@ function webform_openfisca_form_alter(&$form, FormStateInterface $form_state, $f
         $fisca_vars['_nil'] = '- Exclude from mapping -';
         $fisca_vars['name_key'] = 'Name';
         $fisca_vars['period'] = 'Period';
+        // Echo "<pre>"; print_r($vars); die;.
+        ksort($vars);
         foreach ($vars as $k => $var) {
           $fisca_vars[$k] = $k . ": " . $var['description'];
         }
       }
 
       if ($enabled) {
+        $field_mapping = $field_mappings[$key];
+        // Field mappings are joined together in the format
+        // variable_entity.entity_key.variable_name
+        // eg. persons.personA.age.
+        $keys = explode('.', $field_mapping);
+        $variable_name = $keys[2] ?? '';
+        $entity_key = $keys[1] ?? '';
+
         $form['fisca_machine_name'] = [
           '#type' => 'select',
           '#options' => $fisca_vars,
           '#title' => t('Linked Fisca variable'),
-          '#prefix' => '<h2>Fisca enabled!</h2><p>Please provide Fisca variable names to correctly link.</p>',
-          '#default_value' => $field_mappings[$key] ?? '',
+          '#prefix' => '<h2>Fisca enabled!</h2><p>Please provide Fisca variable name to correctly link.</p>',
+          '#default_value' => $variable_name,
+        ];
+
+        $form['fisca_entity_key'] = [
+          '#type' => 'textfield',
+          '#title' => t('Fisca entity key'),
+          '#description' => '<p>Please provide Fisca entity key to group Fisca variables eg. personA.age, personB.birth_day</p>',
+          '#default_value' => $entity_key,
+        ];
+
+        $form['fisca_entity_role'] = [
+          '#type' => 'textfield',
+          '#title' => t('Fisca entity role'),
+          '#description' => '<p>Please provide Fisca entity role for complex group entities and roles eg. families.family.children.</p>',
+          '#default_value' => $fisca_entity_roles[$key]['role'] ?? '',
+        ];
+
+        $form['fisca_entity_role_array'] = [
+          '#type' => 'checkbox',
+          '#title' => t('Fisca entity role array'),
+          '#description' => '<p>Is the Fisca entity role an array eg. children should be an array whereas principal_caregiver is not</p>',
+          '#default_value' => $fisca_entity_roles[$key]['is_array'] ?? '',
         ];
 
         $form['#submit'][] = '_webform_openfisca_form_element_submit';

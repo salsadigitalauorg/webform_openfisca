@@ -89,13 +89,6 @@ class OpenfiscaJourneyHandler extends WebformHandlerBase {
   /**
    * {@inheritdoc}
    */
-  public function submitConfigurationForm(array &$form, FormStateInterface $form_state) {
-    parent::submitConfigurationForm($form, $form_state);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function submitForm(array &$form, FormStateInterface $form_state, WebformSubmissionInterface $webform_submission) {
     $form_id = $form['#webform_id'];
     $settings = $this->getSettings();
@@ -108,30 +101,21 @@ class OpenfiscaJourneyHandler extends WebformHandlerBase {
       $$key = $data[$key];
     }
 
-    // Very hard coded API body to send data to Openfisca
-    // we will need to abstract this out to a service rather
-    // than relying on http client.
-    //
-    // Difficulties:
-    //   - need to define fields as 'null' for fisca to respond
-    //   - need to consume a "period" to apply rules.
     $fisca_field_mappings = $webform_submission->getWebform()->getThirdPartySetting('webform_openfisca', 'fisca_field_mappings');
     $fisca_field_mappings = json_decode($fisca_field_mappings, TRUE);
-    $fisca_field_mappings = array_flip($fisca_field_mappings);
 
     $result_key = $webform_submission->getWebform()->getThirdPartySetting('webform_openfisca', 'fisca_return_key');
-    $result_keys = explode(", ", $result_key);
-    // Echo "<pre>"; print_r($result_keys); die;.
+    $result_keys = explode(",", $result_key);
+
     $fisca_variables = $webform_submission->getWebform()->getThirdPartySetting('webform_openfisca', 'fisca_variables');
     $fisca_variables = json_decode($fisca_variables, TRUE) ?? [];
 
-    $payload = ['persons' => []];
-
-    // Prep the person payload. Hardcoded person.
-    $person = "personA";
+    $fisca_entity_roles = $webform_submission->getWebform()->getThirdPartySetting('webform_openfisca', 'fisca_entity_roles');
+    $fisca_entity_roles = json_decode($fisca_entity_roles, TRUE) ?? [];
+    // Prep the person payload.
+    $payload = [];
 
     // Period.
-    // Suchi - Period can be a date/ a month or even the text "eternity" - so we need to change this code appropriately to capture these somehow.
     $period_query = \Drupal::request()->query->get('period');
     if (isset($period_query)) {
       $period = $period_query;
@@ -150,61 +134,155 @@ class OpenfiscaJourneyHandler extends WebformHandlerBase {
       unset($fisca_field_mappings['period']);
     }
 
-    // Suchi: We had hardcoded the payload to be 'persons' - should be configurable.
-    // Suchi: We have also hardcoded a lot of things here - which need to be generalised.
-    $payload['persons'][$person] = [];
-    // Echo "<pre>"; print_r($fisca_field_mappings); print_r($data); die;.
-    foreach ($fisca_field_mappings as $openfisca_key => $webform_key) {
-      // We dont wat to use the keys which are not mapped.
+    foreach ($fisca_field_mappings as $webform_key => $openfisca_key) {
+      // We don't what to use the keys which are not mapped.
       if ($openfisca_key == '_nil') {
         if (isset($data[$webform_key])) {
           $query_append[$webform_key] = $data[$webform_key];
         }
       }
       else {
-        if (empty($data[$webform_key])) {
-          $val = NULL;
+        if (!empty($data[$webform_key])) {
+          // The openfisca_key will be in the format
+          // variable_entity.entity_key.variable_name
+          // eg. persons.personA.age
+          // We need to dynamically create an multidimensional array
+          // from the list of keys and then set the value.
+          $keys = explode(".", $openfisca_key);
+          $variable = array_pop($keys);
+          $ref = &$payload;
+          while ($key = array_shift($keys)) {
+            $ref = &$ref[$key];
+          }
+          $val = strtolower($data[$webform_key]) == 'true' || strtolower($data[$webform_key]) == 'false' ? strtolower($data[$webform_key]) == 'true' : $data[$webform_key];
+          $formatted_period = $this->formatVariablePeriod($fisca_variables, $variable, $period);
+          $ref[$variable] = [$formatted_period => $val];
         }
-        else {
-          $val = $data[$webform_key] == 'True' || $data[$webform_key] == 'False' ? $data[$webform_key] == 'True' : $data[$webform_key];
+      }
+    }
+
+    // Create result keys entities with null values to tell OpenFisca
+    // to calculate these variables eg. { persons.personA.variable_name: null }.
+    foreach ($result_keys as $result_key) {
+      // The result_key will be in the format
+      // variable_entity.entity_key.variable_name
+      // eg. persons.personA.age
+      // We need to dynamically create an multidimensional array
+      // from the list of keys and then set the value.
+      $keys = explode(".", $result_key);
+      $variable = array_pop($keys);
+      $ref = &$payload;
+      while ($key = array_shift($keys)) {
+        $ref = &$ref[$key];
+      }
+      $formatted_period = $this->formatVariablePeriod($fisca_variables, $variable, $period);
+      $ref[$variable] = [$formatted_period => NULL];
+    }
+
+    // Create group entities with roles
+    // eg. { families.familyA.children: ["childA", "childB"] }.
+    foreach ($fisca_entity_roles as $fisca_entity_role) {
+      $role = $fisca_entity_role['role'] ?? NULL;
+      $is_array = $fisca_entity_role['is_array'] ?? FALSE;
+      if (isset($role)) {
+        // The role will be in the format
+        // group_entity.group_entity_key.role.entity_key
+        // eg. families.familyA.principal.personA
+        // eg. families.familyA.children.child1
+        // We need to dynamically create an multidimensional array
+        // from the list of keys and then set the value.
+        $keys = explode(".", $role);
+        $entity_key = array_pop($keys);
+        // Only add the role to the payload if the payload entity_key exists.
+        if (str_contains(json_encode($payload), $entity_key)) {
+          $ref = &$payload;
+          while ($key = array_shift($keys)) {
+            $ref = &$ref[$key];
+          }
+          if ($is_array) {
+            $ref[] = $entity_key;
+          }
+          else {
+            $ref = $entity_key;
+          }
         }
-        $formatted_period = $this->format_variable_period($fisca_variables, $openfisca_key, $period);
-        $payload['persons'][$person][$openfisca_key] = [$formatted_period => $val];
       }
     }
 
     $open_fisca_client = \Drupal::service('webform_openfisca.open_fisca_connector_service');
     $entity = $form_state->getFormObject()->getWebform();
     $request = $open_fisca_client->post($entity->getThirdPartySetting('webform_openfisca', 'fisca_api_endpoint') . '/calculate', ['json' => $payload]);
-    $response = json_decode($request->getBody());
+    $response = json_decode($request->getBody(), TRUE);
 
-    $results = $response->persons->$person;
-
-    // Check the value of the return key.
+    // Get the values of the return keys.
     foreach ($result_keys as $result_key) {
-      $result_values[$result_key] = $results->$result_key->$period;
+      // The result_keys will be in the format entity.entity_key.variable_name
+      // eg. persons.personA.age
+      // We need to dynamically create an multidimensional array
+      // from the list of keys and then set the value.
+      $keys = explode(".", $result_key);
+      $ref = &$response;
+      while ($key = array_shift($keys)) {
+        $ref = &$ref[$key] ?? NULL;
+      }
+      // We will not know the period key will be, get the first items value
+      // eg. { variable_name: { period: variable_value }}
+      // eg. { age: { "2022-11-01": 20 }}.
+      if (isset($ref)) {
+        $objIterator = new \ArrayIterator($ref);
+        $key = $objIterator->key();
+        if (isset($ref[$key])) {
+          $result_values[$result_key] = $ref[$key];
+        }
+      }
     }
 
-    foreach ($results as $k => $result) {
-      if (isset($result->ETERNITY)) {
-        $fisca_fields[$k] = $result->ETERNITY;
-      }
-      elseif (isset($result->$period)) {
-        $fisca_fields[$k] = $result->$period;
-      }
-      if (($k == 'last_vaccine_dose') && ($result->$period == 'Thu, 01 Jan 1970 00:00:00 GMT')) {
-        // Mark this as null.
-        $fisca_fields[$k] = NULL;
+    // To calculate the total benefeit.
+    $total_benefit = 0;
+
+    // Get the values of fisca fields.
+    foreach ($fisca_field_mappings as $webform_key => $openfisca_key) {
+      if ($openfisca_key != '_nil') {
+        // The openfisca_key will be in the format
+        // variable_entity.entity_key.variable_name
+        // eg. persons.personA.age
+        // We need to dynamically create an multidimensional array
+        // from the list of keys and then set the value.
+        $keys = explode(".", $openfisca_key);
+        $variable = array_pop($keys);
+        $ref = &$response;
+        while ($key = array_shift($keys)) {
+          $ref = &$ref[$key] ?? NULL;
+        }
+        // We will not know the period key will be, get the first items value
+        // eg { variable_name: { period: variable_value }}
+        // eg { age: { "2022-11-01": 20 }}.
+        if (isset($ref) && isset($ref[$variable])) {
+          $objIterator = new \ArrayIterator($ref[$variable]);
+          $key = $objIterator->key();
+          if (isset($ref[$variable][$key])) {
+            if (strpos($webform_key, "_benefit")) {
+              // This is a benefit. Add it to the total.
+              // Cast all benefits into int type.
+              $ref[$variable][$key] = (int) $ref[$variable][$key];
+              $total_benefit += $ref[$variable][$key];
+            }
+            $fisca_fields[$webform_key] = $ref[$variable][$key];
+          }
+        }
       }
     }
+    $query_append['total_benefit'] = $total_benefit;
 
     if (isset($query_append) && is_array($query_append)) {
       $fisca_fields = array_merge($fisca_fields, $query_append);
     }
 
     $query = http_build_query($fisca_fields);
-    $confirmation_url = $this->find_redirect_rules($form_id, $result_values);
-    $this->getWebform()->setSettingOverride('confirmation_url', $confirmation_url . '?' . $query);
+    $confirmation_url = $this->findRedirectRules($form_id, $result_values);
+    if (!empty($confirmation_url)) {
+      $this->getWebform()->setSettingOverride('confirmation_url', $confirmation_url . '?' . $query);
+    }
 
     // Debug.
     $config = \Drupal::configFactory()->get('webform_openfisca.settings');
@@ -254,9 +332,12 @@ class OpenfiscaJourneyHandler extends WebformHandlerBase {
   /**
    * Helper function to find redirects from the rules defined for form id.
    *
-   * @param $form_id
+   * @param string $form_id
+   *   The form_id to be checked.
+   * @param array $results
+   *   The list of response values.
    */
-  public function find_redirect_rules($form_id, $results) {
+  public function findRedirectRules(string $form_id, array $results) {
 
     // Find the rule node for this form id.
     $nodes = \Drupal::entityTypeManager()
@@ -310,16 +391,19 @@ class OpenfiscaJourneyHandler extends WebformHandlerBase {
   }
 
   /**
-   * Helper method to get variable period and return a date in the correct format.
+   * Helper method to get variable period & return a date in the correct format.
    *
    * @param array $fisca_variables
+   *   The list of avalibale fisca variables.
    * @param string $variable
+   *   The variable to be accessed.
    * @param string $period_date
+   *   The period date.
    *
    * @return string
+   *   The formatted value.
    */
-  private function format_variable_period($fisca_variables, $variable, $period_date) {
-    // Suchi - do we need this?
+  private function formatVariablePeriod($fisca_variables, $variable, $period_date) {
     $fisca_variable = $fisca_variables[$variable];
     $definition_period = $fisca_variable['definitionPeriod'];
     $date = date_create($period_date);
