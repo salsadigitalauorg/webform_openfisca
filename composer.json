@@ -1,0 +1,22 @@
+{
+  "name": "salsadigitalauorg/webform_openfisca",
+  "description": "Adds OpenFisca support for RaC enabled webforms.",
+  "type": "drupal-module",
+  "authors": [],
+  "minimum-stability": "dev",
+  "prefer-stable": true,
+  "require": {
+      "drupal/webform": "^6.2"
+  },
+  "autoload": {
+      "classmap": [
+          "src/"
+      ]
+  },
+  "repositories": {
+    "drupal": {
+      "type": "composer",
+      "url": "https://packages.drupal.org/8"
+    }
+  }
+}
