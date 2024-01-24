@@ -184,28 +184,16 @@ function _webform_openfisca_form_element_submit(array &$form, FormStateInterface
       // Add/Update OpenFisca variable.
       $fisca_variables[$fisca_machine_name] = $fisca_variable;
 
-      // Remove any entity role.
-      if (isset($fisca_entity_roles[$key])) {
-        unset($fisca_entity_roles[$key]);
+      if (!empty($fisca_entity_role)) {
+        // Add/Update OpenFisca entity roles
+        // Get OpenFisca entity role and save as
+        // object in format {"role": "children", is_array; true}.
+        $fisca_entity_roles[$key]['role'] = $fisca_entity_role;
+        $fisca_entity_roles[$key]['is_array'] = $fisca_entity_role_array;
       }
-    }
-    elseif (!empty($fisca_entity_role)) {
-      // Add/Update OpenFisca entity roles
-      // Get OpenFisca entity role and save as
-      // object in format {"role": "children", is_array; true}.
-      $fisca_entity_roles[$key]['role'] = $fisca_entity_role;
-      $fisca_entity_roles[$key]['is_array'] = $fisca_entity_role_array;
-
-      // Remove the field_mapping for this key.
-      if (isset($fisca_field_mappings[$key])) {
-        $fisca_field_mapping = explode('.', $fisca_field_mappings[$key]);
-        // Fisca variable is at the end eg.eg. persons.personA.age.
-        $fisca_variable = array_pop($fisca_field_mapping);
-        unset($fisca_field_mappings[$key]);
-        // Remove the fisca_variables for this key.
-        if (isset($fisca_variables[$fisca_variable])) {
-          unset($fisca_variables[$fisca_variable]);
-        }
+      elseif (isset($fisca_entity_roles[$key])) {
+        // Remove any entity role.
+        unset($fisca_entity_roles[$key]);
       }
     }
     else {
