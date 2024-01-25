@@ -1,15 +1,26 @@
 {
-    "name": "drupal/webform_openfisca",
-    "type": "drupal-module",
-    "description": "Adds OpenFisca support for RaC enabled webforms.",
-    "package": "Webform",
-    "homepage": "http://drupal.org/project/webform_openfisca",
-    "license": "GPL-2.0-or-later",
-    "require": {
-        "php": "^7.3 || ^8.0",
-        "drupal/core": "^8.8 || ^9 || ^10",
-        "drupal/paragraphs": "~1.0",
-        "drupal/webform": "^6.2",
-        "drupal/token": "^1.0"
+  "name": "salsadigitalauorg/webform_openfisca",
+  "description": "Adds OpenFisca support for RaC enabled webforms.",
+  "type": "drupal-module",
+  "authors": [],
+  "minimum-stability": "dev",
+  "prefer-stable": true,
+  "require": {
+      "php": "^7.3 || ^8.0",
+      "drupal/core": "^8.8 || ^9 || ^10",
+      "drupal/paragraphs": "~1.0",
+      "drupal/webform": "^6.2",
+      "drupal/token": "^1.0"
+  },
+  "autoload": {
+      "classmap": [
+          "src/"
+      ]
+  },
+  "repositories": {
+    "drupal": {
+      "type": "composer",
+      "url": "https://packages.drupal.org/8"
     }
+  }
 }
