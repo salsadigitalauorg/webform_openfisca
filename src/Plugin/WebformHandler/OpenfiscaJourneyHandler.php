@@ -117,14 +117,9 @@ class OpenfiscaJourneyHandler extends WebformHandlerBase {
 
     // Period.
     $period_query = \Drupal::request()->query->get('period');
-    if (isset($period_query)) {
-      $period = $period_query;
-      $query_append['period'] = $period;
-      $query_append['change'] = 1;
-      unset($fisca_field_mappings['period']);
-    }
-    elseif ((isset($fisca_field_mappings['period'])) && (isset($data[$fisca_field_mappings['period']]))) {
-      $period = $data[$fisca_field_mappings['period']];
+
+    if (isset($period_query) || (isset($fisca_field_mappings['period']) && isset($data[$fisca_field_mappings['period']]))) {
+      $period = $period_query ?? $data[$fisca_field_mappings['period']];
       $query_append['period'] = $period;
       $query_append['change'] = 1;
       unset($fisca_field_mappings['period']);
