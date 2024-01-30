@@ -2,15 +2,13 @@
 
 /**
  * @file
- * Provides a form element to collect valid location information using Google Maps API's
- * Geocoding and Places Autocomplete.
+ * Hooks implemented by the webform_openfisca module.
  */
 
-use Drupal\Core\Asset\AttachedAssetsInterface;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Url;
 use Drupal\Core\Render\BubbleableMetadata;
 use Drupal\Core\Render\Markup;
+use Drupal\Core\Routing\RouteMatchInterface;
 
 /**
  * Implements hook_webform_admin_third_party_settings_form_alter().
@@ -25,6 +23,7 @@ function webform_openfisca_webform_admin_third_party_settings_form_alter(&$form,
   $default_fisca_return_key = $third_party_settings_manager->getThirdPartySetting('webform_openfisca', 'fisca_return_key');
   $default_fisca_mappings = $third_party_settings_manager->getThirdPartySetting('webform_openfisca', 'fisca_field_mappings');
   $fisca_variables = $third_party_settings_manager->getThirdPartySetting('webform_openfisca', 'fisca_variables');
+  $fisca_entity_roles = $third_party_settings_manager->getThirdPartySetting('webform_openfisca', 'fisca_entity_roles');
 
   $form['third_party_settings']['webform_openfisca'] = [
     '#type' => 'details',
@@ -34,7 +33,7 @@ function webform_openfisca_webform_admin_third_party_settings_form_alter(&$form,
   $form['third_party_settings']['webform_openfisca']['fisca_enabled'] = [
     '#type' => 'checkbox',
     '#title' => t('Enable OpenFisca RaC integration'),
-    '#description' => t(''),
+    '#description' => '',
     '#default_value' => $default_fisca_enabled,
   ];
   $form['third_party_settings']['webform_openfisca']['fisca_api_endpoint'] = [
@@ -60,6 +59,12 @@ function webform_openfisca_webform_admin_third_party_settings_form_alter(&$form,
     '#title' => t('OpenFisca Variables'),
     '#description' => t('Specify the variables from OpenFisca API'),
     '#default_value' => $fisca_variables,
+  ];
+  $form['third_party_settings']['webform_openfisca']['fisca_entity_roles'] = [
+    '#type' => 'textarea',
+    '#title' => t('OpenFisca Field Entity Roles'),
+    '#description' => t('Specify the field entity roles for OpenFisca API'),
+    '#default_value' => $fisca_entity_roles,
   ];
 }
 
@@ -76,6 +81,7 @@ function webform_openfisca_webform_third_party_settings_form_alter(&$form, FormS
   $default_fisca_return_key = $third_party_settings_manager->getThirdPartySetting('webform_openfisca', 'fisca_return_key') ?: [];
   $default_fisca_mappings = $third_party_settings_manager->getThirdPartySetting('webform_openfisca', 'fisca_field_mappings') ?: [];
   $fisca_variables = $third_party_settings_manager->getThirdPartySetting('webform_openfisca', 'fisca_variables') ?: [];
+  $fisca_entity_roles = $third_party_settings_manager->getThirdPartySetting('webform_openfisca', 'fisca_entity_roles') ?: [];
 
   /** @var \Drupal\webform\WebformInterface $entity */
   if ($entity = $form_state->getFormObject()->getEntity()) {
@@ -84,6 +90,7 @@ function webform_openfisca_webform_third_party_settings_form_alter(&$form, FormS
     $default_fisca_return_key = $entity->getThirdPartySetting('webform_openfisca', 'fisca_return_key') ?? $default_fisca_return_key;
     $default_fisca_mappings = $entity->getThirdPartySetting('webform_openfisca', 'fisca_field_mappings') ?? $default_fisca_mappings;
     $fisca_variables = $entity->getThirdPartySetting('webform_openfisca', 'fisca_variables') ?? $fisca_variables;
+    $fisca_entity_roles = $entity->getThirdPartySetting('webform_openfisca', 'fisca_entity_roles') ?? $fisca_entity_roles;
   }
 
   $form['third_party_settings']['webform_openfisca'] = [
@@ -94,7 +101,7 @@ function webform_openfisca_webform_third_party_settings_form_alter(&$form, FormS
   $form['third_party_settings']['webform_openfisca']['fisca_enabled'] = [
     '#type' => 'checkbox',
     '#title' => t('Enable OpenFisca RaC integration'),
-    '#description' => t(''),
+    '#description' => '',
     '#default_value' => $default_fisca_enabled,
   ];
   $form['third_party_settings']['webform_openfisca']['fisca_api_endpoint'] = [
@@ -121,9 +128,12 @@ function webform_openfisca_webform_third_party_settings_form_alter(&$form, FormS
     '#description' => t('Specify the variables from OpenFisca API'),
     '#default_value' => $fisca_variables,
   ];
-
-  // @todo Should be a submit handler.
-  $form['#validate'][] = '_webform_openfisca_form_submit';
+  $form['third_party_settings']['webform_openfisca']['fisca_entity_roles'] = [
+    '#type' => 'textarea',
+    '#title' => t('OpenFisca Field Entity Roles'),
+    '#description' => t('Specify the field entity roles for OpenFisca API'),
+    '#default_value' => $fisca_entity_roles,
+  ];
 }
 
 /**
@@ -140,20 +150,74 @@ function _webform_openfisca_form_element_submit(array &$form, FormStateInterface
   $open_fisca_client = \Drupal::service('webform_openfisca.open_fisca_connector_service');
 
   if ($entity = $form_state->getFormObject()->getWebform()) {
+    // Get OpenFisca settings.
+    $fisca_field_mappings = json_decode($entity->getThirdPartySetting('webform_openfisca', 'fisca_field_mappings'), TRUE) ?? [];
+    $fisca_variables = json_decode($entity->getThirdPartySetting('webform_openfisca', 'fisca_variables'), TRUE) ?? [];
+    $fisca_entity_roles = json_decode($entity->getThirdPartySetting('webform_openfisca', 'fisca_entity_roles'), TRUE) ?? [];
+    $api_endpoint = $entity->getThirdPartySetting('webform_openfisca', 'fisca_api_endpoint') ?? '';
 
+    // Get form values.
     $key = $form_state->getValue('key');
     $fisca_machine_name = $form_state->getValue('fisca_machine_name');
-    $field_mappings = json_decode($entity->getThirdPartySetting('webform_openfisca', 'fisca_field_mappings'), TRUE) ?? [];
-    $field_mappings[$key] = $fisca_machine_name;
+    $fisca_entity_key = $form_state->getValue('fisca_entity_key');
+    $fisca_entity_role = $form_state->getValue('fisca_entity_role');
+    $fisca_entity_role_array = $form_state->getValue('fisca_entity_role_array');
 
-    $entity->setThirdPartySetting('webform_openfisca', 'fisca_field_mappings', json_encode($field_mappings));
+    if (!in_array($fisca_machine_name, ['period', '_nil', 'name_key'])) {
+      // Get OpenFisca Entities.
+      $fisca_entities = $open_fisca_client->openFiscaGetEntities($api_endpoint);
+      // Get OpenFisca variable.
+      $fisca_variable = $open_fisca_client->openFiscaGetVariable($api_endpoint, $fisca_machine_name);
+      // Get OpenFisca Entity from variable.
+      $fisca_entity = $fisca_entities[$fisca_variable['entity']];
 
-    $api_endpoint = $entity->getThirdPartySetting('webform_openfisca', 'fisca_api_endpoint') ?? '';
-    $fisca_variable = $open_fisca_client->openFiscaGetVariable($api_endpoint, $fisca_machine_name);
-    $fisca_variables = json_decode($entity->getThirdPartySetting('webform_openfisca', 'fisca_variables'), TRUE) ?? [];
-    $fisca_variables[$fisca_machine_name] = $fisca_variable;
+      // Create field mapping in format
+      // variable_entity.entity_key.variable_name eg. persons.personA.age.
+      $fisca_field_mapping = implode('.', [
+        $fisca_entity['plural'],
+        $fisca_entity_key,
+        $fisca_machine_name,
+      ]);
 
-    $entity->setThirdPartySetting('webform_openfisca', 'fisca_variables', json_encode($fisca_variables));
+      // Add/Update OpenFisca field mappings.
+      $fisca_field_mappings[$key] = $fisca_field_mapping;
+      // Add/Update OpenFisca variable.
+      $fisca_variables[$fisca_machine_name] = $fisca_variable;
+
+      if (!empty($fisca_entity_role)) {
+        // Add/Update OpenFisca entity roles
+        // Get OpenFisca entity role and save as
+        // object in format {"role": "children", is_array; true}.
+        $fisca_entity_roles[$key]['role'] = $fisca_entity_role;
+        $fisca_entity_roles[$key]['is_array'] = $fisca_entity_role_array;
+      }
+      elseif (isset($fisca_entity_roles[$key])) {
+        // Remove any entity role.
+        unset($fisca_entity_roles[$key]);
+      }
+    }
+    else {
+      // Remove the field_mapping for this key.
+      if (isset($fisca_field_mappings[$key])) {
+        $fisca_field_mapping = explode('.', $fisca_field_mappings[$key]);
+        // Fisca variable is at the end eg.eg. persons.personA.age.
+        $fisca_variable = array_pop($fisca_field_mapping);
+        unset($fisca_field_mappings[$key]);
+        // Remove the fisca_variables for this key.
+        if (isset($fisca_variables[$fisca_variable])) {
+          unset($fisca_variables[$fisca_variable]);
+        }
+      }
+      // Remove any entity role.
+      if (isset($fisca_entity_roles[$key])) {
+        unset($fisca_entity_roles[$key]);
+      }
+    }
+
+    // Save OpenFisca settings.
+    $entity->setThirdPartySetting('webform_openfisca', 'fisca_field_mappings', json_encode($fisca_field_mappings, JSON_PRETTY_PRINT));
+    $entity->setThirdPartySetting('webform_openfisca', 'fisca_variables', json_encode($fisca_variables, JSON_PRETTY_PRINT));
+    $entity->setThirdPartySetting('webform_openfisca', 'fisca_entity_roles', json_encode($fisca_entity_roles, JSON_PRETTY_PRINT));
 
     $entity->save();
   }
@@ -172,6 +236,7 @@ function webform_openfisca_form_alter(&$form, FormStateInterface $form_state, $f
       $enabled = $entity->getThirdPartySetting('webform_openfisca', 'fisca_enabled') ?? FALSE;
       $api_endpoint = $entity->getThirdPartySetting('webform_openfisca', 'fisca_api_endpoint') ?? '';
       $field_mappings = json_decode($entity->getThirdPartySetting('webform_openfisca', 'fisca_field_mappings'), TRUE) ?? [];
+      $fisca_entity_roles = json_decode($entity->getThirdPartySetting('webform_openfisca', 'fisca_entity_roles'), TRUE) ?? [];
 
       $fObject = $form_state->getFormObject();
       $key = $fObject->getKey();
@@ -184,18 +249,49 @@ function webform_openfisca_form_alter(&$form, FormStateInterface $form_state, $f
         $fisca_vars['_nil'] = '- Exclude from mapping -';
         $fisca_vars['name_key'] = 'Name';
         $fisca_vars['period'] = 'Period';
+        // Echo "<pre>"; print_r($vars); die;.
+        ksort($vars);
         foreach ($vars as $k => $var) {
-          $fisca_vars[$k] = $k . ": " . $var->description;
+          $fisca_vars[$k] = $k . ": " . $var['description'];
         }
       }
 
       if ($enabled) {
+        $field_mapping = $field_mappings[$key];
+        // Field mappings are joined together in the format
+        // variable_entity.entity_key.variable_name
+        // eg. persons.personA.age.
+        $keys = explode('.', $field_mapping);
+        $variable_name = $keys[2] ?? '';
+        $entity_key = $keys[1] ?? '';
+
         $form['fisca_machine_name'] = [
           '#type' => 'select',
           '#options' => $fisca_vars,
           '#title' => t('Linked Fisca variable'),
-          '#prefix' => '<h2>Fisca enabled!</h2><p>Please provide Fisca variable names to correctly link.</p>',
-          '#default_value' => $field_mappings[$key] ?? '',
+          '#prefix' => '<h2>Fisca enabled!</h2><p>Please provide Fisca variable name to correctly link.</p>',
+          '#default_value' => $variable_name,
+        ];
+
+        $form['fisca_entity_key'] = [
+          '#type' => 'textfield',
+          '#title' => t('Fisca entity key'),
+          '#description' => '<p>Please provide Fisca entity key to group Fisca variables eg. personA.age, personB.birth_day</p>',
+          '#default_value' => $entity_key,
+        ];
+
+        $form['fisca_entity_role'] = [
+          '#type' => 'textfield',
+          '#title' => t('Fisca entity role'),
+          '#description' => '<p>Please provide Fisca entity role for complex group entities and roles eg. families.family.children.</p>',
+          '#default_value' => $fisca_entity_roles[$key]['role'] ?? '',
+        ];
+
+        $form['fisca_entity_role_array'] = [
+          '#type' => 'checkbox',
+          '#title' => t('Fisca entity role array'),
+          '#description' => '<p>Is the Fisca entity role an array eg. children should be an array whereas principal_caregiver is not</p>',
+          '#default_value' => $fisca_entity_roles[$key]['is_array'] ?? '',
         ];
 
         $form['#submit'][] = '_webform_openfisca_form_element_submit';
@@ -205,288 +301,136 @@ function webform_openfisca_form_alter(&$form, FormStateInterface $form_state, $f
 }
 
 /**
- * Implements hook_token_info()
- *
- * Suchi: Generalise this maybe? Use a list of all variables and tokenise them like we are doing parameters?
+ * Helper to load all enabled fisca endpoints.
+ */
+function _webform_openfisca_get_all_endpoints() {
+  $endpoints = [];
+  // Get the webform storage service.
+  $webformStorage = \Drupal::entityTypeManager()->getStorage('webform');
+
+  // Load all webforms.
+  $webforms = $webformStorage->loadMultiple();
+
+  // Loop through each webform.
+  foreach ($webforms as $webform) {
+    // Check if the webform has the 'openfisca' enabled.
+    $fiscaEnabled = $webform->getThirdPartySetting('webform_openfisca', 'fisca_enabled', FALSE);
+
+    // Check if the 'fisca_api_endpoint' is not empty.
+    $fiscaApiEndpoint = $webform->getThirdPartySetting('webform_openfisca', 'fisca_api_endpoint', '');
+
+    if ($fiscaEnabled && !empty($fiscaApiEndpoint)) {
+      $endpoints[] = $fiscaApiEndpoint;
+    }
+  }
+  return $endpoints;
+}
+
+/**
+ * Implements hook_token_info().
  */
 function webform_openfisca_token_info() {
   $open_fisca_client = \Drupal::service('webform_openfisca.open_fisca_connector_service');
 
-  $info['tokens']['site']['booking_link'] = [
-    'name' => t('Booking link'),
-    'description' => t('Booking link'),
-  ];
-  $info['tokens']['site']['health_link'] = [
-    'name' => t('Link to the health department website.'),
-    'description' => t('Link to the health department website'),
-  ];
-  $info['tokens']['site']['num_next_dose'] = [
-    'name' => t('Number of the next dose'),
-    'description' => t('Number of the next dose'),
-  ];
-  // covid_vaccination_doses_recommendation_up_to_date.
-  $info['tokens']['site']['covid_vaccination_doses_recommendation_up_to_date'] = [
-    'name' => t('Recommended number of doses - update'),
-    'description' => t('Recommended number of doses - extracted from URL query string'),
-  ];
-  // covid_vaccination_age_eligibility.
-  $info['tokens']['site']['covid_vaccination_age_eligibility'] = [
-    'name' => t('Age eligibility for COVID vaccination'),
-    'description' => t('Age eligibility for COVID vaccination - extracted from URL query string'),
-  ];
-  // covid_vaccination_eligibility.
-  $info['tokens']['site']['covid_vaccination_eligibility'] = [
-    'name' => t('Eligibility for COVID vaccination'),
-    'description' => t('Eligibility for COVID vaccination - extracted from URL query string'),
-  ];
-  // covid_vaccination_up_to_date.
-  $info['tokens']['site']['covid_vaccination_up_to_date'] = [
-    'name' => t('Is the vaccination uptodate'),
-    'description' => t('Is the vaccination uptodate - extracted from URL query string'),
-  ];
-  // covid_vaccination_work_recommanded_doses.
-  $info['tokens']['site']['covid_vaccination_work_recommanded_doses'] = [
-    'name' => t('Recommended doses for work'),
-    'description' => t('Recommended doses for work - extracted from URL query string'),
-  ];
-  // covid_vaccination_recommended_vaccines.
-  $info['tokens']['site']['covid_vaccination_recommended_vaccines'] = [
-    'name' => t('COVID vaccination recommended primary vaccines for your age'),
-    'description' => t('COVID vaccination recommended primary vaccines for your age - extracted from URL query string'),
-  ];
-  // covid_vaccination_approved_vaccines.
-  $info['tokens']['site']['covid_vaccination_approved_vaccines'] = [
-    'name' => t('COVID vaccination recommended booster vaccines for your age'),
-    'description' => t('COVID vaccination recommended booster vaccines for your age - extracted from URL query string'),
-  ];
-  // Change.
-  $info['tokens']['site']['change'] = [
-    'name' => t('Is this a change management workflow?'),
-  ];
+  $endpoints = _webform_openfisca_get_all_endpoints();
 
-  // Get all parameters.
-  $config = \Drupal::configFactory()->get('webform_openfisca.settings');
-  $api_endpoint = $config->get('webform_openfisca.api_endpoint');
+  if (!empty($endpoints)) {
+    foreach ($endpoints as $api_endpoint) {
+      // Get all parameters.
+      $parameters = $open_fisca_client->OpenfiscaGetParameters($api_endpoint);
+      foreach ($parameters as $key => $parameter) {
+        // $parameter1 = str_replace(".", "/", $key);
+        $info['tokens']['webform_openfisca'][$key] = [
+          'name' => $parameter['description'],
+          'description' => $parameter['description'],
+        ];
+      }
 
-  $parameters = $open_fisca_client->OpenfiscaGetParameters($api_endpoint);
-  foreach ($parameters as $key => $parameter) {
-    $parameter1 = str_replace(".", "/", $key);
-    $info['tokens']['site'][$key] = [
-      'name' => $parameter['description'],
-      'description' => $parameter['description'],
-    ];
+      // Get all variables.
+      $variables = $open_fisca_client->openFiscaGetVariables($api_endpoint);
+      foreach ($variables as $key => $variable) {
+        $info['tokens']['webform_openfisca'][$key] = [
+          'name' => $variable['description'],
+          'description' => $variable['description'],
+        ];
+      }
+    }
   }
-
-  // Get all variables.
-  $config = \Drupal::configFactory()->get('webform_openfisca.settings');
-  $api_endpoint = $config->get('webform_openfisca.api_endpoint');
-
-  $variables = $open_fisca_client->openFiscaGetVariables($api_endpoint);
-  foreach ($variables as $key => $variable) {
-    $info['tokens']['site'][$key] = [
-      'name' => $variable['description'],
-      'description' => $variable['description'],
-    ];
-  }
+  $info['types']['webform_openfisca'] = [
+    'name' => t('Webform openfisca'),
+    'description' => t('Tokens related to webform openfisca.'),
+    'needs-data' => 'webform_openfisca',
+  ];
 
   return $info;
 }
 
 /**
- * Implements hook_tokens()
- * Suchi: Generalise this maybe? Use a list of all variables and tokenise them like we are doing parameters?
+ * Implements hook_tokens().
  */
 function webform_openfisca_tokens($type, $tokens, array $data, array $options, BubbleableMetadata $bubbleable_metadata) {
   $open_fisca_client = \Drupal::service('webform_openfisca.open_fisca_connector_service');
 
   $replacements = [];
-  foreach ($tokens as $name => $original) {
-    $config = \Drupal::configFactory()->get('webform_openfisca.settings');
-    switch ($name) {
-      case 'booking_link':
-        $url = $config->get('webform_openfisca.booking_link');
-        $text = $config->get('webform_openfisca.booking_text');
-        $indigenous = \Drupal::request()->query->get('indigenous');
 
-        if ($indigenous == "yes") {
-          $url .= "?tag=indigenous";
-        }
-        $replacement = "<a href='$url'>$text</a>";
-        $replacements[$original] = Markup::create((string) $replacement);
-        break;
+  $endpoints = _webform_openfisca_get_all_endpoints();
+  if (!empty($endpoints)) {
+    foreach ($endpoints as $api_endpoint) {
+      foreach ($tokens as $name => $original) {
 
-      case 'health_link':
-        $state = \Drupal::request()->query->get('work_location');
-        if (isset($state)) {
-          $text = ucwords(str_replace("_", " ", $state));
-
-          $health_var = $state . "_health_url";
-          $url = $config->get("webform_openfisca.$health_var");
-          $replacement = "<a href='$url'>$text health department website</a>";
-          $replacements[$original] = Markup::create((string) $replacement);
-        }
-        else {
-          $replacements[$original] = '';
-        }
-
-        break;
-
-      case 'covid_vaccination_doses_recommendation_up_to_date':
-        $replacement = "<mark>";
-        $replacement .= \Drupal::request()->query->get('covid_vaccination_doses_recommendation_up_to_date');
-        $replacement .= "</mark>";
-        $replacements[$original] = Markup::create((string) $replacement);
-        break;
-
-      case 'change':
-        $replacements[$original] = "<mark>";
-        $replacements[$original] .= \Drupal::request()->query->get('change');
-        $replacements[$original] .= "</mark>";
-        $replacements[$original] = Markup::create((string) $replacements[$original]);
-        break;
-
-      case 'covid_vaccination_age_eligibility':
-        $replacements[$original] = "<mark>";
-        $replacements[$original] .= \Drupal::request()->query->get('covid_vaccination_age_eligibility');
-        $replacements[$original] .= "</mark>";
-        $replacements[$original] = Markup::create((string) $replacements[$original]);
-        break;
-
-      case 'covid_vaccination_eligibility':
-        $replacements[$original] = "<mark>";
-        $replacements[$original] .= \Drupal::request()->query->get('covid_vaccination_eligibility');
-        $replacements[$original] .= "</mark>";
-        $replacements[$original] = Markup::create((string) $replacements[$original]);
-        break;
-
-      case 'covid_vaccination_up_to_date':
-        $replacements[$original] = "<mark>";
-        $replacements[$original] .= \Drupal::request()->query->get('covid_vaccination_up_to_date');
-        $replacements[$original] .= "</mark>";
-        $replacements[$original] = Markup::create((string) $replacements[$original]);
-        break;
-
-      case 'covid_vaccination_work_recommanded_doses':
-        $replacements[$original] = "<mark>";
-        $replacements[$original] .= \Drupal::request()->query->get('covid_vaccination_work_recommanded_doses');
-        $replacements[$original] .= "</mark>";
-        $replacements[$original] = Markup::create((string) $replacements[$original]);
-        break;
-
-      case 'covid_vaccination_recommended_vaccines':
-        $recommended_primary = \Drupal::request()->query->get('covid_vaccination_recommended_vaccines');
-        if (isset($recommended_primary)) {
-          $replacement = "<ul><li><mark>";
-          if (strpos($recommended_primary, ",")) {
-            $replacement .= implode("</mark></li><li><mark>", (explode(",", $recommended_primary)));
-          }
-          else {
-            $replacement .= $recommended_primary;
-          }
-          $replacement .= "</mark></li></ul>";
-          $replacements[$original] = Markup::create((string) $replacement);
-        }
-        break;
-
-      case 'covid_vaccination_approved_vaccines':
-        // TBC - Hardcoding logic here - not recommended.
-        $age = \Drupal::request()->query->get('age');
-        $min_age = $open_fisca_client->openFiscaGetApiValues('covid_vaccinations.min_age_adult_approved_vaccines');
-
-        if ($age < $min_age) {
-          $replacements[$original] = '';
-        }
-        else {
-          $replacement = "Given you’re <mark>$min_age</mark> years old or over you can also have these approved vaccines:";
-          $links = [
-            'Novavax' => "<a href='https://www.health.gov.au/initiatives-and-programs/covid-19-vaccines/approved-vaccines/novavax'>more information about Novavax</a>",
-            'AstraZeneca' => "<a href='https://www.health.gov.au/initiatives-and-programs/covid-19-vaccines/approved-vaccines/astrazeneca'>more information about AstraZeneca</a>",
-          ];
-          $recommended_booster = \Drupal::request()->query->get('covid_vaccination_approved_vaccines');
-          if (isset($recommended_booster)) {
-            $replacement .= "<ul>";
-            if (strpos($recommended_booster, ",")) {
-              $approved_vaccines = explode(",", $recommended_booster);
-              foreach ($approved_vaccines as $approved_vaccine) {
-                if (isset($links[$approved_vaccine])) {
-                  $replacement .= "<li><mark>" . $approved_vaccine . "</mark> - " . $links[$approved_vaccine] . "</li>";
-                }
-                else {
-                  $replacement .= "<li><mark>" . $approved_vaccine . "</mark></li>";
-                }
+        // Get all parameters.
+        $parameters = array_keys($open_fisca_client->OpenfiscaGetParameters($api_endpoint));
+        foreach ($parameters as $parameter) {
+          $formated_parameter = str_replace(".", "/", $parameter);
+          $replacement = FALSE;
+          if ($name == $parameter) {
+            $parameter_endpoint_url = $api_endpoint . '/parameter/' . $formated_parameter;
+            $replacement_details = $open_fisca_client->openFiscaGetAttributeDetails($parameter_endpoint_url);
+            if (!empty($replacement_details)) {
+              $period = \Drupal::request()->query->get('period');
+              if (isset($period) && isset($replacement_details->values->$period)) {
+                $replacement = $replacement_details->values->$period;
               }
+              if (!$replacement) {
+                $replacement = reset($replacement_details->values);
+              }
+              $replacements[$original] = Markup::create((string) $replacement);
             }
-            else {
-              if (isset($links[$recommended_booster])) {
-                $replacement .= "<li><mark>" . $recommended_booster . "</mark> - " . $links[$recommended_booster] . "</li>";
-              }
-              else {
-                $replacement .= "<li><mark>" . $recommended_booster . "</mark></li>";
-              }
-            }
-            $replacement .= "</ul>";
+          }
+        }
+
+        // Get all variables.
+        $variables = $open_fisca_client->openFiscaGetVariables($api_endpoint);
+        foreach ($variables as $variable) {
+          if ($name == $variable) {
+            $replacement = \Drupal::request()->query->get($variable);
             $replacements[$original] = Markup::create((string) $replacement);
           }
         }
-        break;
 
-      case 'num_next_dose':
-        $vaccine_doses = \Drupal::request()->query->get('vaccine_doses');
-        $num_next_dose = $vaccine_doses + 1;
-
-        $replacements[$original] = "<mark>";
-        $replacements[$original] .= ordinal($num_next_dose);
-        $replacements[$original] .= "</mark>";
-        $replacements[$original] = Markup::create((string) $replacements[$original]);
-        break;
-    }
-
-    // Get all parameters.
-    $config = \Drupal::configFactory()->get('webform_openfisca.settings');
-    $api_endpoint = $config->get('webform_openfisca.api_endpoint');
-
-    $parameters = array_keys($open_fisca_client->OpenfiscaGetParameters($api_endpoint));
-    foreach ($parameters as $parameter) {
-      $parameter1 = str_replace(".", "/", $parameter);
-      if ($name == $parameter) {
-        $replacement = "<mark>";
-        $replacement .= getAPIValues($parameter1);
-        $replacement .= "</mark>";
-        $replacements[$original] = Markup::create((string) $replacement);
       }
     }
-
-    // Get all variables.
-    $config = \Drupal::configFactory()->get('webform_openfisca.settings');
-    $api_endpoint = $config->get('webform_openfisca.api_endpoint');
-
-    $variables = $open_fisca_client->openFiscaGetVariables($api_endpoint);
-    foreach ($variables as $variable) {
-      if ($name == $variable) {
-        $replacement = "<mark>";
-        $replacement .= \Drupal::request()->query->get($variable);
-        $replacement .= "</mark>";
-        $replacements[$original] = Markup::create((string) $replacement);
-      }
-    }
-
   }
   return $replacements;
 }
 
 /**
- * Helper function.
- *
- * @param $number
- *
- * @return string
+ * Implements hook_help().
  */
-function ordinal($number) {
-  $ends = ['th', 'st', 'nd', 'rd', 'th', 'th', 'th', 'th', 'th', 'th'];
-  if ((($number % 100) >= 11) && (($number % 100) <= 13)) {
-    return $number . 'th';
-  }
-  else {
-    return $number . $ends[$number % 10];
+function webform_openfisca_help($route_name, RouteMatchInterface $route_match) {
+  if ($route_name == 'help.page.webform_openfisca') {
+    $token_tree = \Drupal::service('token.tree_builder')->buildRenderable(['webform_openfisca'], [
+      'click_insert' => FALSE,
+      'show_restricted' => TRUE,
+      'show_nested' => FALSE,
+      'global_types' => FALSE,
+    ]);
+    $output = '<h3>' . t('About') . '</h3>';
+    $output .= '<p>' . t('The <a href=":project">Webform OpenFisca Integration</a> module integrates Drupal Webform functionality with the OpenFisca API, allowing for seamless communication and calculation based on OpenFisca rules.', [':project' => 'https://www.drupal.org/project/webform_openfisca']) . '</p>';
+    $output .= '<dl>';
+    $output .= '<dt>' . t('The list of the currently available tokens provided by this module are shown below.') . '</dt>';
+    $output .= '<dd>' . \Drupal::service('renderer')->render($token_tree) . '</dd>';
+    $output .= '</dl>';
+    return $output;
   }
 }
