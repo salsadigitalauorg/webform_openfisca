@@ -2,94 +2,99 @@
 
 namespace Drupal\Tests\webform_openfisca\Functional;
 
-use Drupal\Tests\BrowserTestBase;
+use Drupal\field\Entity\FieldConfig;
+use Drupal\field\Entity\FieldStorageConfig;
+use Drupal\Tests\webform\Functional\WebformBrowserTestBase;
+use Drupal\webform\Entity\Webform;
+use Drupal\webform\Utility\WebformElementHelper;
+use Drupal\webform\WebformSubmissionForm;
+use Drupal\webform\WebformSubmissionInterface;
 
 /**
- * Tests the usage and configuration of the Webform OpenFisca Integration module.
- *
- * @group webform_openfisca
+ * Test case for checking fields in content types and paragraph types.
  */
-class WebformOpenFiscaFunctionalTest extends BrowserTestBase {
+class WebformOpenFiscaFunctionalTest extends WebformBrowserTestBase {
 
   /**
    * {@inheritdoc}
    */
-  protected static $modules = ['webform', 'webform_openfisca'];
+  protected static $modules = [
+    'webform_openfisca', 
+    'paragraphs', 
+    'webform', 
+    'token', 
+    'node', 
+    'path', 
+    'menu_ui', 
+    'text',
+    'field_ui'
+  ];
 
   /**
-   * Tests the usage and configuration of the module.
+   * {@inheritdoc}
    */
-  public function testUsageAndConfiguration() {
-    // Create a webform with no fields.
-    $webform = $this->createWebform('test_module', 'Test Module');
+  protected $defaultTheme = 'stark';
 
-    // Navigate to the Webform settings page.
-    $this->drupalLogin($this->drupalCreateUser(['administer site configuration']));
-    $this->drupalGet('/admin/structure/webform/manage/' . $webform->id() . '/settings');
+  /**
+   * An administrative user to configure the test environment.
+   *
+   * @var \Drupal\user\Entity\User|false
+   */
+  protected $adminUser;
 
-    // Verify that the settings page loads successfully.
-    $this->assertSession()->statusCodeEquals(200);
+  /**
+   * {@inheritdoc}
+   */
+  public function setUp(): void {
+    parent::setUp();
 
-    // Verify that the OpenFisca configuration section exists.
-    $this->assertSession()->elementExists('css', '#edit-third-party-settings-webform-openfisca');
-
-    // Verify the existence of specific form elements within the OpenFisca configuration section.
-    $this->assertSession()->fieldExists('third_party_settings[webform_openfisca][fisca_enabled]');
-    $this->assertSession()->fieldExists('third_party_settings[webform_openfisca][fisca_api_endpoint]');
-    $this->assertSession()->fieldExists('third_party_settings[webform_openfisca][fisca_return_key]');
-    $this->assertSession()->fieldExists('third_party_settings[webform_openfisca][fisca_field_mappings]');
-    $this->assertSession()->fieldExists('third_party_settings[webform_openfisca][fisca_variables]');
-    $this->assertSession()->fieldExists('third_party_settings[webform_openfisca][fisca_entity_roles]');
-
-    // Fill the "OpenFisca API endpoint" field with the correct value.
-    $edit = [
-        'third_party_settings[webform_openfisca][fisca_api_endpoint]' => 'https://api.fr.openfisca.org/latest',
-        'third_party_settings[webform_openfisca][fisca_enabled]' => TRUE,
-    ];
-
-    $this->submitForm($edit, 'Save configuration');
-
-    // Check if "Enable OpenFisca RaC integration" is checked after saving the settings.
-    $this->assertSession()->checkboxChecked('third_party_settings[webform_openfisca][fisca_enabled]');
-
-    // Navigate to the Webform handlers page.
-    $this->drupalGet('/admin/structure/webform/manage/' . $webform->id() . '/handlers');
-
-    // Verify that the handlers page loads successfully.
-    $this->assertSession()->statusCodeEquals(200);
-
-    // Add the "Openfisca Journey handler" to the webform handlers.
-    $this->clickLink('Add handler');
-    $this->assertSession()->pageTextContains('Openfisca Journey handler');
-    $this->assertSession()->elementExists('css', 'input[name="handler_config[plugin][enabled]"][value="1"]');
-
-    // Enable the "Openfisca Journey handler" handler.
-    $edit = [
-    'handler_config[plugin][enabled]' => TRUE,
-    ];
-    $this->submitForm($edit, 'Save');
-
-    // TODO
+    // Login root user.
+    $this->drupalLogin($this->rootUser);
   }
 
   /**
-   * Helper function to create a webform.
-   *
-   * @param string $id
-   *   The machine name of the webform.
-   * @param string $label
-   *   The label of the webform.
-   *
-   * @return \Drupal\webform\Entity\Webform
-   *   The created webform entity.
+   * Tests the webform (entity reference) field.
    */
-  protected function createWebform($id, $label) {
-    $webform = $this->container->get('entity_type.manager')->getStorage('webform')->create([
-      'id' => $id,
-      'label' => $label,
-    ]);
+  public function testWebformField() {
+    $assert_session = $this->assertSession();
+
+    $this->drupalLogin($this->rootUser);
+
+    /* ********************************************************************** */
+
+    // Check that webform select menu is visible.
+    $this->drupalGet('/node/add/rac');
+    $this->assertNoCssSelect('#edit-field-webform-0-target-id optgroup');
+    $assert_session->optionExists('edit-field-webform-0-target-id', 'contact');
+
+    // Add category to 'contact' webform.
+    /** @var \Drupal\webform\WebformInterface $webform */
+    $webform = Webform::load('contact');
+    $webform->set('categories', ['{Some category}']);
     $webform->save();
-    return $webform;
+
+    // Check that webform select menu included optgroup.
+    $this->drupalGet('/node/add/rac');
+    $this->assertCssSelect('#edit-field-webform-0-target-id optgroup[label="{Some category}"]');
+
+    // Create a second webform.
+    $webform_2 = $this->createWebform();
+
+    // Check that webform 2 is included in the select menu.
+    $this->drupalGet('/node/add/rac');
+    $assert_session->optionExists('edit-field-webform-0-target-id', 'contact');
+    $assert_session->optionExists('edit-field-webform-0-target-id', $webform_2->id());
+
+    // Limit the webform select menu to only the contact form.
+    $this->drupalGet('/admin/structure/types/manage/rac/form-display');
+    $this->drupalGet('/admin/structure/types/manage/rac/form-display');
+    $this->submitForm([], 'field_webform_settings_edit');
+    $this->submitForm(['fields[field_webform][settings_edit_form][settings][webforms][]' => ['contact']], 'Save');
+
+    // Check that webform 2 is NOT included in the select menu.
+    $this->drupalGet('/node/add/rac');
+    $assert_session->optionExists('edit-field-webform-0-target-id', 'contact');
+    $assert_session->optionNotExists('edit-field-webform-0-target-id', $webform_2->id());
   }
 
 }

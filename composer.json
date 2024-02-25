@@ -22,5 +22,8 @@
       "type": "composer",
       "url": "https://packages.drupal.org/8"
     }
+  },
+  "require-dev": {
+    "weitzman/drupal-test-traits": "^2.2"
   }
 }

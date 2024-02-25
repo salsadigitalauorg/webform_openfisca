@@ -1,0 +1,7 @@
+name: 'Webform OpenFisca test'
+type: module
+description: 'Support module for webform OpenFisca testing.'
+package: 'Webform OpenFisca Testing'
+core_version_requirement: ^8.8 || ^9 || ^10
+dependencies:
+  - 'webform_openfisca:webform_openfisca'
