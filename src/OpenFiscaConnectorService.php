@@ -5,6 +5,7 @@ namespace Drupal\webform_openfisca;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\RequestException;
+use Psr\Log\LoggerInterface;
 
 /**
  * Class OpenFiscaConnector.
@@ -26,16 +27,26 @@ class OpenFiscaConnectorService {
   protected $configFactory;
 
   /**
+   * A logger instance.
+   *
+   * @var \Psr\Log\LoggerInterface
+   */
+  protected $logger;
+
+  /**
    * Constructor for MymoduleServiceExample.
    *
    * @param \GuzzleHttp\ClientInterface $http_client
    *   A Guzzle client object.
    * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
    *   The factory for configuration objects.
+   * @param \Psr\Log\LoggerInterface $logger
+   *   A logger instance.
    */
-  public function __construct(ClientInterface $http_client, ConfigFactoryInterface $configFactory) {
+  public function __construct(ClientInterface $http_client, ConfigFactoryInterface $configFactory, LoggerInterface $logger) {
     $this->httpClient = $http_client;
     $this->configFactory = $configFactory;
+    $this->logger = $logger;
   }
 
   /**
@@ -48,7 +59,7 @@ class OpenFiscaConnectorService {
     }
     catch (RequestException $e) {
       // Handle exception.
-      \Drupal::logger('webform_openfisca')->error('Error posting to OpenFisca API: ' . $e->getMessage());
+      $this->logger->error('Error posting to OpenFisca API: ' . $e->getMessage());
       return NULL;
     }
   }
@@ -63,7 +74,7 @@ class OpenFiscaConnectorService {
     }
     catch (RequestException $e) {
       // Handle exception.
-      \Drupal::logger('webform_openfisca')->error('Error fetching OpenFisca variables: ' . $e->getMessage());
+      $this->logger->error('Error fetching OpenFisca variables: ' . $e->getMessage());
       return NULL;
     }
   }
@@ -78,7 +89,7 @@ class OpenFiscaConnectorService {
     }
     catch (RequestException $e) {
       // Handle exception.
-      \Drupal::logger('webform_openfisca')->error('Error fetching OpenFisca parameters: ' . $e->getMessage());
+      $this->logger->error('Error fetching OpenFisca parameters: ' . $e->getMessage());
       return NULL;
     }
   }
@@ -93,7 +104,7 @@ class OpenFiscaConnectorService {
     }
     catch (RequestException $e) {
       // Handle exception.
-      \Drupal::logger('webform_openfisca')->error('Error fetching OpenFisca variable: ' . $e->getMessage());
+      $this->logger->error('Error fetching OpenFisca variable: ' . $e->getMessage());
       return NULL;
     }
   }
@@ -108,7 +119,7 @@ class OpenFiscaConnectorService {
     }
     catch (RequestException $e) {
       // Handle exception.
-      \Drupal::logger('webform_openfisca')->error('Error fetching OpenFisca parameter: ' . $e->getMessage());
+      $this->logger->error('Error fetching OpenFisca parameter: ' . $e->getMessage());
       return NULL;
     }
   }
@@ -123,7 +134,7 @@ class OpenFiscaConnectorService {
     }
     catch (RequestException $e) {
       // Handle exception.
-      \Drupal::logger('webform_openfisca')->error('Error fetching OpenFisca attribute details: ' . $e->getMessage());
+      $this->logger->error('Error fetching OpenFisca attribute details: ' . $e->getMessage());
       return NULL;
     }
   }
@@ -138,7 +149,7 @@ class OpenFiscaConnectorService {
     }
     catch (RequestException $e) {
       // Handle exception.
-      \Drupal::logger('webform_openfisca')->error('Error fetching OpenFisca entities: ' . $e->getMessage());
+      $this->logger->error('Error fetching OpenFisca entities: ' . $e->getMessage());
       return NULL;
     }
   }

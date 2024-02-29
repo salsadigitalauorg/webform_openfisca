@@ -98,7 +98,7 @@ class OpenfiscaJourneyHandler extends WebformHandlerBase {
     // Extract all submission values as variables.
     $data_keys = array_keys($data);
     foreach ($data_keys as $key) {
-      $$key = $data[$key];
+      $key = $data[$key];
     }
 
     $fisca_field_mappings = $webform_submission->getWebform()->getThirdPartySetting('webform_openfisca', 'fisca_field_mappings');
