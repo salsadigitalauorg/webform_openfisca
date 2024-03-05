@@ -76,7 +76,7 @@ function webform_openfisca_webform_admin_third_party_settings_form_alter(&$form,
 function webform_openfisca_webform_third_party_settings_form_alter(&$form, FormStateInterface $form_state) {
   /** @var \Drupal\webform\WebformThirdPartySettingsManagerInterface $third_party_settings_manager */
   $third_party_settings_manager = \Drupal::service('webform.third_party_settings_manager');
-  $default_fisca_enabled = $third_party_settings_manager->getThirdPartySetting('webform_openfisca', 'fisca_enabled') ?: [];
+  $default_fisca_enabled = $third_party_settings_manager->getThirdPartySetting('webform_openfisca', 'fisca_enabled') ?: FALSE;
   $default_fisca_endpoint = $third_party_settings_manager->getThirdPartySetting('webform_openfisca', 'fisca_api_endpoint') ?: [];
   $default_fisca_return_key = $third_party_settings_manager->getThirdPartySetting('webform_openfisca', 'fisca_return_key') ?: [];
   $default_fisca_mappings = $third_party_settings_manager->getThirdPartySetting('webform_openfisca', 'fisca_field_mappings') ?: [];
@@ -257,40 +257,48 @@ function webform_openfisca_form_alter(&$form, FormStateInterface $form_state, $f
       }
 
       if ($enabled) {
-        $field_mapping = $field_mappings[$key];
-        // Field mappings are joined together in the format
-        // variable_entity.entity_key.variable_name
-        // eg. persons.personA.age.
-        $keys = explode('.', $field_mapping);
-        $variable_name = $keys[2] ?? '';
-        $entity_key = $keys[1] ?? '';
+        if (isset($field_mappings[$key])) {
+          $field_mapping = $field_mappings[$key];
+          // Field mappings are joined together in the format
+          // variable_entity.entity_key.variable_name
+          // eg. persons.personA.age.
+          $keys = explode('.', $field_mapping);
+          $variable_name = $keys[2] ?? '';
+          $entity_key = $keys[1] ?? '';
+        }
 
         $form['fisca_machine_name'] = [
           '#type' => 'select',
           '#options' => $fisca_vars,
           '#title' => t('Linked Fisca variable'),
           '#prefix' => '<h2>Fisca enabled!</h2><p>Please provide Fisca variable name to correctly link.</p>',
-          '#default_value' => $variable_name,
+          '#default_value' => $variable_name ?? '',
         ];
 
         $form['fisca_entity_key'] = [
           '#type' => 'textfield',
           '#title' => t('Fisca entity key'),
-          '#description' => '<p>Please provide Fisca entity key to group Fisca variables eg. personA.age, personB.birth_day</p>',
-          '#default_value' => $entity_key,
+          '#description' => [
+            '#markup' => t('Please provide Fisca entity key to group Fisca variables eg. personA.age, personB.birth_day'),
+          ],
+          '#default_value' => $entity_key ?? '',
         ];
 
         $form['fisca_entity_role'] = [
           '#type' => 'textfield',
           '#title' => t('Fisca entity role'),
-          '#description' => '<p>Please provide Fisca entity role for complex group entities and roles eg. families.family.children.</p>',
+          '#description' => [
+            '#markup' => t('Please provide Fisca entity role for complex group entities and roles eg. families.family.children.'),
+          ],
           '#default_value' => $fisca_entity_roles[$key]['role'] ?? '',
         ];
 
         $form['fisca_entity_role_array'] = [
           '#type' => 'checkbox',
           '#title' => t('Fisca entity role array'),
-          '#description' => '<p>Is the Fisca entity role an array eg. children should be an array whereas principal_caregiver is not</p>',
+          '#description' => [
+            '#markup' => t('Is the Fisca entity role an array eg. children should be an array whereas principal_caregiver is not'),
+          ],
           '#default_value' => $fisca_entity_roles[$key]['is_array'] ?? '',
         ];
 
