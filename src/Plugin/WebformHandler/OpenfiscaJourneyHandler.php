@@ -273,6 +273,14 @@ class OpenfiscaJourneyHandler extends WebformHandlerBase {
       $fisca_fields = array_merge($fisca_fields, $query_append);
     }
 
+    $existing_confirmation_url = $this->getWebform()->getSetting('confirmation_url');
+    if ($existing_confirmation_url) {
+      $parsed_url = parse_url($existing_confirmation_url);
+      if (isset($parsed_url['query'])  && is_array($parsed_url['query'])) {
+        $fisca_fields = array_merge($fisca_fields, $parsed_url['query']);
+      }
+    }
+
     $query = http_build_query($fisca_fields);
     $confirmation_url = $this->findRedirectRules($form_id, $result_values);
     if (!empty($confirmation_url)) {
