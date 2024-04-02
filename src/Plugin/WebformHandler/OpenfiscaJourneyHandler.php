@@ -2,6 +2,7 @@
 
 namespace Drupal\webform_openfisca\Plugin\WebformHandler;
 
+use Drupal\Component\Utility\UrlHelper;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\webform\Plugin\WebformHandlerBase;
 use Drupal\webform\WebformSubmissionInterface;
@@ -275,7 +276,7 @@ class OpenfiscaJourneyHandler extends WebformHandlerBase {
 
     $existing_confirmation_url = $this->getWebform()->getSetting('confirmation_url');
     if ($existing_confirmation_url) {
-      $parsed_url = parse_url($existing_confirmation_url);
+      $parsed_url = UrlHelper::parse($existing_confirmation_url);
       if (isset($parsed_url['query'])  && is_array($parsed_url['query'])) {
         $fisca_fields = array_merge($fisca_fields, $parsed_url['query']);
       }
