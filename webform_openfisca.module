@@ -367,7 +367,7 @@ function webform_openfisca_token_info() {
 
   $info['tokens']['webform_openfisca']['wo_rounded'] = [
     'name' => t('Numbers - rounded and beautified.'),
-    'description' => t('Numbers, rounded and commas added. Example usage: [current-page:wo_rounded:53789.23232]  OR  [current-page:wo_rounded:current-page:query:abc] '),
+    'description' => t('Numbers, rounded and commas added. Example usage: [current-page:wo_rounded:53789.23232] OR [current-page:wo_rounded:current-page:query:abc] '),
     'dynamic' => TRUE,
   ];
 
