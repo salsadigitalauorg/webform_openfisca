@@ -437,10 +437,7 @@ function webform_openfisca_tokens($type, $tokens, array $data, array $options, B
       elseif (is_string($name)) {
         $value = floatval($token->replace("[" . $name . "]"));
       }
-
-
       $replacements[$original] = number_format($value, 2, ".", ",");
-
     }
   }
 
