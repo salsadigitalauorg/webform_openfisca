@@ -2,11 +2,20 @@
 
 namespace Drupal\webform_openfisca\Plugin\WebformHandler;
 
+use Drupal\Component\Serialization\Json;
 use Drupal\Component\Utility\UrlHelper;
+use Drupal\Core\Ajax\AjaxResponse;
+use Drupal\Core\Ajax\InvokeCommand;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\webform\Ajax\WebformSubmissionAjaxResponse;
+use Drupal\webform\Entity\WebformSubmission;
 use Drupal\webform\Plugin\WebformHandlerBase;
+use Drupal\webform\WebformInterface;
+use Drupal\webform\WebformSubmissionForm;
 use Drupal\webform\WebformSubmissionInterface;
+use Drupal\webform_openfisca\OpenFiscaConnectorService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpFoundation\Request;
 
 /**
  * Webform submission debug handler.
@@ -26,33 +35,37 @@ class OpenfiscaJourneyHandler extends WebformHandlerBase {
   /**
    * Format YAML.
    */
-  const FORMAT_YAML = 'yaml';
+  const string FORMAT_YAML = 'yaml';
 
   /**
    * Format JSON.
    */
-  const FORMAT_JSON = 'json';
+  const string FORMAT_JSON = 'json';
 
   /**
-   * The renderer.
-   *
-   * @var \Drupal\Core\Render\RendererInterface
+   * Current request.
    */
-  protected $renderer;
+  protected Request $request;
+
+  /**
+   * OpenFisca Connector service.
+   */
+  protected OpenFiscaConnectorService $openfiscaConnector;
 
   /**
    * {@inheritdoc}
    */
-  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
+  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) : static {
     $instance = parent::create($container, $configuration, $plugin_id, $plugin_definition);
-    $instance->renderer = $container->get('renderer');
+    $instance->request = $container->get('request_stack')->getCurrentRequest();
+    $instance->openfiscaConnector = $container->get('webform_openfisca.open_fisca_connector_service');
     return $instance;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function defaultConfiguration() {
+  public function defaultConfiguration() : array {
     return [
       'format' => 'yaml',
       'submission' => FALSE,
@@ -62,7 +75,7 @@ class OpenfiscaJourneyHandler extends WebformHandlerBase {
   /**
    * {@inheritdoc}
    */
-  public function getSummary() {
+  public function getSummary() : array {
     $settings = $this->getSettings();
     switch ($settings['format']) {
       case static::FORMAT_JSON:
@@ -82,57 +95,100 @@ class OpenfiscaJourneyHandler extends WebformHandlerBase {
   /**
    * {@inheritdoc}
    */
-  public function buildConfigurationForm(array $form, FormStateInterface $form_state) {
+  public function buildConfigurationForm(array $form, FormStateInterface $form_state) : array {
     // @todo Fisca handler configuration.
     return $this->setSettingsParents($form);
   }
 
   /**
+   * Get OpenFisca setting of a webform.
+   *
+   * @param \Drupal\webform\WebformInterface $webform
+   *   The webform.
+   * @param string $key
+   *   The setting.
+   * @param mixed|NULL $default_value
+   *   The default value.
+   * @param bool $json_decode
+   *   Whether to JSON decode the setting.
+   *
+   * @return mixed
+   *   The value of setting.
+   */
+  protected function getWebformOpenFiscaSetting(WebformInterface $webform, string $key, mixed $default_value = NULL, bool $json_decode = TRUE) : mixed {
+    $setting = $webform->getThirdPartySetting('webform_openfisca', $key);
+    return ($json_decode ? Json::decode($setting) : $setting) ?? $default_value;
+  }
+
+  /**
    * {@inheritdoc}
    */
-  public function submitForm(array &$form, FormStateInterface $form_state, WebformSubmissionInterface $webform_submission) {
-    $form_id = $form['#webform_id'];
-    $settings = $this->getSettings();
+  public function submitForm(array &$form, FormStateInterface $form_state, WebformSubmissionInterface $webform_submission) : void {
+    $webform = $webform_submission->getWebform();
+    $query_append = [];
+    $fisca_field_mappings = $this->getWebformOpenFiscaSetting($webform, 'fisca_field_mappings', []);
+    $fisca_return_key = $this->getWebformOpenFiscaSetting($webform, 'fisca_return_key', json_decode: FALSE);
+    $result_keys = explode(',', $fisca_return_key);
+    $payload = $this->prepareOpenfiscaPayload($webform_submission, $query_append, $fisca_field_mappings, $result_keys);
 
+    $fisca_fields = [];
+    $result_values = [];
+    $response = $this->calculateBenefits($payload, $result_keys, $query_append, $fisca_field_mappings, $fisca_fields, $result_values);
+
+    $query = '';
+    $confirmation_url = $this->overrideConfirmationUrl($query_append, $fisca_fields, $result_values, $query);
+
+    // Debug.
+    $this->displayDebug($payload, $response, $result_values, $fisca_fields, $query, $confirmation_url);
+  }
+
+  /**
+   * Prepare the payload for querying Openfisca.
+   *
+   * @param \Drupal\webform\WebformSubmissionInterface $webform_submission
+   *   Webform submission.
+   * @param array $query_append
+   *   Query append.
+   * @param array $fisca_field_mappings
+   *   Openfisca field mappings.
+   * @param array $result_keys
+   *   Openfisca result keys.
+   *
+   * @return array
+   *   The payload.
+   */
+  protected function prepareOpenfiscaPayload(WebformSubmissionInterface $webform_submission, array &$query_append, array &$fisca_field_mappings, array &$result_keys) : array {
+    $settings = $this->getSettings();
     $data = ($settings['submission']) ? $webform_submission->toArray(TRUE) : $webform_submission->getData();
 
     // Extract all submission values as variables.
-    $data_keys = array_keys($data);
-    foreach ($data_keys as $key) {
-      $$key = $data[$key];
-    }
+    extract($data, EXTR_OVERWRITE);
 
-    $fisca_field_mappings = $webform_submission->getWebform()->getThirdPartySetting('webform_openfisca', 'fisca_field_mappings');
-    $fisca_field_mappings = json_decode($fisca_field_mappings, TRUE);
+    $webform = $webform_submission->getWebform();
 
-    $result_key = $webform_submission->getWebform()->getThirdPartySetting('webform_openfisca', 'fisca_return_key');
-    $result_keys = explode(",", $result_key);
+    $fisca_variables = $this->getWebformOpenFiscaSetting($webform, 'fisca_variables', []);
 
-    $fisca_variables = $webform_submission->getWebform()->getThirdPartySetting('webform_openfisca', 'fisca_variables');
-    $fisca_variables = json_decode($fisca_variables, TRUE) ?? [];
-
-    $fisca_entity_roles = $webform_submission->getWebform()->getThirdPartySetting('webform_openfisca', 'fisca_entity_roles');
-    $fisca_entity_roles = json_decode($fisca_entity_roles, TRUE) ?? [];
-    // Prep the person payload.
+    $fisca_entity_roles = $this->getWebformOpenFiscaSetting($webform, 'fisca_entity_roles', []);
+    // Prepare the person payload.
     $payload = [];
 
     // Period.
-    $period_query = \Drupal::request()->query->get('period');
+    $period_query = $this->request->query->get('period');
+    $query_append = [];
 
-    if (isset($period_query) || (isset($fisca_field_mappings['period']) && isset($data[$fisca_field_mappings['period']]))) {
+    if (isset($period_query) || (isset($fisca_field_mappings['period'], $data[$fisca_field_mappings['period']]))) {
       $period = $period_query ?? $data[$fisca_field_mappings['period']];
       $query_append['period'] = $period;
       $query_append['change'] = 1;
-      unset($fisca_field_mappings['period']);
     }
     else {
-      $period = date("Y-m-d");
-      unset($fisca_field_mappings['period']);
+      $period = date('Y-m-d');
     }
+    unset($fisca_field_mappings['period']);
 
     foreach ($fisca_field_mappings as $webform_key => $openfisca_key) {
       // We don't what to use the keys which are not mapped.
-      if ($openfisca_key == '_nil') {
+      if ($openfisca_key === '_nil') {
         if (isset($data[$webform_key])) {
           $query_append[$webform_key] = $data[$webform_key];
         }
@@ -142,15 +198,15 @@ class OpenfiscaJourneyHandler extends WebformHandlerBase {
           // The openfisca_key will be in the format
           // variable_entity.entity_key.variable_name
           // eg. persons.personA.age
-          // We need to dynamically create an multidimensional array
+          // We need to dynamically create a multidimensional array
           // from the list of keys and then set the value.
-          $keys = explode(".", $openfisca_key);
+          $keys = explode('.', $openfisca_key);
           $variable = array_pop($keys);
           $ref = &$payload;
           while ($key = array_shift($keys)) {
             $ref = &$ref[$key];
           }
-          $val = strtolower($data[$webform_key]) == 'true' || strtolower($data[$webform_key]) == 'false' ? strtolower($data[$webform_key]) == 'true' : $data[$webform_key];
+          $val = strtolower($data[$webform_key]) === 'true' || strtolower($data[$webform_key]) === 'false' ? strtolower($data[$webform_key]) === 'true' : $data[$webform_key];
           $formatted_period = $this->formatVariablePeriod($fisca_variables, $variable, $period);
           $ref[$variable] = [$formatted_period => $val];
         }
@@ -163,9 +219,9 @@ class OpenfiscaJourneyHandler extends WebformHandlerBase {
       // The result_key will be in the format
       // variable_entity.entity_key.variable_name
       // eg. persons.personA.age
-      // We need to dynamically create an multidimensional array
+      // We need to dynamically create a multidimensional array
       // from the list of keys and then set the value.
-      $keys = explode(".", $result_key);
+      $keys = explode('.', $result_key);
       $variable = array_pop($keys);
       $ref = &$payload;
       while ($key = array_shift($keys)) {
@@ -187,7 +243,7 @@ class OpenfiscaJourneyHandler extends WebformHandlerBase {
         // eg. families.familyA.children.child1
         // We need to dynamically create an multidimensional array
         // from the list of keys and then set the value.
-        $keys = explode(".", $role);
+        $keys = explode('.', $role);
         $entity_key = array_pop($keys);
         // Only add the role to the payload if the payload entity_key exists.
         if (str_contains(json_encode($payload), $entity_key)) {
@@ -205,10 +261,26 @@ class OpenfiscaJourneyHandler extends WebformHandlerBase {
       }
     }
 
-    $open_fisca_client = \Drupal::service('webform_openfisca.open_fisca_connector_service');
-    $entity = $form_state->getFormObject()->getWebform();
-    $request = $open_fisca_client->post($entity->getThirdPartySetting('webform_openfisca', 'fisca_api_endpoint') . '/calculate', ['json' => $payload]);
-    $response = json_decode($request->getBody(), TRUE);
+    return $payload;
+  }
+
+  /**
+   * Calculate benefits from Openfisca.
+   *
+   * @param array $payload
+   *   The payload.
+   * @param array $result_keys
+   *   The result keys.
+   * @param array $fisca_field_mappings
+   *   Openfisca field mappings.
+   *
+   * @return mixed
+   *   Raw response from Openfisca.
+   */
+  protected function calculateBenefits(array $payload, array &$result_keys, array &$query_append, array &$fisca_field_mappings, array &$fisca_fields, array &$result_values) : mixed {
+    $openfisca_endpoint = $this->getWebformOpenFiscaSetting($this->getWebform(), 'fisca_api_endpoint', json_decode: FALSE);
+    $request = $this->openfiscaConnector->post($openfisca_endpoint  . '/calculate', ['json' => $payload]);
+    $response = Json::decode($request?->getBody());
 
     // Get the values of the return keys.
     foreach ($result_keys as $result_key) {
@@ -216,7 +288,7 @@ class OpenfiscaJourneyHandler extends WebformHandlerBase {
       // eg. persons.personA.age
       // We need to dynamically create an multidimensional array
       // from the list of keys and then set the value.
-      $keys = explode(".", $result_key);
+      $keys = explode('.', $result_key);
       $ref = &$response;
       while ($key = array_shift($keys)) {
         $ref = &$ref[$key] ?? NULL;
@@ -233,18 +305,18 @@ class OpenfiscaJourneyHandler extends WebformHandlerBase {
       }
     }
 
-    // To calculate the total benefeit.
+    // To calculate the total benefit.
     $total_benefit = 0;
 
     // Get the values of fisca fields.
     foreach ($fisca_field_mappings as $webform_key => $openfisca_key) {
-      if ($openfisca_key != '_nil') {
+      if ($openfisca_key !== '_nil') {
         // The openfisca_key will be in the format
         // variable_entity.entity_key.variable_name
         // eg. persons.personA.age
         // We need to dynamically create an multidimensional array
         // from the list of keys and then set the value.
-        $keys = explode(".", $openfisca_key);
+        $keys = explode('.', $openfisca_key);
         $variable = array_pop($keys);
         $ref = &$response;
         while ($key = array_shift($keys)) {
@@ -257,7 +329,7 @@ class OpenfiscaJourneyHandler extends WebformHandlerBase {
           $objIterator = new \ArrayIterator($ref[$variable]);
           $key = $objIterator->key();
           if (isset($ref[$variable][$key])) {
-            if (strpos($webform_key, "_benefit")) {
+            if (strpos($webform_key, '_benefit')) {
               // This is a benefit. Add it to the total.
               // Cast all benefits into int type.
               $ref[$variable][$key] = (int) $ref[$variable][$key];
@@ -270,7 +342,29 @@ class OpenfiscaJourneyHandler extends WebformHandlerBase {
     }
     $query_append['total_benefit'] = $total_benefit;
 
-    if (isset($query_append) && is_array($query_append)) {
+    return $response;
+  }
+
+  /**
+   * Override webform confirmation URL.
+   *
+   * @param array $query_append
+   *   Query append.
+   * @param array $fisca_fields
+   *   Openfisca fields.
+   * @param array $result_values
+   *   Result values.
+   * @param string $query
+   *   Query string for the confirmation URL.
+   *
+   * @return string
+   *   The confirmation URL.
+   *
+   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
+   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
+   */
+  protected function overrideConfirmationUrl(array $query_append, array &$fisca_fields, array $result_values, string &$query) : string {
+    if (!empty($query_append)) {
       $fisca_fields = array_merge($fisca_fields, $query_append);
     }
 
@@ -282,6 +376,7 @@ class OpenfiscaJourneyHandler extends WebformHandlerBase {
       }
     }
 
+    $form_id = $this->getWebform()->id();
     $query = http_build_query($fisca_fields);
     $query = urldecode($query);
     $confirmation_url = $this->findRedirectRules($form_id, $result_values);
@@ -289,35 +384,67 @@ class OpenfiscaJourneyHandler extends WebformHandlerBase {
       $this->getWebform()->setSettingOverride('confirmation_url', $confirmation_url . '?' . $query);
     }
 
-    // Debug.
-    $config = \Drupal::configFactory()->get('webform_openfisca.settings');
-    $debug = $config->get("webform_openfisca.debug");
+    return $confirmation_url;
+  }
+
+  /**
+   * Encode and pretty print JSON.
+   *
+   * @param mixed $data
+   *   Data to encode.
+   *
+   * @return string|false
+   *   The JSON.
+   */
+  protected function jsonPrettyEncode(mixed $data) : string|false {
+    return json_encode($data, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_PRETTY_PRINT);
+  }
+
+  /**
+   * Display Openfisca debug.
+   *
+   * @param array $payload
+   *   The payload.
+   * @param mixed $response
+   *   Raw response from Openfisca.
+   * @param array $result_values
+   *   Result values.
+   * @param array $fisca_fields
+   *   Openfisca fields.
+   * @param string $query
+   *   Confirmation URL query string.
+   * @param string|null $confirmation_url
+   *   Confirmation URL.
+   */
+  protected function displayDebug(array $payload, mixed $response, array $result_values, array $fisca_fields, string $query, ?string $confirmation_url = NULL) : void {
+    $config = $this->configFactory->get('webform_openfisca.settings');
+    $debug = $config->get('webform_openfisca.debug');
 
     if ($debug) {
       $build = [
         'label' => ['#markup' => 'Debug:'],
         'payload' => [
-          '#markup' => 'Openfisca Calculate Payload:<br>' . json_encode($payload, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_PRETTY_PRINT),
+          '#markup' => 'Openfisca Calculate Payload:<br>' . $this->jsonPrettyEncode($payload),
           '#prefix' => '<pre>',
           '#suffix' => '</pre>',
         ],
         'response' => [
-          '#markup' => 'Openfisca Calculate Response<br>' . json_encode($response, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_PRETTY_PRINT),
+          '#markup' => 'Openfisca Calculate Response<br>' . $this->jsonPrettyEncode($response),
           '#prefix' => '<pre>',
           '#suffix' => '</pre>',
         ],
         'result_values' => [
-          '#markup' => 'result_values<br>' . json_encode($result_values, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_PRETTY_PRINT),
+          '#markup' => 'result_values<br>' . $this->jsonPrettyEncode($result_values),
           '#prefix' => '<pre>',
           '#suffix' => '</pre>',
         ],
         'fisca_fields' => [
-          '#markup' => 'fisca_fields<br>' . json_encode($fisca_fields, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_PRETTY_PRINT),
+          '#markup' => 'fisca_fields<br>' . $this->jsonPrettyEncode($fisca_fields),
           '#prefix' => '<pre>',
           '#suffix' => '</pre>',
         ],
         'query' => [
-          '#markup' => 'query<br>' . json_encode($query, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_PRETTY_PRINT),
+          '#markup' => 'query<br>' . $query,
           '#prefix' => '<pre>',
           '#suffix' => '</pre>',
         ],
@@ -327,11 +454,9 @@ class OpenfiscaJourneyHandler extends WebformHandlerBase {
           '#suffix' => '</pre>',
         ],
       ];
-      $message = $this->renderer->renderPlain($build);
-
+      $message = $this->renderer->renderInIsolation($build);
       $this->messenger()->addWarning($message);
     }
-
   }
 
   /**
@@ -341,11 +466,16 @@ class OpenfiscaJourneyHandler extends WebformHandlerBase {
    *   The form_id to be checked.
    * @param array $results
    *   The list of response values.
+   *
+   * @return string|null
+   *   The redirect.
+   *
+   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
+   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
-  public function findRedirectRules(string $form_id, array $results) {
-
+  public function findRedirectRules(string $form_id, array $results) : ?string {
     // Find the rule node for this form id.
-    $nodes = \Drupal::entityTypeManager()
+    $nodes = $this->entityTypeManager
       ->getStorage('node')
       ->loadByProperties([
         'type' => 'rac',
@@ -353,28 +483,32 @@ class OpenfiscaJourneyHandler extends WebformHandlerBase {
       ]);
     // If there are no nodes found exit early.
     if (empty($nodes)) {
-      return;
+      return NULL;
     }
     $entity = reset($nodes);
 
     // Extract the rules.
-    $i = 0;
+    $array_rules = [];
     foreach ($entity->field_rules as $paragraph) {
-      /** @var Entity (i.e. Node, Paragraph, Term) $referenced_product **/
+      $array_rule = ['rules' => []];
+      /** @var \Drupal\Core\Entity\FieldableEntityInterface $referenced_para **/
       $referenced_para = $paragraph->entity->toArray();
-      $array_rules[$i]['redirect'] = $referenced_para['field_redirect_to'];
+      $array_rule['redirect'] = $referenced_para['field_redirect_to'];
       $rules = $referenced_para['field_rac_element'];
       foreach ($rules as $rule) {
         $target_id = $rule['target_id'];
-        $rule_array = \Drupal::entityTypeManager()->getStorage('paragraph')->load($target_id)->toArray();
+        $rule_array = $this->entityTypeManager->getStorage('paragraph')->load($target_id)?->toArray();
+        if (!is_array($rule_array)) {
+          continue;
+        }
         $field_variable = $rule_array['field_variable'][0]['value'];
         $field_value = $rule_array['field_value'][0]['value'];
-        $array_rules[$i]['rules'][] = [
+        $array_rule['rules'][] = [
           'variable' => $field_variable,
           'value' => $field_value,
         ];
       }
-      $i++;
+      $array_rules[] = $array_rule;
     }
 
     // Now we have the rule as an array. Apply it to the results.
@@ -390,16 +524,17 @@ class OpenfiscaJourneyHandler extends WebformHandlerBase {
         }
       }
       if (!in_array(FALSE, $evaluation)) {
-        return("/node/" . $redirect_node);
+        return('/node/' . $redirect_node);
       }
     }
+    return NULL;
   }
 
   /**
    * Helper method to get variable period & return a date in the correct format.
    *
    * @param array $fisca_variables
-   *   The list of avalibale fisca variables.
+   *   The list of available fisca variables.
    * @param string $variable
    *   The variable to be accessed.
    * @param string $period_date
@@ -408,43 +543,43 @@ class OpenfiscaJourneyHandler extends WebformHandlerBase {
    * @return string
    *   The formatted value.
    */
-  private function formatVariablePeriod($fisca_variables, $variable, $period_date) {
+  protected function formatVariablePeriod(array $fisca_variables, string $variable, string $period_date) : string {
     $fisca_variable = $fisca_variables[$variable];
     $definition_period = $fisca_variable['definitionPeriod'];
     $date = date_create($period_date);
 
     switch ($definition_period) {
-      case "DAY":
+      case 'DAY':
         // Date format yyyy-mm-dd eg. 2022-11-02.
-        $formatted_period = date_format($date, "Y-m-d");
+        $formatted_period = date_format($date, 'Y-m-d');
         break;
 
-      case "WEEK":
+      case 'WEEK':
         // Date format yyyy-Wxx eg. 2022-W44.
-        $week = date_format($date, "W");
-        $year = date_format($date, "Y");
+        $week = date_format($date, 'W');
+        $year = date_format($date, 'Y');
         $formatted_period = $year . '-W' . $week;
         break;
 
-      case "WEEKDAY":
+      case 'WEEKDAY':
         // Date format yyyy-Wxx-x eg. 2022-W44-2 (2=Tuesday the weekday number).
-        $week = date_format($date, "W");
-        $year = date_format($date, "Y");
-        $weekday = date_format($date, "N");
+        $week = date_format($date, 'W');
+        $year = date_format($date, 'Y');
+        $weekday = date_format($date, 'N');
         $formatted_period = $year . '-W' . $week . '-' . $weekday;
         break;
 
-      case "MONTH":
+      case 'MONTH':
         // Date format yyyy-mm eg. 2022-11.
-        $formatted_period = date_format($date, "Y-m");
+        $formatted_period = date_format($date, 'Y-m');
         break;
 
-      case "YEAR":
+      case 'YEAR':
         // Date format yyyy eg. 2022.
-        $formatted_period = date_format($date, "Y");
+        $formatted_period = date_format($date, 'Y');
         break;
 
-      case "ETERNITY":
+      case 'ETERNITY':
         // No date format, return string value ETERNITY.
         $formatted_period = 'ETERNITY';
         break;
@@ -455,6 +590,79 @@ class OpenfiscaJourneyHandler extends WebformHandlerBase {
     }
 
     return $formatted_period;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function alterElements(array &$elements, WebformInterface $webform) : void {
+    $fisca_enabled = $this->getWebformOpenFiscaSetting($webform, 'fisca_enabled', FALSE);
+    if (!$fisca_enabled) {
+      return;
+    }
+
+    $fisca_immediate_response_mapping = $this->getWebformOpenFiscaSetting($webform, 'fisca_immediate_response_mapping', []);
+    foreach ($elements as $key => &$element) {
+      if (!empty($fisca_immediate_response_mapping[$key])) {
+        $element['#attributes']['data-openfisca-immediate-response'] = 'true';
+        $element['#attached']['library'][] = 'webform_openfisca/immediate_response';
+        $element['#ajax'] = [
+          'callback' => [$this, 'requestOpenfiscaImmediateResponse'],
+          'disable-refocus' => TRUE,
+          'event' => 'fiscaImmediateResponse',
+          'progress' => [
+            'type' => 'throbber',
+          ],
+        ];
+      }
+    }
+  }
+
+  /**
+   * Ajax callback to request immediate response from Openfisca.
+   *
+   * @param array $form
+   *   Form.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   Form state.
+   *
+   * @return \Drupal\Core\Ajax\AjaxResponse
+   *   The Ajax response.
+   *
+   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
+   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
+   */
+  public function requestOpenfiscaImmediateResponse(array $form, FormStateInterface $form_state) : AjaxResponse {
+    $webform = $this->getWebform();
+    $values = $form_state->getValue('values') ?: [];
+    $webform_submission = WebformSubmission::create($values + ['webform_id' => $this->getWebform()->id()]);
+
+    $query_append = [];
+    $fisca_field_mappings = $this->getWebformOpenFiscaSetting($webform, 'fisca_field_mappings', []);
+    $fisca_return_key = $this->getWebformOpenFiscaSetting($webform, 'fisca_return_key', json_decode: FALSE);
+    $result_keys = explode(',', $fisca_return_key);
+    $payload = $this->prepareOpenfiscaPayload($webform_submission, $query_append, $fisca_field_mappings, $result_keys);
+
+    $fisca_fields = [];
+    $result_values = [];
+    $this->calculateBenefits($payload, $result_keys, $query_append, $fisca_field_mappings, $fisca_fields, $result_values);
+
+    $immediate_response = [];
+    if (!empty($query_append['total_benefit'])) {
+      $query = '';
+      $confirmation_url = $this->overrideConfirmationUrl($query_append, $fisca_fields, $result_values, $query);
+      $immediate_response = [
+        'confirmation_url' => $confirmation_url,
+        'query' => $query,
+      ];
+    }
+
+    $response = new AjaxResponse();
+    if (!empty($immediate_response)) {
+      /** InvokeCommand($selector, $method, array $arguments = []) */
+      $response->addCommand(new InvokeCommand(NULL, 'webformOpenfiscaImmediateResponseRedirect', [$immediate_response]));
+    }
+    return $response;
   }
 
 }
