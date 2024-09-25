@@ -9,13 +9,14 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Render\BubbleableMetadata;
 use Drupal\Core\Render\Markup;
 use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\webform_ui\Form\WebformUiElementFormInterface;
 
 /**
  * Implements hook_webform_admin_third_party_settings_form_alter().
  *
  * Contains the global/default settings.
  */
-function webform_openfisca_webform_admin_third_party_settings_form_alter(&$form, FormStateInterface $form_state) {
+function webform_openfisca_webform_admin_third_party_settings_form_alter(&$form, FormStateInterface $form_state) : void {
   /** @var \Drupal\webform\WebformThirdPartySettingsManagerInterface $third_party_settings_manager */
   $third_party_settings_manager = \Drupal::service('webform.third_party_settings_manager');
   $default_fisca_enabled = $third_party_settings_manager->getThirdPartySetting('webform_openfisca', 'fisca_enabled');
@@ -73,7 +74,7 @@ function webform_openfisca_webform_admin_third_party_settings_form_alter(&$form,
  *
  * Contains the per-webform configurables.
  */
-function webform_openfisca_webform_third_party_settings_form_alter(&$form, FormStateInterface $form_state) {
+function webform_openfisca_webform_third_party_settings_form_alter(&$form, FormStateInterface $form_state) : void {
   /** @var \Drupal\webform\WebformThirdPartySettingsManagerInterface $third_party_settings_manager */
   $third_party_settings_manager = \Drupal::service('webform.third_party_settings_manager');
   $default_fisca_enabled = $third_party_settings_manager->getThirdPartySetting('webform_openfisca', 'fisca_enabled') ?: FALSE;
@@ -82,6 +83,7 @@ function webform_openfisca_webform_third_party_settings_form_alter(&$form, FormS
   $default_fisca_mappings = $third_party_settings_manager->getThirdPartySetting('webform_openfisca', 'fisca_field_mappings') ?: [];
   $fisca_variables = $third_party_settings_manager->getThirdPartySetting('webform_openfisca', 'fisca_variables') ?: [];
   $fisca_entity_roles = $third_party_settings_manager->getThirdPartySetting('webform_openfisca', 'fisca_entity_roles') ?: [];
+  $fisca_immediate_response_mapping = '[]';
 
   /** @var \Drupal\webform\WebformInterface $entity */
   if ($entity = $form_state->getFormObject()->getEntity()) {
@@ -91,6 +93,7 @@ function webform_openfisca_webform_third_party_settings_form_alter(&$form, FormS
     $default_fisca_mappings = $entity->getThirdPartySetting('webform_openfisca', 'fisca_field_mappings') ?? $default_fisca_mappings;
     $fisca_variables = $entity->getThirdPartySetting('webform_openfisca', 'fisca_variables') ?? $fisca_variables;
     $fisca_entity_roles = $entity->getThirdPartySetting('webform_openfisca', 'fisca_entity_roles') ?? $fisca_entity_roles;
+    $fisca_immediate_response_mapping = $entity->getThirdPartySetting('webform_openfisca', 'fisca_immediate_response_mapping') ?? '[]';
   }
 
   $form['third_party_settings']['webform_openfisca'] = [
@@ -134,6 +137,12 @@ function webform_openfisca_webform_third_party_settings_form_alter(&$form, FormS
     '#description' => t('Specify the field entity roles for OpenFisca API'),
     '#default_value' => $fisca_entity_roles,
   ];
+  $form['third_party_settings']['webform_openfisca']['fisca_immediate_response_mapping'] = [
+    '#type' => 'textarea',
+    '#title' => t('OpenFisca immediate response mapping'),
+    '#description' => t('Specify the field immediate response mapping'),
+    '#default_value' => $fisca_immediate_response_mapping,
+  ];
 }
 
 /**
@@ -149,12 +158,14 @@ function webform_openfisca_webform_third_party_settings_form_alter(&$form, FormS
 function _webform_openfisca_form_element_submit(array &$form, FormStateInterface $form_state) {
   $open_fisca_client = \Drupal::service('webform_openfisca.open_fisca_connector_service');
 
+  /** @var \Drupal\webform\WebformInterface $entity */
   if ($entity = $form_state->getFormObject()->getWebform()) {
     // Get OpenFisca settings.
     $fisca_field_mappings = json_decode($entity->getThirdPartySetting('webform_openfisca', 'fisca_field_mappings'), TRUE) ?? [];
     $fisca_variables = json_decode($entity->getThirdPartySetting('webform_openfisca', 'fisca_variables'), TRUE) ?? [];
     $fisca_entity_roles = json_decode($entity->getThirdPartySetting('webform_openfisca', 'fisca_entity_roles'), TRUE) ?? [];
     $api_endpoint = $entity->getThirdPartySetting('webform_openfisca', 'fisca_api_endpoint') ?? '';
+    $fisca_immediate_response_mapping = json_decode($entity->getThirdPartySetting('webform_openfisca', 'fisca_immediate_response_mapping'), TRUE) ?? [];
 
     // Get form values.
     $key = $form_state->getValue('key');
@@ -162,6 +173,7 @@ function _webform_openfisca_form_element_submit(array &$form, FormStateInterface
     $fisca_entity_key = $form_state->getValue('fisca_entity_key');
     $fisca_entity_role = $form_state->getValue('fisca_entity_role');
     $fisca_entity_role_array = $form_state->getValue('fisca_entity_role_array');
+    $fisca_immediate_response = $form_state->getValue('fisca_immediate_response');
 
     if (!in_array($fisca_machine_name, ['period', '_nil', 'name_key'])) {
       // Get OpenFisca Entities.
@@ -204,20 +216,24 @@ function _webform_openfisca_form_element_submit(array &$form, FormStateInterface
         $fisca_variable = array_pop($fisca_field_mapping);
         unset($fisca_field_mappings[$key]);
         // Remove the fisca_variables for this key.
-        if (isset($fisca_variables[$fisca_variable])) {
-          unset($fisca_variables[$fisca_variable]);
-        }
+        unset($fisca_variables[$fisca_variable]);
       }
       // Remove any entity role.
-      if (isset($fisca_entity_roles[$key])) {
-        unset($fisca_entity_roles[$key]);
-      }
+      unset($fisca_entity_roles[$key]);
+    }
+
+    if (!empty($fisca_immediate_response)) {
+      $fisca_immediate_response_mapping[$key] = TRUE;
+    }
+    else {
+      unset($fisca_immediate_response_mapping[$key]);
     }
 
     // Save OpenFisca settings.
     $entity->setThirdPartySetting('webform_openfisca', 'fisca_field_mappings', json_encode($fisca_field_mappings, JSON_PRETTY_PRINT));
     $entity->setThirdPartySetting('webform_openfisca', 'fisca_variables', json_encode($fisca_variables, JSON_PRETTY_PRINT));
     $entity->setThirdPartySetting('webform_openfisca', 'fisca_entity_roles', json_encode($fisca_entity_roles, JSON_PRETTY_PRINT));
+    $entity->setThirdPartySetting('webform_openfisca', 'fisca_immediate_response_mapping', json_encode($fisca_immediate_response_mapping, JSON_PRETTY_PRINT));
 
     $entity->save();
   }
@@ -231,15 +247,19 @@ function webform_openfisca_form_alter(&$form, FormStateInterface $form_state, $f
 
   $open_fisca_client = \Drupal::service('webform_openfisca.open_fisca_connector_service');
 
-  if ($form_id == 'webform_ui_element_form') {
+  if ($form_id === 'webform_ui_element_form') {
     if ($entity = $form_state->getFormObject()->getWebform()) {
       $enabled = $entity->getThirdPartySetting('webform_openfisca', 'fisca_enabled') ?? FALSE;
       $api_endpoint = $entity->getThirdPartySetting('webform_openfisca', 'fisca_api_endpoint') ?? '';
       $field_mappings = json_decode($entity->getThirdPartySetting('webform_openfisca', 'fisca_field_mappings'), TRUE) ?? [];
       $fisca_entity_roles = json_decode($entity->getThirdPartySetting('webform_openfisca', 'fisca_entity_roles'), TRUE) ?? [];
+      $fisca_immediate_response_mapping = json_decode($entity->getThirdPartySetting('webform_openfisca', 'fisca_immediate_response_mapping'), TRUE) ?? [];
 
-      $fObject = $form_state->getFormObject();
-      $key = $fObject->getKey();
+      $form_object = $form_state->getFormObject();
+      if (!$form_object instanceof WebformUiElementFormInterface) {
+        return;
+      }
+      $key = $form_object->getKey();
 
       // Get the list of variables from Fisca API.
       $fisca_vars = [];
@@ -302,6 +322,15 @@ function webform_openfisca_form_alter(&$form, FormStateInterface $form_state, $f
           '#default_value' => $fisca_entity_roles[$key]['is_array'] ?? '',
         ];
 
+        $form['fisca_immediate_response'] = [
+          '#type' => 'checkbox',
+          '#title' => t('Requires immediate response'),
+          '#description' => [
+            '#markup' => t('Will this element require immediate response from OpenFisca?'),
+          ],
+          '#default_value' => $fisca_immediate_response_mapping[$key] ?? FALSE,
+        ];
+
         $form['#submit'][] = '_webform_openfisca_form_element_submit';
       }
     }
@@ -311,12 +340,13 @@ function webform_openfisca_form_alter(&$form, FormStateInterface $form_state, $f
 /**
  * Helper to load all enabled fisca endpoints.
  */
-function _webform_openfisca_get_all_endpoints() {
+function _webform_openfisca_get_all_endpoints() : array {
   $endpoints = [];
   // Get the webform storage service.
   $webformStorage = \Drupal::entityTypeManager()->getStorage('webform');
 
   // Load all webforms.
+  /** @var \Drupal\webform\WebformInterface[] $webforms */
   $webforms = $webformStorage->loadMultiple();
 
   // Loop through each webform.
@@ -337,7 +367,7 @@ function _webform_openfisca_get_all_endpoints() {
 /**
  * Implements hook_token_info().
  */
-function webform_openfisca_token_info() {
+function webform_openfisca_token_info() : array {
   $open_fisca_client = \Drupal::service('webform_openfisca.open_fisca_connector_service');
 
   $endpoints = _webform_openfisca_get_all_endpoints();
@@ -367,7 +397,7 @@ function webform_openfisca_token_info() {
 
   $info['tokens']['webform_openfisca']['wo_rounded'] = [
     'name' => t('Numbers - rounded and beautified.'),
-    'description' => t('Numbers, rounded and commas added. Example usage: [current-page:wo_rounded:53789.23232] OR [current-page:wo_rounded:current-page:query:abc] '),
+    'description' => t('Numbers, rounded and commas added. Example usage: [current-page:wo_rounded:53789.23232] OR [current-page:wo_rounded:current-page:query:abc]'),
     'dynamic' => TRUE,
   ];
 
@@ -383,7 +413,7 @@ function webform_openfisca_token_info() {
 /**
  * Implements hook_tokens().
  */
-function webform_openfisca_tokens($type, $tokens, array $data, array $options, BubbleableMetadata $bubbleable_metadata) {
+function webform_openfisca_tokens($type, $tokens, array $data, array $options, BubbleableMetadata $bubbleable_metadata) : array {
   $open_fisca_client = \Drupal::service('webform_openfisca.open_fisca_connector_service');
 
   $replacements = [];
@@ -435,9 +465,9 @@ function webform_openfisca_tokens($type, $tokens, array $data, array $options, B
         $value = $name;
       }
       elseif (is_string($name)) {
-        $value = floatval($token->replace("[" . $name . "]"));
+        $value = (float) $token->replace('[' . $name . ']');
       }
-      $replacements[$original] = number_format($value, 2, ".", ",");
+      $replacements[$original] = number_format($value ?? 0, 2, ".", ",");
     }
   }
 
@@ -448,7 +478,7 @@ function webform_openfisca_tokens($type, $tokens, array $data, array $options, B
  * Implements hook_help().
  */
 function webform_openfisca_help($route_name, RouteMatchInterface $route_match) {
-  if ($route_name == 'help.page.webform_openfisca') {
+  if ($route_name === 'help.page.webform_openfisca') {
     $token_tree = \Drupal::service('token.tree_builder')->buildRenderable(['webform_openfisca'], [
       'click_insert' => FALSE,
       'show_restricted' => TRUE,

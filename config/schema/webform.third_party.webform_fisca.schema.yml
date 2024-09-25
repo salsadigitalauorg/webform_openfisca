@@ -22,3 +22,6 @@ webform.settings.third_party.webform_openfisca:
     fisca_field_mappings:
       type: string
       label: 'JSON encoded field mappings'
+    fisca_immediate_response_mapping:
+      type: string
+      label: 'JSON encoded immediate response mapping'
