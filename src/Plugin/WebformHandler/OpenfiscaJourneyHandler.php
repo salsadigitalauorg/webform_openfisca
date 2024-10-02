@@ -621,11 +621,12 @@ class OpenfiscaJourneyHandler extends WebformHandlerBase {
     $key = $element['#webform_key'];
     if (!empty($fisca_immediate_response_mapping[$key])) {
       $element['#attributes']['data-openfisca-immediate-response'] = 'true';
+      $element['#attributes']['data-openfisca-webform-id'] = $webform->id();
       $element['#attached']['library'][] = 'webform_openfisca/immediate_response';
       $element['#ajax'] = [
         'callback' => [$this, 'requestOpenfiscaImmediateResponse'],
         'disable-refocus' => TRUE,
-        'event' => 'fiscaImmediateResponse',
+        'event' => 'fiscaImmediateResponse:request',
         'progress' => [
           'type' => 'throbber',
         ],
@@ -679,6 +680,17 @@ class OpenfiscaJourneyHandler extends WebformHandlerBase {
     if (!empty($immediate_response)) {
       /** InvokeCommand($selector, $method, array $arguments = []) */
       $response->addCommand(new InvokeCommand(NULL, 'webformOpenfiscaImmediateResponseRedirect', [$immediate_response]));
+    }
+    else {
+      $triggering_element = $form_state->getTriggeringElement();
+      if (isset($values[$triggering_element['#name']])) {
+        $data = [
+          'name' => $triggering_element['#name'],
+          'webform' => $triggering_element['#webform'],
+          'selector' => $triggering_element['#attributes']['data-drupal-selector'] ?? '',
+        ];
+        $response->addCommand(new InvokeCommand(NULL, 'webformOpenfiscaImmediateResponseContinue', [$data]));
+      }
     }
     return $response;
   }
