@@ -208,7 +208,9 @@ class OpenfiscaJourneyHandler extends WebformHandlerBase {
           }
           $val = strtolower($data[$webform_key]) === 'true' || strtolower($data[$webform_key]) === 'false' ? strtolower($data[$webform_key]) === 'true' : $data[$webform_key];
           $formatted_period = $this->formatVariablePeriod($fisca_variables, $variable, $period);
-          $ref[$variable] = [$formatted_period => $val];
+          if (!empty($formatted_period)) {
+            $ref[$variable] = [$formatted_period => $val];
+          }
         }
       }
     }
@@ -228,7 +230,9 @@ class OpenfiscaJourneyHandler extends WebformHandlerBase {
         $ref = &$ref[$key];
       }
       $formatted_period = $this->formatVariablePeriod($fisca_variables, $variable, $period);
-      $ref[$variable] = [$formatted_period => NULL];
+      if (!empty($formatted_period)) {
+        $ref[$variable] = [$formatted_period => NULL];
+      }
     }
 
     // Create group entities with roles
@@ -357,13 +361,13 @@ class OpenfiscaJourneyHandler extends WebformHandlerBase {
    * @param string $query
    *   Query string for the confirmation URL.
    *
-   * @return string
+   * @return string|null
    *   The confirmation URL.
    *
    * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
-  protected function overrideConfirmationUrl(array $query_append, array &$fisca_fields, array $result_values, string &$query) : string {
+  protected function overrideConfirmationUrl(array $query_append, array &$fisca_fields, array $result_values, string &$query) : ?string {
     if (!empty($query_append)) {
       $fisca_fields = array_merge($fisca_fields, $query_append);
     }
@@ -516,14 +520,14 @@ class OpenfiscaJourneyHandler extends WebformHandlerBase {
       $evaluation = [];
       $redirect_node = $array_rule['redirect'][0]['target_id'];
       foreach ($array_rule['rules'] as $rule) {
-        if ($results[$rule['variable']] == $rule['value']) {
+        if (($results[$rule['variable']] ?? NULL) == $rule['value']) {
           $evaluation[] = TRUE;
         }
         else {
           $evaluation[] = FALSE;
         }
       }
-      if (!in_array(FALSE, $evaluation)) {
+      if (!in_array(FALSE, $evaluation, TRUE)) {
         return('/node/' . $redirect_node);
       }
     }
@@ -544,6 +548,9 @@ class OpenfiscaJourneyHandler extends WebformHandlerBase {
    *   The formatted value.
    */
   protected function formatVariablePeriod(array $fisca_variables, string $variable, string $period_date) : string {
+    if (!isset($fisca_variables[$variable])) {
+      return '';
+    }
     $fisca_variable = $fisca_variables[$variable];
     $definition_period = $fisca_variable['definitionPeriod'];
     $date = date_create($period_date);
@@ -595,26 +602,34 @@ class OpenfiscaJourneyHandler extends WebformHandlerBase {
   /**
    * {@inheritdoc}
    */
-  public function alterElements(array &$elements, WebformInterface $webform) : void {
+  public function alterElement(array &$element, FormStateInterface $form_state, array $context) : void {
+    $form_object = $form_state->getFormObject();
+    if (!$form_object instanceof WebformSubmissionForm) {
+      return;
+    }
+    if ($form_object->getOperation() !== 'add') {
+      return;
+    }
+
+    $webform = $form_object->getWebform();
     $fisca_enabled = $this->getWebformOpenFiscaSetting($webform, 'fisca_enabled', FALSE);
     if (!$fisca_enabled) {
       return;
     }
 
     $fisca_immediate_response_mapping = $this->getWebformOpenFiscaSetting($webform, 'fisca_immediate_response_mapping', []);
-    foreach ($elements as $key => &$element) {
-      if (!empty($fisca_immediate_response_mapping[$key])) {
-        $element['#attributes']['data-openfisca-immediate-response'] = 'true';
-        $element['#attached']['library'][] = 'webform_openfisca/immediate_response';
-        $element['#ajax'] = [
-          'callback' => [$this, 'requestOpenfiscaImmediateResponse'],
-          'disable-refocus' => TRUE,
-          'event' => 'fiscaImmediateResponse',
-          'progress' => [
-            'type' => 'throbber',
-          ],
-        ];
-      }
+    $key = $element['#webform_key'];
+    if (!empty($fisca_immediate_response_mapping[$key])) {
+      $element['#attributes']['data-openfisca-immediate-response'] = 'true';
+      $element['#attached']['library'][] = 'webform_openfisca/immediate_response';
+      $element['#ajax'] = [
+        'callback' => [$this, 'requestOpenfiscaImmediateResponse'],
+        'disable-refocus' => TRUE,
+        'event' => 'fiscaImmediateResponse',
+        'progress' => [
+          'type' => 'throbber',
+        ],
+      ];
     }
   }
 
@@ -634,8 +649,11 @@ class OpenfiscaJourneyHandler extends WebformHandlerBase {
    */
   public function requestOpenfiscaImmediateResponse(array $form, FormStateInterface $form_state) : AjaxResponse {
     $webform = $this->getWebform();
-    $values = $form_state->getValue('values') ?: [];
-    $webform_submission = WebformSubmission::create($values + ['webform_id' => $this->getWebform()->id()]);
+    $values = $form_state->getValues() ?: [];
+    $webform_submission = WebformSubmission::create([
+      'data' => $values,
+      'webform_id' => $this->getWebform()->id(),
+    ]);
 
     $query_append = [];
     $fisca_field_mappings = $this->getWebformOpenFiscaSetting($webform, 'fisca_field_mappings', []);
