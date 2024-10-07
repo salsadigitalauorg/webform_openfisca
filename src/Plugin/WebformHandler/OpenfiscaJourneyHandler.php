@@ -35,12 +35,12 @@ class OpenfiscaJourneyHandler extends WebformHandlerBase {
   /**
    * Format YAML.
    */
-  const string FORMAT_YAML = 'yaml';
+  const FORMAT_YAML = 'yaml';
 
   /**
    * Format JSON.
    */
-  const string FORMAT_JSON = 'json';
+  const FORMAT_JSON = 'json';
 
   /**
    * Current request.
