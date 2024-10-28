@@ -3,6 +3,7 @@
 namespace Drupal\webform_openfisca\Plugin\WebformHandler;
 
 use Drupal\Component\Serialization\Json;
+use Drupal\Component\Utility\NestedArray;
 use Drupal\Component\Utility\UrlHelper;
 use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\InvokeCommand;
@@ -293,6 +294,7 @@ class OpenfiscaJourneyHandler extends WebformHandlerBase {
       // We need to dynamically create an multidimensional array
       // from the list of keys and then set the value.
       $keys = explode('.', $result_key);
+      // @todo Refactor this ambiguous section. Ideally use NestedArray.
       $ref = &$response;
       while ($key = array_shift($keys)) {
         $ref = &$ref[$key] ?? NULL;
@@ -345,6 +347,20 @@ class OpenfiscaJourneyHandler extends WebformHandlerBase {
       }
     }
     $query_append['total_benefit'] = $total_benefit;
+
+    // Attempt to determine the special immediate exit.
+    $immediate_exit_mapping = $this->getWebformOpenFiscaSetting($this->getWebform(), 'fisca_immediate_exit_mapping', default_value: '', json_decode: FALSE);
+    foreach (explode(',', $immediate_exit_mapping) as $immediate_exit_key) {
+      $immediate_exit_key = trim($immediate_exit_key);
+      $keys = explode('.', $immediate_exit_key);
+      if (NestedArray::keyExists($response, $keys)) {
+        $immediate_exit = NestedArray::getValue($response, $keys);
+        if (is_array($immediate_exit) && !empty(array_filter($immediate_exit))) {
+          $query_append['immediate_exit'] = TRUE;
+        }
+      }
+
+    }
 
     return $response;
   }
@@ -667,7 +683,7 @@ class OpenfiscaJourneyHandler extends WebformHandlerBase {
     $this->calculateBenefits($payload, $result_keys, $query_append, $fisca_field_mappings, $fisca_fields, $result_values);
 
     $immediate_response = [];
-    if (!empty($query_append['total_benefit'])) {
+    if (!empty($query_append['total_benefit']) || !empty($query_append['immediate_exit'])) {
       $query = '';
       $confirmation_url = $this->overrideConfirmationUrl($query_append, $fisca_fields, $result_values, $query);
       $immediate_response = [
