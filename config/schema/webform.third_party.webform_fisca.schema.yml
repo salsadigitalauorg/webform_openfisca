@@ -25,3 +25,6 @@ webform.settings.third_party.webform_openfisca:
     fisca_immediate_response_mapping:
       type: string
       label: 'JSON encoded immediate response mapping'
+    fisca_immediate_exit_mapping:
+      type: string
+      label: 'OpenFisca return keys for immediate exit'

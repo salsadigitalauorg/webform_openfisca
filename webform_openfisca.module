@@ -84,6 +84,7 @@ function webform_openfisca_webform_third_party_settings_form_alter(&$form, FormS
   $fisca_variables = $third_party_settings_manager->getThirdPartySetting('webform_openfisca', 'fisca_variables') ?: [];
   $fisca_entity_roles = $third_party_settings_manager->getThirdPartySetting('webform_openfisca', 'fisca_entity_roles') ?: [];
   $fisca_immediate_response_mapping = '[]';
+  $fisca_immediate_exit_mapping = '';
 
   /** @var \Drupal\webform\WebformInterface $entity */
   if ($entity = $form_state->getFormObject()->getEntity()) {
@@ -94,6 +95,7 @@ function webform_openfisca_webform_third_party_settings_form_alter(&$form, FormS
     $fisca_variables = $entity->getThirdPartySetting('webform_openfisca', 'fisca_variables') ?? $fisca_variables;
     $fisca_entity_roles = $entity->getThirdPartySetting('webform_openfisca', 'fisca_entity_roles') ?? $fisca_entity_roles;
     $fisca_immediate_response_mapping = $entity->getThirdPartySetting('webform_openfisca', 'fisca_immediate_response_mapping') ?? '[]';
+    $fisca_immediate_exit_mapping = $entity->getThirdPartySetting('webform_openfisca', 'fisca_immediate_exit_mapping') ?? '';
   }
 
   $form['third_party_settings']['webform_openfisca'] = [
@@ -142,6 +144,12 @@ function webform_openfisca_webform_third_party_settings_form_alter(&$form, FormS
     '#title' => t('OpenFisca immediate response mapping'),
     '#description' => t('Specify the field immediate response mapping'),
     '#default_value' => $fisca_immediate_response_mapping,
+  ];
+  $form['third_party_settings']['webform_openfisca']['fisca_immediate_exit_mapping'] = [
+    '#type' => 'textarea',
+    '#title' => t('OpenFisca immediate exit mapping'),
+    '#description' => t('Specify the return keys of OpenFisca response to map to immediate exit. Comma separated.'),
+    '#default_value' => $fisca_immediate_exit_mapping,
   ];
 }
 
