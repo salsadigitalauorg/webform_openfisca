@@ -8,7 +8,6 @@ use Drupal\Component\Utility\UrlHelper;
 use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\InvokeCommand;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\webform\Ajax\WebformSubmissionAjaxResponse;
 use Drupal\webform\Entity\WebformSubmission;
 use Drupal\webform\Plugin\WebformHandlerBase;
 use Drupal\webform\WebformInterface;
@@ -702,7 +701,7 @@ class OpenfiscaJourneyHandler extends WebformHandlerBase {
       if (isset($values[$triggering_element['#name']])) {
         $data = [
           'name' => $triggering_element['#name'],
-          'webform' => $triggering_element['#webform'],
+          'webform' => $triggering_element['#webform'] ?? $webform->id(),
           'selector' => $triggering_element['#attributes']['data-drupal-selector'] ?? '',
         ];
         $response->addCommand(new InvokeCommand(NULL, 'webformOpenfiscaImmediateResponseContinue', [$data]));
