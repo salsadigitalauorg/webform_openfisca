@@ -36,6 +36,11 @@
       $.fn.webformOpenfiscaImmediateResponseContinue = function(triggering_element) {
         if (triggering_element !== null) {
           let element = $('[data-openfisca-webform-id=' + triggering_element.webform + '][data-openfisca-immediate-response=true][name=' + triggering_element.name + '][data-drupal-selector=' + triggering_element.selector + ']').get(0);
+          if (element === null) {
+            // The selector may be changed but the element is not rebuilt.
+            // Attempt to use webform and element name instead.
+            element = $('[data-openfisca-webform-id=' + triggering_element.webform + '][data-openfisca-immediate-response=true][name=' + triggering_element.name + ']').get(0);
+          }
           $(element).triggerHandler('fiscaImmediateResponse:continue');
         }
       };
