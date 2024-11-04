@@ -3,6 +3,7 @@
 namespace Drupal\webform_openfisca\Plugin\WebformHandler;
 
 use Drupal\Component\Serialization\Json;
+use Drupal\Component\Utility\Html;
 use Drupal\Component\Utility\NestedArray;
 use Drupal\Component\Utility\UrlHelper;
 use Drupal\Core\Ajax\AjaxResponse;
@@ -262,6 +263,18 @@ class OpenfiscaJourneyHandler extends WebformHandlerBase {
             $ref = $entity_key;
           }
         }
+      }
+    }
+
+    // Add immediate exit mapping to the payload.
+    $immediate_exit_mapping = $this->getWebformOpenFiscaSetting($this->getWebform(), 'fisca_immediate_exit_mapping', default_value: '', json_decode: FALSE);
+    foreach (explode(',', $immediate_exit_mapping) as $immediate_exit_key) {
+      $immediate_exit_key = trim($immediate_exit_key);
+      $keys = explode('.', $immediate_exit_key);
+      $variable = array_pop($keys);
+      if (NestedArray::keyExists($payload, $keys) && !NestedArray::keyExists($payload, array_merge($keys, [$variable]))) {
+        $formatted_period = $this->formatVariablePeriod($fisca_variables, $variable, $period);
+        NestedArray::setValue($payload, array_merge($keys, [$variable]), [$formatted_period => NULL]);
       }
     }
 
@@ -675,6 +688,7 @@ class OpenfiscaJourneyHandler extends WebformHandlerBase {
     $fisca_field_mappings = $this->getWebformOpenFiscaSetting($webform, 'fisca_field_mappings', []);
     $fisca_return_key = $this->getWebformOpenFiscaSetting($webform, 'fisca_return_key', json_decode: FALSE);
     $result_keys = explode(',', $fisca_return_key);
+
     $payload = $this->prepareOpenfiscaPayload($webform_submission, $query_append, $fisca_field_mappings, $result_keys);
 
     $fisca_fields = [];
@@ -703,7 +717,12 @@ class OpenfiscaJourneyHandler extends WebformHandlerBase {
           'name' => $triggering_element['#name'],
           'webform' => $triggering_element['#webform'] ?? $webform->id(),
           'selector' => $triggering_element['#attributes']['data-drupal-selector'] ?? '',
+          'original_selector' => '',
         ];
+        if (!empty($triggering_element['#id'])) {
+          $original_id = preg_replace('/--([a-zA-Z0-9]{11})$/', '', $triggering_element['#id'], 1);
+          $data['original_selector'] = Html::getId($original_id);
+        }
         $response->addCommand(new InvokeCommand(NULL, 'webformOpenfiscaImmediateResponseContinue', [$data]));
       }
     }
