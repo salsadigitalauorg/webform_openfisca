@@ -646,6 +646,7 @@ class OpenfiscaJourneyHandler extends WebformHandlerBase {
     }
 
     $fisca_immediate_response_mapping = $this->getWebformOpenFiscaSetting($webform, 'fisca_immediate_response_mapping', []);
+    $fisca_immediate_response_ajax_indicator = $this->getWebformOpenFiscaSetting($webform, 'fisca_immediate_response_ajax_indicator', TRUE, json_decode: FALSE);
     $key = $element['#webform_key'];
     if (!empty($fisca_immediate_response_mapping[$key])) {
       $element['#attributes']['data-openfisca-immediate-response'] = 'true';
@@ -656,7 +657,7 @@ class OpenfiscaJourneyHandler extends WebformHandlerBase {
         'disable-refocus' => TRUE,
         'event' => 'fiscaImmediateResponse:request',
         'progress' => [
-          'type' => 'throbber',
+          'type' => $fisca_immediate_response_ajax_indicator ? 'throbber' : 'none',
         ],
       ];
     }

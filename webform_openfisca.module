@@ -106,6 +106,7 @@ function webform_openfisca_webform_third_party_settings_form_alter(&$form, FormS
   $fisca_entity_roles = $third_party_settings_manager->getThirdPartySetting('webform_openfisca', 'fisca_entity_roles') ?: [];
   $fisca_immediate_response_mapping = '[]';
   $fisca_immediate_exit_mapping = '';
+  $fisca_immediate_response_ajax_indicator = TRUE;
 
   /** @var \Drupal\webform\WebformInterface $entity */
   if ($entity = $form_state->getFormObject()->getEntity()) {
@@ -117,6 +118,7 @@ function webform_openfisca_webform_third_party_settings_form_alter(&$form, FormS
     $fisca_entity_roles = $entity->getThirdPartySetting('webform_openfisca', 'fisca_entity_roles') ?? $fisca_entity_roles;
     $fisca_immediate_response_mapping = $entity->getThirdPartySetting('webform_openfisca', 'fisca_immediate_response_mapping') ?? '[]';
     $fisca_immediate_exit_mapping = $entity->getThirdPartySetting('webform_openfisca', 'fisca_immediate_exit_mapping') ?? '';
+    $fisca_immediate_response_ajax_indicator = $entity->getThirdPartySetting('webform_openfisca', 'fisca_immediate_response_ajax_indicator') ?? TRUE;
   }
 
   $form['third_party_settings']['webform_openfisca'] = [
@@ -199,6 +201,12 @@ function webform_openfisca_webform_third_party_settings_form_alter(&$form, FormS
     '#title' => t('OpenFisca immediate exit mapping'),
     '#description' => t('Specify the return keys of OpenFisca response to map to immediate exit. Comma separated.'),
     '#default_value' => $fisca_immediate_exit_mapping,
+  ];
+  $form['third_party_settings']['webform_openfisca']['fisca_immediate_response_ajax_indicator'] = [
+    '#type' => 'checkbox',
+    '#title' => t('Display Ajax indicator'),
+    '#description' => t('Whether to display an Ajax indicator when an immediate response is required.'),
+    '#default_value' => $fisca_immediate_response_ajax_indicator,
   ];
   $form['#validate'][] = '_webform_openfisca_webform_third_party_settings_form_validate';
 }

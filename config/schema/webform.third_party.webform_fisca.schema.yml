@@ -28,3 +28,6 @@ webform.settings.third_party.webform_openfisca:
     fisca_immediate_exit_mapping:
       type: string
       label: 'OpenFisca return keys for immediate exit'
+    fisca_immediate_response_ajax_indicator:
+      type: boolean
+      label: 'Display Ajax indicator for immediate response'
