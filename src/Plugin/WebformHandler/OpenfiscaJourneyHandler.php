@@ -365,8 +365,7 @@ class OpenfiscaJourneyHandler extends WebformHandlerBase {
     foreach (explode(',', $immediate_exit_mapping) as $immediate_exit_key) {
       $immediate_exit_key = trim($immediate_exit_key);
       $keys = explode('.', $immediate_exit_key);
-      $variable = array_pop($keys);
-      if (!empty($variable) && NestedArray::keyExists($response, $keys)) {
+      if (NestedArray::keyExists($response, $keys)) {
         $immediate_exit = NestedArray::getValue($response, $keys);
         if (is_array($immediate_exit) && !empty(array_filter($immediate_exit))) {
           $query_append['immediate_exit'] = TRUE;
