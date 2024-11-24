@@ -1,33 +1,37 @@
-webform.admin_settings.third_party.webform_openfisca:
-  type: mapping
-  label: 'OpenFisca'
-  mapping:
-    fisca_enabled:
-      type: boolean
-      label: 'OpenFisca integration enabled'
-    fisca_api_endpoint:
-      type: string
-      label: 'OpenFisca integration endpoint'
-
 webform.settings.third_party.webform_openfisca:
   type: mapping
-  label: 'OpenFisca'
+  label: 'OpenFisca settings'
   mapping:
     fisca_enabled:
       type: string
       label: 'OpenFisca integration enabled'
+    fisca_debug_mode:
+      type: boolean
+      label: 'OpenFisca integration debug mode'
+    fisca_logging_mode:
+      type: boolean
+      label: 'OpenFisca integration logging mode'
     fisca_api_endpoint:
       type: string
       label: 'OpenFisca integration endpoint'
+    fisca_api_authorization_header:
+      type: string
+      label: 'OpenFisca integration Authorization header'
     fisca_field_mappings:
       type: string
-      label: 'JSON encoded field mappings'
+      label: 'JSON encoded field mappings (comma-separated)'
+    fisca_variables:
+      type: string
+      label: 'JSON encoded OpenFisca variables'
+    fisca_entity_roles:
+      type: string
+      label: 'JSON encoded entity roles'
     fisca_immediate_response_mapping:
       type: string
       label: 'JSON encoded immediate response mapping'
-    fisca_immediate_exit_mapping:
-      type: string
-      label: 'OpenFisca return keys for immediate exit'
     fisca_immediate_response_ajax_indicator:
       type: boolean
       label: 'Display Ajax indicator for immediate response'
+    fisca_immediate_exit_mapping:
+      type: string
+      label: 'OpenFisca return keys for immediate exit (comma-separated)'
