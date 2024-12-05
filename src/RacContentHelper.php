@@ -184,10 +184,11 @@ class RacContentHelper implements RacContentHelperInterface {
    *   TRUE if the 2 values are considered as equal.
    */
   protected function compareWithRacRuleValue(mixed $value, string $rac_rule_value): bool {
-    if (is_bool($value)) {
-      $value = $value ? 'true' : 'false';
-    }
-    return (string) $value === $rac_rule_value;
+    // Do not apply explicit type-casting and strict comparison here as RAC
+    // rules are always string but OpenFisca response can be in any type.
+    // @todo Find a better way to perform strict comparison instead of relying
+    // on hidden type-casting from PHP.
+    return $value == $rac_rule_value;
   }
 
 }
