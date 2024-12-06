@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace Drupal\webform_openfisca;
 
 use Drupal\Component\Serialization\Json;
+use Drupal\Core\Cache\Cache;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\webform\WebformInterface;
+use Drupal\webform_openfisca\OpenFisca\ClientInterface;
 use Drupal\webform_openfisca\OpenFisca\Helper as OpenFiscaHelper;
 
 /**
@@ -93,6 +95,14 @@ class WebformThirdPartySettingsFormAlter extends WebformFormAlterBase {
       '#description' => $this->t('Specify the variables from OpenFisca API'),
       '#default_value' => $openfisca_settings->getJsonVariables(),
     ];
+    $form['third_party_settings']['webform_openfisca']['fisca_parameter_tokens'] = [
+      '#type' => 'webform_codemirror',
+      '#mode' => 'text',
+      '#rows' => 3,
+      '#title' => $this->t('OpenFisca parameter tokens'),
+      '#description' => $this->t('Specify the OpenFisca parameters used as tokens. Comma separated.'),
+      '#default_value' => $openfisca_settings->getPlainParameterTokens(),
+    ];
     $form['third_party_settings']['webform_openfisca']['fisca_entity_roles'] = [
       '#type' => 'webform_codemirror',
       '#mode' => 'javascript',
@@ -148,7 +158,6 @@ class WebformThirdPartySettingsFormAlter extends WebformFormAlterBase {
       return;
     }
 
-    // Add the immediate exit key to OpenFisca variables.
     $fisca_endpoint = $form_state->getValue(
       ['third_party_settings', 'webform_openfisca', 'fisca_api_endpoint']
     ) ?: '';
@@ -157,8 +166,33 @@ class WebformThirdPartySettingsFormAlter extends WebformFormAlterBase {
     }
 
     $openfisca_settings = WebformOpenFiscaSettings::load($webform);
+    if ($fisca_endpoint !== $openfisca_settings->getApiEndpoint()) {
+      $openfisca_settings = $openfisca_settings->updateApiEndpoint($fisca_endpoint);
+    }
     $openfisca_client = $openfisca_settings->getOpenFiscaClient($this->openFiscaClientFactory);
 
+    // Add the immediate exit key to OpenFisca variables.
+    $this->updateImmediateExitKeys($form, $form_state, $webform, $openfisca_settings, $openfisca_client);
+
+    // Add the parameter tokens to OpenFisca parameters.
+    $this->updateParameterTokens($form, $form_state, $webform, $openfisca_settings, $openfisca_client);
+  }
+
+  /**
+   * Add the immediate exit key to OpenFisca variables.
+   *
+   * @param array $form
+   *   The form.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   * @param \Drupal\webform\WebformInterface $webform
+   *   The webform.
+   * @param \Drupal\webform_openfisca\WebformOpenFiscaSettings $openfisca_settings
+   *   The webform OpenFisca settings.
+   * @param \Drupal\webform_openfisca\OpenFisca\ClientInterface $openfisca_client
+   *   The OpenFisca client.
+   */
+  protected function updateImmediateExitKeys(array &$form, FormStateInterface $form_state, WebformInterface $webform, WebformOpenFiscaSettings $openfisca_settings, ClientInterface $openfisca_client): void {
     $fisca_variables = $form_state->getValue(
       ['third_party_settings', 'webform_openfisca', 'fisca_variables']
     ) ?: '';
@@ -186,6 +220,57 @@ class WebformThirdPartySettingsFormAlter extends WebformFormAlterBase {
       ['third_party_settings', 'webform_openfisca', 'fisca_variables'],
       $fisca_variables
     );
+  }
+
+  /**
+   * Add the parameter tokens to OpenFisca parameters.
+   *
+   * @param array $form
+   *   The form.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   * @param \Drupal\webform\WebformInterface $webform
+   *   The webform.
+   * @param \Drupal\webform_openfisca\WebformOpenFiscaSettings $openfisca_settings
+   *   The webform OpenFisca settings.
+   * @param \Drupal\webform_openfisca\OpenFisca\ClientInterface $openfisca_client
+   *   The OpenFisca client.
+   */
+  protected function updateParameterTokens(array &$form, FormStateInterface $form_state, WebformInterface $webform, WebformOpenFiscaSettings $openfisca_settings, ClientInterface $openfisca_client): void {
+    $fisca_parameter_tokens = $form_state->getValue(
+      ['third_party_settings', 'webform_openfisca', 'fisca_parameter_tokens']
+    ) ?: '';
+
+    if (empty($fisca_parameter_tokens)) {
+      return;
+    }
+    $fisca_parameter_tokens = OpenFiscaHelper::expandCsvString($fisca_parameter_tokens);
+
+    $parameters = $openfisca_client->getParameters();
+    $invalid_parameters = array_diff($fisca_parameter_tokens, array_keys($parameters));
+    if (!empty($invalid_parameters)) {
+      $form_state->setErrorByName('[third_party_settings][webform_openfisca][fisca_parameter_tokens', $this->t('Invalid OpenFisca parameters: "%parameters".<br/> Please check <a href=":link" target="_blank">OpenFisca</a> for the list of parameters.', [
+        '%parameters' => implode(', ', $invalid_parameters),
+        ':link' => $openfisca_settings->getApiEndpoint() . '/' . $openfisca_client::ENDPOINT_PARAMETERS,
+      ]));
+      return;
+    }
+
+    $fisca_parameters = [];
+    foreach ($fisca_parameter_tokens as $parameter_name) {
+      $parameter = $openfisca_client->getParameter($parameter_name);
+      if ($parameter !== NULL) {
+        $fisca_parameters[$parameter_name] = $parameter;
+      }
+    }
+    $fisca_parameters = OpenFiscaHelper::jsonEncodePretty($fisca_parameters);
+    $form_state->setValue(
+      ['third_party_settings', 'webform_openfisca', 'fisca_parameters'],
+      $fisca_parameters
+    );
+
+    // Flush token_info cache to rebuild the parameter tokens.
+    $this->cacheTagsInvalidator->invalidateTags(['token_info']);
   }
 
 }

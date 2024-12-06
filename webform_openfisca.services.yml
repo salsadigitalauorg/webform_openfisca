@@ -23,6 +23,7 @@ services:
       - '@webform_openfisca.openfisca_client_factory'
       - '@string_translation'
       - '@messenger'
+      - '@cache_tags.invalidator'
 
   webform_openfisca.webform_form_alter.third_party_settings:
     parent: webform_openfisca.webform_form_alter.base

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\webform_openfisca;
 
+use Drupal\Core\Cache\CacheTagsInvalidatorInterface;
 use Drupal\Core\Entity\EntityFormInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Messenger\MessengerInterface;
@@ -29,11 +30,14 @@ abstract class WebformFormAlterBase {
    *   String translation.
    * @param \Drupal\Core\Messenger\MessengerInterface $messenger
    *   Messenger service.
+   * @param \Drupal\Core\Cache\CacheTagsInvalidatorInterface $cacheTagsInvalidator
+   *   Cache tags invalidator.
    */
   public function __construct(
     protected OpenFiscaClientFactoryInterface $openFiscaClientFactory,
     TranslationInterface $string_translation,
     protected MessengerInterface $messenger,
+    protected CacheTagsInvalidatorInterface $cacheTagsInvalidator,
   ) {
     $this->setStringTranslation($string_translation);
   }

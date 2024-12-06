@@ -23,6 +23,12 @@ webform.settings.third_party.webform_openfisca:
     fisca_variables:
       type: string
       label: 'JSON encoded OpenFisca variables'
+    fisca_parameter_tokens:
+      type: string
+      label: 'OpenFisca parameters used as tokens (comma-separated)'
+    fisca_parameters:
+      type: string
+      label: 'JSON-encoded OpenFisca parameters'
     fisca_entity_roles:
       type: string
       label: 'JSON encoded entity roles'

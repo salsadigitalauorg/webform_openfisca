@@ -60,6 +60,27 @@ class WebformOpenFiscaSettings {
   protected array $variables = [];
 
   /**
+   * JSON-encoded OpenFisca parameters.
+   *
+   * @var string
+   */
+  protected string $jsonParameters = '[]';
+
+  /**
+   * OpenFisca parameters.
+   *
+   * @var array<string, array<string, mixed>>
+   */
+  protected array $parameters = [];
+
+  /**
+   * OpenFisca parameters used as tokens.
+   *
+   * @var string
+   */
+  protected string $parameterTokens = '';
+
+  /**
    * The JSON-encoded field mapping.
    *
    * @var string
@@ -134,6 +155,12 @@ class WebformOpenFiscaSettings {
     $this->jsonVariables = $webform->getThirdPartySetting('webform_openfisca', 'fisca_variables', '[]');
     $variables = Json::decode($this->jsonVariables);
     $this->variables = is_array($variables) ? $variables : [];
+
+    $this->jsonParameters = $webform->getThirdPartySetting('webform_openfisca', 'fisca_parameters', '[]');
+    $parameters = Json::decode($this->jsonParameters);
+    $this->parameters = is_array($parameters) ? $parameters : [];
+
+    $this->parameterTokens = (string) $webform->getThirdPartySetting('webform_openfisca', 'fisca_parameter_tokens', '');
 
     $this->jsonFieldMappings = $webform->getThirdPartySetting('webform_openfisca', 'fisca_field_mappings', '[]');
     $field_mappings = Json::decode($this->jsonFieldMappings);
@@ -276,6 +303,60 @@ class WebformOpenFiscaSettings {
   public function getVariable(string $variable_name) : array|false {
     $variable = $this->variables[$variable_name] ?? FALSE;
     return is_array($variable) ? $variable : FALSE;
+  }
+
+  /**
+   * Get the JSON-encoded OpenFisca parameters.
+   *
+   * @return string
+   *   The JSON string.
+   */
+  public function getJsonParameters() : string {
+    return $this->jsonParameters;
+  }
+
+  /**
+   * Get OpenFisca parameters.
+   *
+   * @return array<string, array<string, mixed>>
+   *   The parameters.
+   */
+  public function getParameters() : array {
+    return $this->parameters;
+  }
+
+  /**
+   * Get an OpenFisca parameter.
+   *
+   * @param string $parameter_name
+   *   The parameter name.
+   *
+   * @return array|false
+   *   The parameter, or FALSE if not exist.
+   */
+  public function getParameter(string $parameter_name) : array|false {
+    $parameter = $this->parameters[$parameter_name] ?? FALSE;
+    return is_array($parameter) ? $parameter : FALSE;
+  }
+
+  /**
+   * Get OpenFisca parameters used as tokens.
+   *
+   * @return string
+   *   The parameter tokens.
+   */
+  public function getPlainParameterTokens() : string {
+    return $this->parameterTokens;
+  }
+
+  /**
+   * Get OpenFisca parameters used as tokens as an array.
+   *
+   * @return string[]
+   *   The parameter tokens.
+   */
+  public function getParameterTokens() : array {
+    return OpenFiscaHelper::expandCsvString($this->parameterTokens);
   }
 
   /**
@@ -462,6 +543,21 @@ class WebformOpenFiscaSettings {
     unset($updated_settings->immediateResponseMapping[$element_key]);
     $updated_settings->jsonImmediateResponseMapping = OpenFiscaHelper::jsonEncodePretty($updated_settings->immediateResponseMapping);
 
+    return $updated_settings;
+  }
+
+  /**
+   * Change the OpenFisca API Endpoint.
+   *
+   * @param string $api_endpoint
+   *   The new API Endpoint.
+   *
+   * @return self
+   *   A new object with the updated settings.
+   */
+  public function updateApiEndpoint(string $api_endpoint) : self {
+    $updated_settings = clone $this;
+    $updated_settings->apiEndpoint = $api_endpoint;
     return $updated_settings;
   }
 

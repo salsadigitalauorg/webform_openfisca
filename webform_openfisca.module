@@ -7,6 +7,7 @@
 
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\webform_openfisca\WebformOpenFiscaSettings;
 
 /**
  * Implements hook_webform_third_party_settings_form_alter().
@@ -29,12 +30,12 @@ function webform_openfisca_form_webform_ui_element_form_alter(&$form, FormStateI
 /**
  * Implements hook_help().
  */
-function webform_openfisca_help($route_name, RouteMatchInterface $route_match) {
+function webform_openfisca_help($route_name, RouteMatchInterface $route_match) : string {
   if ($route_name === 'help.page.webform_openfisca') {
     $token_tree = \Drupal::service('token.tree_builder')->buildRenderable(['webform_openfisca'], [
       'click_insert' => FALSE,
       'show_restricted' => TRUE,
-      'show_nested' => FALSE,
+      'show_nested' => TRUE,
       'global_types' => FALSE,
     ]);
     $output = '<h3>' . t('About') . '</h3>';
@@ -45,4 +46,5 @@ function webform_openfisca_help($route_name, RouteMatchInterface $route_match) {
     $output .= '</dl>';
     return $output;
   }
+  return '';
 }
