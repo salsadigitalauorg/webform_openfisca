@@ -17,9 +17,12 @@ webform.settings.third_party.webform_openfisca:
     fisca_api_authorization_header:
       type: string
       label: 'OpenFisca integration Authorization header'
+    fisca_return_key:
+      type: string
+      label: 'OpenFisca return keys for calculation (comma-separated)'
     fisca_field_mappings:
       type: string
-      label: 'JSON encoded field mappings (comma-separated)'
+      label: 'JSON encoded field mappings'
     fisca_variables:
       type: string
       label: 'JSON encoded OpenFisca variables'

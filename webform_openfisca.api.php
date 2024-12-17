@@ -26,6 +26,7 @@ use Drupal\webform_openfisca\WebformOpenFiscaSettings;
  * @see \Drupal\webform_openfisca\OpenFisca\ClientFactory::create()
  * @see \Drupal\webform_openfisca\WebformOpenFiscaSettings::getOpenFiscaClient()
  * @see https://docs.guzzlephp.org/en/latest/request-options.html
+ * @codeCoverageIgnore
  */
 function hook_webform_openfisca_client_options_alter(array &$options, array &$context, array &$webform_openfisca_context) : void {
   /** @var \Drupal\webform_openfisca\WebformOpenFiscaSettings $webform_openfisca_settings */
@@ -40,4 +41,3 @@ function hook_webform_openfisca_client_options_alter(array &$options, array &$co
     $options['query'] = ['foo' => 'bar'];
   }
 }
-

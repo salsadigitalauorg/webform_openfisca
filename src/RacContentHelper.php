@@ -86,7 +86,7 @@ class RacContentHelper implements RacContentHelperInterface {
         return $node;
       }
     }
-    catch (InvalidPluginDefinitionException|PluginNotFoundException) {
+    catch (InvalidPluginDefinitionException | PluginNotFoundException) {
       return NULL;
     }
 
@@ -108,7 +108,7 @@ class RacContentHelper implements RacContentHelperInterface {
     if (!$node instanceof NodeInterface) {
       return NULL;
     }
-    /** @var \Drupal\Core\Field\EntityReferenceFieldItemListInterface $rac_element_paragraphs */
+    /** @var \Drupal\Core\Field\EntityReferenceFieldItemListInterface<\Drupal\paragraphs\ParagraphInterface> $rac_element_paragraphs */
     $rac_element_paragraphs = $node->get('field_rules');
     /** @var \Drupal\paragraphs\ParagraphInterface[] $rules_paragraphs */
     $rules_paragraphs = $rac_element_paragraphs->referencedEntities();
@@ -137,11 +137,15 @@ class RacContentHelper implements RacContentHelperInterface {
       $redirect_to = $paragraph->get('field_redirect_to');
       if (!$redirect_to instanceof EntityReferenceFieldItemListInterface
         || $redirect_to->isEmpty()
-      ){
+      ) {
         continue;
       }
+      /** @var \Drupal\node\NodeInterface[] */
       $redirect_nodes = $redirect_to->referencedEntities();
       $redirect_node = reset($redirect_nodes);
+      if (!$redirect_node instanceof NodeInterface) {
+        return NULL;
+      }
 
       $redirect_rule = [
         'rules' => [],

@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Drupal\webform_openfisca\OpenFisca;
 
@@ -25,6 +25,11 @@ abstract class Payload {
    * @var array<string, mixed>
    */
   protected array $debugData = [];
+
+  /**
+   * Constructor.
+   */
+  final public function __construct() {}
 
   /**
    * Get the JSON of the payload.
@@ -55,7 +60,7 @@ abstract class Payload {
    * @param string $json
    *   The JSON.
    *
-   * @return self
+   * @return static
    *   The payload.
    */
   public static function fromJson(string $json) : static {
@@ -69,8 +74,8 @@ abstract class Payload {
    *
    * @param array|string $key_path
    *   The key path in the format:
-   *   - array: ['persons', 'PersonA', 'age']
-   *   - string: 'persons.PersonsA.age'
+   *   - array: ['persons', 'PersonA', 'age'].
+   *   - string: 'persons.PersonsA.age'.
    *
    * @return bool
    *   TRUE if the key path exists.
@@ -89,8 +94,8 @@ abstract class Payload {
    *
    * @param array|string $key_path
    *   The key path in the format:
-   *  - array: ['persons', 'PersonA', 'age']
-   *  - string: 'persons.PersonsA.age'
+   *   - array: ['persons', 'PersonA', 'age'].
+   *   - string: 'persons.PersonsA.age'.
    *
    * @return mixed
    *   The value.
@@ -156,13 +161,13 @@ abstract class Payload {
   }
 
   /**
-   * Find the path of the first matching key,
+   * Find the path of the first matching key.
    *
    * @param string $key
    *   The key, e.g. 'salary'.
    * @param array $parents
    *   The parents key path. If set, only find within the subset of the payload
-   * defined the parents, e.g. [persons]
+   *   defined the parents, e.g. [persons].
    *
    * @return array|null
    *   The key path e.g. [persons, PersonA, salary], or NULL if not found.
@@ -190,7 +195,7 @@ abstract class Payload {
    *   The key, e.g. 'salary'.
    * @param array $parents
    *   The parents key path. If set, only find within the subset of the payload
-   * defined the parents, e.g. [persons]
+   *   defined the parents, e.g. [persons].
    *
    * @return string|null
    *   The key path e.g. 'persons.PersonA.salary', or NULL if not found.

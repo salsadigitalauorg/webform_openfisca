@@ -18,7 +18,7 @@ class ResponsePayload extends Payload {
    * @param \Psr\Http\Message\ResponseInterface|null $response
    *   The response.
    *
-   * @return self|null
+   * @return static|null
    *   The payload, or NULL upon error.
    */
   public static function fromHttpResponse(?ResponseInterface $response) : ?static {

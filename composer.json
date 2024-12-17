@@ -1,29 +1,48 @@
 {
-  "name": "salsadigitalauorg/webform_openfisca",
-  "description": "Adds OpenFisca support for RaC enabled webforms.",
-  "type": "drupal-module",
-  "authors": [],
-  "minimum-stability": "dev",
-  "prefer-stable": true,
-  "require": {
-      "php": "^7.3 || ^8.0",
-      "drupal/core": "^8.8 || ^9 || ^10",
-      "drupal/paragraphs": "~1.0",
-      "drupal/webform": "^6.2",
-      "drupal/token": "^1.0"
-  },
-  "autoload": {
+    "name": "drupal/webform_openfisca",
+    "description": "Adds OpenFisca support for Rules-as-Code enabled webforms.",
+    "type": "drupal-module",
+    "license": "GPL-2.0-or-later",
+    "authors": [
+        {
+            "name": "Salsa Digital",
+            "email": "info@salsa.digital",
+            "homepage": "https://salsa.digital",
+            "role": "Maintainer"
+        }
+    ],
+    "homepage": "https://drupal.org/project/webform_openfisca",
+    "support": {
+        "issues": "https://drupal.org/project/issues/webform_openfisca",
+        "source": "https://git.drupalcode.org/project/webform_openfisca"
+    },
+    "require": {
+        "php": ">=8.3",
+        "drupal/core": "^10 || ^11",
+        "drupal/paragraphs": "^1.0",
+        "drupal/webform": "^6.2 || ^6.3@alpha",
+        "drupal/token": "^1.0"
+    },
+    "require-dev": {
+        "drupal/autologout": "^2"
+    },
+    "suggest": {
+        "drupal/key": "Key provides the ability to improve Drupal security by managing sensitive keys (such as API and encryption keys)."
+    },
+    "autoload": {
       "classmap": [
           "src/"
       ]
-  },
-  "repositories": {
-    "drupal": {
-      "type": "composer",
-      "url": "https://packages.drupal.org/8"
+    },
+    "archive": {
+        "exclude": [
+            ".ahoy.yml",
+            "/.devtools",
+            "/.github",
+            "composer.dev.json",
+            "package-lock.json",
+            "renovate.json",
+            "/tests"
+        ]
     }
-  },
-  "require-dev": {
-    "weitzman/drupal-test-traits": "^2.2"
-  }
 }

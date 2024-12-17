@@ -93,7 +93,7 @@ interface ClientInterface {
    * @param array $options
    *   The request options.
    *
-   * @return array|null
+   * @return array<string, mixed>|null
    *   The variables, or NULL upon error.
    */
   public function getVariables(array $options = []): ?array;

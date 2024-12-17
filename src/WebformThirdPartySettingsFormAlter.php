@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Drupal\webform_openfisca;
 
 use Drupal\Component\Serialization\Json;
-use Drupal\Core\Cache\Cache;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\webform\WebformInterface;
 use Drupal\webform_openfisca\OpenFisca\ClientInterface;
@@ -161,7 +160,7 @@ class WebformThirdPartySettingsFormAlter extends WebformFormAlterBase {
     $fisca_endpoint = $form_state->getValue(
       ['third_party_settings', 'webform_openfisca', 'fisca_api_endpoint']
     ) ?: '';
-    if (empty(trim($fisca_endpoint ?? ''))) {
+    if (empty(trim($fisca_endpoint ?: ''))) {
       return;
     }
 
