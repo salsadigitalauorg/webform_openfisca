@@ -121,31 +121,54 @@ jobs:
       - name: Lint code with PHPCS
         working-directory: build
         run: vendor/bin/phpcs || [ "${CI_PHPCS_IGNORE_FAILURE:-0}" -eq 1 ]
+        env:
+          CI_PHPCS_IGNORE_FAILURE: ${{ vars.CI_PHPCS_IGNORE_FAILURE }}
 
       - name: Lint code with PHPStan
         working-directory: build
         run: vendor/bin/phpstan || [ "${CI_PHPSTAN_IGNORE_FAILURE:-0}" -eq 1 ]
         continue-on-error: ${{ endsWith(matrix.name, 'canary') }} # PHPStan levels for canary releases are not the same as for this project.
+        env:
+          CI_PHPSTAN_IGNORE_FAILURE: ${{ vars.CI_PHPSTAN_IGNORE_FAILURE }}
 
       - name: Lint code with Rector
         working-directory: build
         run: vendor/bin/rector --clear-cache --dry-run || [ "${CI_RECTOR_IGNORE_FAILURE:-0}" -eq 1 ]
+        env:
+          CI_RECTOR_IGNORE_FAILURE: ${{ vars.CI_RECTOR_IGNORE_FAILURE }}
 
       - name: Lint code with PHPMD
         working-directory: build
         run: vendor/bin/phpmd . text phpmd.xml || [ "${CI_PHPMD_IGNORE_FAILURE:-0}" -eq 1 ]
+        env:
+          CI_PHPMD_IGNORE_FAILURE: ${{ vars.CI_PHPMD_IGNORE_FAILURE }}
 
       - name: Lint code with Twig CS Fixer
         working-directory: build
         run: vendor/bin/twig-cs-fixer || [ "${CI_TWIGCSFIXER_IGNORE_FAILURE:-0}" -eq 1 ]
+        env:
+          CI_TWIGCSFIXER_IGNORE_FAILURE: ${{ vars.CI_TWIGCSFIXER_IGNORE_FAILURE }}
 
       - name: Run tests
         working-directory: build
-        run: php -d pcov.directory=.. vendor/bin/phpunit || [ "${CI_TEST_IGNORE_FAILURE:-0}" -eq 1 ] || [ "${TEST_ACCEPT_CANARY_FAILURE:-0}" -eq 1 ]
+        run: php -d pcov.directory=.. vendor/bin/phpunit || [ "${CI_TEST_IGNORE_FAILURE:-0}" -eq 1 ] || [ "${CI_TEST_ACCEPT_CANARY_FAILURE:-0}" -eq 1 ]
         env:
           BROWSERTEST_OUTPUT_DIRECTORY: /tmp
+          CI_TEST_IGNORE_FAILURE: ${{ vars.CI_TEST_IGNORE_FAILURE }}
           # PHP 8.4, Drupal 11, and Drupal 10.x-beta are not fully supported.
-          TEST_ACCEPT_CANARY_FAILURE: ${{ (contains(matrix.name, 'canary') || contains(matrix.name, 'd11') || matrix.php-version == '8.4') && 1 || 0 }}
+          CI_TEST_ACCEPT_CANARY_FAILURE: ${{ (contains(matrix.name, 'canary') || contains(matrix.name, 'd11') || matrix.php-version == '8.4') && 1 || 0 }}
+
+      - name: Check code coverage
+        working-directory: build
+        run: vendor/bin/coverage-check ${CI_CHECK_COVERAGE_COMMAND:-} ../.logs/coverage/phpunit/clover.xml "${CI_CHECK_COVERAGE_THRESHOLD:-50}" || [ "${CI_CHECK_COVERAGE_IGNORE_FAILURE:-0}" -eq 1 ]
+        if: always()
+        env:
+          # Drupal 10 uses older version of coverage-check which requires an extra param.
+          CI_CHECK_COVERAGE_COMMAND: ${{ contains(matrix.name, 'd10') && 'coverage:check' || '' }}
+          # TODO: Increase the threshold to 80-90% when we have enough tests.
+          CI_CHECK_COVERAGE_THRESHOLD: ${{ vars.CI_CHECK_COVERAGE_THRESHOLD || 50 }}
+          # Temporarily accept code coverage check failure.
+          CI_CHECK_COVERAGE_IGNORE_FAILURE: ${{ vars.CI_CHECK_COVERAGE_IGNORE_FAILURE || 1}}
 
       - name: Upload test results as an artifact
         uses: actions/upload-artifact@v4

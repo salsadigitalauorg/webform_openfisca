@@ -1,6 +1,6 @@
 <p align="center">
   <a href="" rel="noopener">
-  <img width=200px height=200px src="https://placehold.jp/000000/ffffff/200x200.png?text=webform_openfisca&css=%7B%22border-radius%22%3A%22%20100px%22%7D" alt="Webform OpenFisca logo"></a>
+  <img width=200px height=100px src="logo.png" alt="Salsa Digital logo"></a>
 </p>
 
 <h1 align="center">This module integrates Drupal Webform functionality with the OpenFisca API,
@@ -203,6 +203,13 @@ cd build
 php -d pcov.directory=.. vendor/bin/phpunit tests/src/Unit/MyUnitTest.php
 php -d pcov.directory=.. vendor/bin/phpunit --group=wip
 ```
+
+### Check code coverage
+After running all tests, coverage reports are generated in the directory
+`.logs/coverage/phpunit` in various formats.
+
+You can run the command `ahoy check-code-coverage` to show the summary
+of the coverage reports.
 
 ---
 _This repository was created using the [Drupal Extension Scaffold](https://github.com/AlexSkrypnyk/drupal_extension_scaffold) project template_
