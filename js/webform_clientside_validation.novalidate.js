@@ -3,7 +3,6 @@
  * Attaches behaviors for the Clientside Validation jQuery module.
  */
 (function ($, Drupal) {
-
   'use strict';
 
   /**

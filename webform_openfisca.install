@@ -1,0 +1,23 @@
+<?php
+
+/**
+ * @file
+ * Webform OpenFisca installation.
+ */
+
+/**
+ * Remove legacy global settings.
+ */
+function webform_openfisca_update_8001() : void {
+  $config = \Drupal::configFactory()->getEditable('webform_openfisca.settings');
+  if (!$config->isNew()) {
+    $config->delete();
+  }
+
+  /** @var \Drupal\webform\WebformThirdPartySettingsManagerInterface $third_party_settings_manager */
+  $third_party_settings_manager = \Drupal::service('webform.third_party_settings_manager');
+  $settings = $third_party_settings_manager->getThirdPartySettings('webform_openfisca');
+  foreach (array_keys($settings) as $key) {
+    $third_party_settings_manager->unsetThirdPartySetting('webform_openfisca', $key);
+  }
+}

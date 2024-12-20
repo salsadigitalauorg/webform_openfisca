@@ -1,14 +1,37 @@
 services:
-  # OpenFiscaConnectorService
-  webform_openfisca.open_fisca_connector_service:
-    class: Drupal\webform_openfisca\OpenFiscaConnectorService
-    arguments: ['@http_client', '@config.factory', '@logger.channel.webform_openfisca']
+  webform_openfisca.openfisca_client_factory:
+    class: Drupal\webform_openfisca\OpenFisca\ClientFactory
+    arguments:
+      - '@http_client_factory'
+      - '@logger.channel.webform_openfisca'
+      - '@module_handler'
+      - '@theme.manager'
 
-  #OpenFiscaRouteSubscriber
-  webform_openfisca.open_fisca_route_subscriber_service:
-    class: \Drupal\webform_openfisca\Routing\OpenFiscaRouteSubscriber
+  webform_openfisca.route_subscriber:
+    class: Drupal\webform_openfisca\Routing\OpenFiscaRouteSubscriber
     tags:
       - { name: event_subscriber }
+
+  webform_openfisca.rac_helper:
+    class: Drupal\webform_openfisca\RacContentHelper
+    arguments: ['@entity_type.manager']
+
+  webform_openfisca.webform_form_alter.base:
+    abstract: true
+    class: Drupal\webform_openfisca\WebformFormAlterBase
+    arguments:
+      - '@webform_openfisca.openfisca_client_factory'
+      - '@string_translation'
+      - '@messenger'
+      - '@cache_tags.invalidator'
+
+  webform_openfisca.webform_form_alter.third_party_settings:
+    parent: webform_openfisca.webform_form_alter.base
+    class: Drupal\webform_openfisca\WebformThirdPartySettingsFormAlter
+
+  webform_openfisca.webform_form_alter.ui_element:
+    parent: webform_openfisca.webform_form_alter.base
+    class: Drupal\webform_openfisca\WebformUiElementFormAlter
 
   logger.channel.webform_openfisca:
     class: Drupal\Core\Logger\LoggerChannel

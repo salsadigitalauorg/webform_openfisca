@@ -1,8 +1,0 @@
-# Settings
-webform_openfisca.settings:
-  path: '/admin/config/webform_openfisca/settings'
-  defaults:
-    _form: '\Drupal\webform_openfisca\Form\ConfigForm'
-    _title: 'Webform OpenFisca Settings'
-  requirements:
-    _permission: 'administer site configuration'
