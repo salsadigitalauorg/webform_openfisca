@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * @file
+ * Tokens for Webform OpenFisca.
+ */
+
 use Drupal\Core\Render\BubbleableMetadata;
 use Drupal\Core\Render\Markup;
 use Drupal\webform\WebformInterface;
@@ -9,6 +14,7 @@ use Drupal\webform_openfisca\WebformOpenFiscaSettings;
  * Implements hook_token_info().
  */
 function webform_openfisca_token_info() : array {
+  $info = [];
   $info['types']['webform_openfisca'] = [
     'name' => t('Webform OpenFisca'),
     'description' => t('Tokens related to Webform OpenFisca.'),
@@ -50,12 +56,13 @@ function webform_openfisca_token_info() : array {
 /**
  * Implements hook_tokens().
  */
-function webform_openfisca_tokens($type, $tokens, array $data, array $options, BubbleableMetadata $bubbleable_metadata) : array {
+function webform_openfisca_tokens(string $type, array $tokens, array $data, array $options, BubbleableMetadata $bubbleable_metadata) : array {
   $replacements = [];
   $token = \Drupal::token();
 
   // [wo_rounded] dynamic tokens.
-  if ($wo_tokens = $token->findWithPrefix($tokens, 'wo_rounded')) {
+  $wo_tokens = $token->findWithPrefix($tokens, 'wo_rounded');
+  if ($wo_tokens) {
     foreach ($wo_tokens as $name => $original) {
       if (is_numeric($name)) {
         $value = $name;
@@ -63,7 +70,7 @@ function webform_openfisca_tokens($type, $tokens, array $data, array $options, B
       elseif (is_string($name)) {
         $value = (float) $token->replace('[' . $name . ']');
       }
-      $replacements[$original] = number_format($value ?? 0, 2, ".", ",");
+      $replacements[$original] = number_format((float) $value ?: 0, 2, '.', ',');
     }
   }
 
@@ -87,14 +94,13 @@ function webform_openfisca_tokens($type, $tokens, array $data, array $options, B
         $openfisca_settings = $webform_openfisca_settings[$webform_id];
       }
       else {
-        /** @var \Drupal\webform\WebformInterface $webform */
         $webform = $webform_storage->load($webform_id);
         if ($webform instanceof WebformInterface) {
           $openfisca_settings = WebformOpenFiscaSettings::load($webform);
           $webform_openfisca_settings[$webform_id] = $openfisca_settings;
         }
       }
-      if (!isset($openfisca_settings) || !$openfisca_settings instanceof WebformOpenFiscaSettings) {
+      if (!isset($openfisca_settings)) {
         continue;
       }
       // Get the parameter from OpenFisca.

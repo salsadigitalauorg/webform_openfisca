@@ -18,7 +18,7 @@ class WebformOpenFiscaSettings {
   /**
    * The ID of the host webform.
    */
-  protected string $webform_id = '';
+  protected string $webformId = '';
 
   /**
    * Whether OpenFisca integration is enabled.
@@ -144,7 +144,7 @@ class WebformOpenFiscaSettings {
    *   The webform.
    */
   protected function __construct(WebformInterface $webform) {
-    $this->webform_id = $webform->id();
+    $this->webformId = (string) $webform->id();
     $this->enabled = (bool) $webform->getThirdPartySetting('webform_openfisca', 'fisca_enabled', FALSE);
     $this->debug = (bool) $webform->getThirdPartySetting('webform_openfisca', 'fisca_debug_mode', FALSE);
     $this->apiLogging = (bool) $webform->getThirdPartySetting('webform_openfisca', 'fisca_logging_mode', FALSE);
@@ -184,11 +184,11 @@ class WebformOpenFiscaSettings {
    * @param \Drupal\webform\WebformInterface $webform
    *   The webform.
    *
-   * @return static
+   * @return self
    *   The OpenFisca settings.
    */
-  public static function load(WebformInterface $webform): static {
-    return new static($webform);
+  public static function load(WebformInterface $webform): self {
+    return new self($webform);
   }
 
   /**
@@ -198,7 +198,7 @@ class WebformOpenFiscaSettings {
    *   The ID.
    */
   public function getWebformId(): string {
-    return $this->webform_id;
+    return $this->webformId;
   }
 
   /**
@@ -387,7 +387,6 @@ class WebformOpenFiscaSettings {
    *
    * @return string|false
    *   The field mapping, or FALSE if not exist.
-   *
    */
   public function getFieldMapping(string $field_name) : string|false {
     return $this->fieldMappings[$field_name] ?? FALSE;

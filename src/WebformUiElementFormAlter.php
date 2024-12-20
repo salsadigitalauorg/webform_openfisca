@@ -189,11 +189,10 @@ class WebformUiElementFormAlter extends WebformFormAlterBase {
       $webform->setThirdPartySetting('webform_openfisca', 'fisca_immediate_response_mapping', OpenFiscaHelper::jsonEncodePretty($fisca_immediate_response_mapping));
       $webform->save();
     }
-    catch (EntityStorageException $entity_storage_exception ) {
+    catch (EntityStorageException $entity_storage_exception) {
       $this->messenger->addError($entity_storage_exception->getMessage());
     }
   }
-
 
   /**
    * Get the key of the webform element.
@@ -215,7 +214,7 @@ class WebformUiElementFormAlter extends WebformFormAlterBase {
    * @param \Drupal\webform_openfisca\WebformOpenFiscaSettings $settings
    *   The Webform OpenFisca settings.
    *
-   * @return array<string, string>
+   * @return array<string, \Drupal\Component\Render\MarkupInterface|string>
    *   The variables.
    */
   protected function getOpenFiscaVariables(WebformOpenFiscaSettings $settings) : array {
@@ -229,6 +228,9 @@ class WebformUiElementFormAlter extends WebformFormAlterBase {
     $fisca_variables = $this->getGenericOpenFiscaVariables();
 
     $variables = $openfisca_client->getVariables();
+    if ($variables === NULL) {
+      return $fisca_variables;
+    }
     ksort($variables);
     foreach ($variables as $key => $variable) {
       $fisca_variables[$key] = $key;

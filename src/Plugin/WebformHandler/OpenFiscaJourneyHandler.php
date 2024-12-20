@@ -153,7 +153,7 @@ class OpenFiscaJourneyHandler extends WebformHandlerBase {
 
     $response = new AjaxResponse();
     if (!empty($immediate_response)) {
-      $response->addCommand(new InvokeCommand(NULL, 'webformOpenfiscaImmediateResponseRedirect', [$immediate_response]));
+      $response->addCommand(new InvokeCommand('', 'webformOpenfiscaImmediateResponseRedirect', [$immediate_response]));
     }
     else {
       $triggering_element = $form_state->getTriggeringElement();
@@ -168,7 +168,7 @@ class OpenFiscaJourneyHandler extends WebformHandlerBase {
           $original_id = preg_replace('/--([a-zA-Z0-9]{11})$/', '', $triggering_element['#id'], 1);
           $data['original_selector'] = Html::getId($original_id);
         }
-        $response->addCommand(new InvokeCommand(NULL, 'webformOpenfiscaImmediateResponseContinue', [$data]));
+        $response->addCommand(new InvokeCommand('', 'webformOpenfiscaImmediateResponseContinue', [$data]));
       }
     }
 
@@ -306,7 +306,7 @@ class OpenFiscaJourneyHandler extends WebformHandlerBase {
    *   The request payload to sent to OpenFisca.
    * @param \Drupal\webform_openfisca\OpenFisca\Payload\ResponsePayload|null $response_payload
    *   The response payload retrieved from OpenFisca. All data to calculate the
-   * benefits will be stored in debug data of the payload.
+   *   benefits will be stored in debug data of the payload.
    *
    * @return int
    *   Number of benefits. -1 for immediate exit.
@@ -435,7 +435,7 @@ class OpenFiscaJourneyHandler extends WebformHandlerBase {
     $response_payload->setDebugData('query', $query);
 
     $result_values = $response_payload->getDebugData('result_values') ?: [];
-    $confirmation_url = $this->racContentHelper->findRacRedirectForWebform($this->getWebform()->id(), $result_values);
+    $confirmation_url = $this->racContentHelper->findRacRedirectForWebform((string) $this->getWebform()->id(), $result_values);
     // Override webform confirmation URL.
     if (!empty($confirmation_url)) {
       $overridden_confirmation_url = $confirmation_url . '?' . $query;
@@ -519,7 +519,7 @@ class OpenFiscaJourneyHandler extends WebformHandlerBase {
       'query' => [
         '#markup' => $this->t('<strong>Query:</strong> <pre>@query</pre>', [
           '@query' => ($response_payload?->getDebugData('query') ?? 'NULL'),
-        ]) ,
+        ]),
         '#prefix' => '<p>',
         '#suffix' => '</p>',
       ],

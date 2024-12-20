@@ -79,7 +79,7 @@ class WebformOpenFiscaFunctionalTest extends WebformBrowserTestBase {
     // Check that webform 2 is included in the select menu.
     $this->drupalGet('/node/add/rac');
     $assert_session->optionExists('edit-field-webform-0-target-id', 'contact');
-    $assert_session->optionExists('edit-field-webform-0-target-id', $webform_2->id());
+    $assert_session->optionExists('edit-field-webform-0-target-id', (string) $webform_2->id());
 
     // Limit the webform select menu to only the contact form.
     $this->drupalGet('/admin/structure/types/manage/rac/form-display');
@@ -90,7 +90,7 @@ class WebformOpenFiscaFunctionalTest extends WebformBrowserTestBase {
     // Check that webform 2 is NOT included in the select menu.
     $this->drupalGet('/node/add/rac');
     $assert_session->optionExists('edit-field-webform-0-target-id', 'contact');
-    $assert_session->optionNotExists('edit-field-webform-0-target-id', $webform_2->id());
+    $assert_session->optionNotExists('edit-field-webform-0-target-id', (string) $webform_2->id());
   }
 
   /**
@@ -103,7 +103,7 @@ class WebformOpenFiscaFunctionalTest extends WebformBrowserTestBase {
     $this->drupalGet('/node/add/rac');
     $assert_session->elementExists('css', "#edit-title-0-value");
     $assert_session->elementExists('css', "#edit-field-rules-0-subform-field-rac-element-0-subform-field-variable-0-value");
-    $assert_session->elementExists('css', "#edit-field-rules-0-subform-field-rac-element-0-subform-field-value--wrapper");
+    $assert_session->elementExists('css', "#edit-field-rules-0-subform-field-rac-element-0-subform-field-value-wrapper");
     $assert_session->elementExists('css', "#edit-field-rules-0-subform-field-redirect-to-0-target-id");
     $assert_session->elementExists('css', "#edit-field-webform-0-target-id");
   }
@@ -202,8 +202,13 @@ class WebformOpenFiscaFunctionalTest extends WebformBrowserTestBase {
     $assert_session->linkByHrefExistsExact('/admin/structure/webform/manage/test_webfrom_fisca/handlers/openfisca_journey_test_handler/edit');
 
     $this->drupalGet('/admin/structure/webform/manage/test_webfrom_fisca/element/add/textfield');
-    $edit = [
+    $add = [
       'key' => 'test_field_1',
+      'properties[title]' => 'Test Field 1',
+    ];
+    $this->submitForm($add, 'Save');
+    $this->drupalGet('/admin/structure/webform/manage/test_webfrom_fisca/element/test_field_1/edit');
+    $edit = [
       'properties[title]' => 'Test Field 1',
       'fisca_entity_key' => 'Abc',
       'fisca_entity_role' => 'families.family.partners.Abc',
@@ -213,8 +218,13 @@ class WebformOpenFiscaFunctionalTest extends WebformBrowserTestBase {
     $this->submitForm($edit, 'Save');
 
     $this->drupalGet('/admin/structure/webform/manage/test_webfrom_fisca/element/add/textfield');
-    $edit = [
+    $add = [
       'key' => 'test_field_2',
+      'properties[title]' => 'Test Field 2',
+    ];
+    $this->submitForm($add, 'Save');
+    $this->drupalGet('/admin/structure/webform/manage/test_webfrom_fisca/element/test_field_2/edit');
+    $edit = [
       'properties[title]' => 'Test Field 2',
       'fisca_entity_key' => 'Xyz',
       'fisca_entity_role' => 'families.family.partners.Xyz',

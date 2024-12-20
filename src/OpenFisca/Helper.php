@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Drupal\webform_openfisca\OpenFisca;
 
@@ -23,17 +23,17 @@ class Helper {
    *   The array.
    */
   public static function expandCsvString(string $csv_string, bool $remove_empty = TRUE) : array {
-    $result = str_getcsv(trim($csv_string));
+    $result = str_getcsv(trim($csv_string), escape: "\\");
+    $result = array_map(
+      static fn ($item) : string => !empty($item) ? trim((string) $item) : '',
+      $result
+    );
+
     if (!$remove_empty) {
       return $result;
     }
 
-    return array_filter(
-      array_map(
-        static fn ($item) : string => !empty($item) ? trim((string) $item) : '',
-        $result
-      )
-    );
+    return array_values(array_filter($result));
   }
 
   /**
@@ -46,9 +46,9 @@ class Helper {
    * @param string|null $entity
    *   The returned entity, e.g. 'PersonA'.
    * @param string[] $path
-   *   The path array, e.g. ['persons', 'PersonA', 'salary']
+   *   The path array, e.g. ['persons', 'PersonA', 'salary'].
    * @param string[] $parents
-   *   The parents array, e.g. ['persons', 'PersonA']
+   *   The parents array, e.g. ['persons', 'PersonA'].
    *
    * @return string
    *   The variable, e.g. 'salary'.
@@ -77,9 +77,11 @@ class Helper {
 
       return $variable ?: '';
     }
+    // @codeCoverageIgnoreStart
     catch (\ValueError) {
       return '';
     }
+    // @codeCoverageIgnoreEnd
   }
 
   /**
@@ -115,7 +117,8 @@ class Helper {
    * @see \Drupal\Component\Serialization\Json::encode()
    */
   public static function jsonEncodePretty(mixed $data) : string {
-    return json_encode($data, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_PRETTY_PRINT);
+    $json = json_encode($data, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_PRETTY_PRINT);
+    return $json === FALSE ? '' : $json;
   }
 
   /**

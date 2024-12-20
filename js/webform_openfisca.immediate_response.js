@@ -2,8 +2,7 @@
  * @file
  * Attaches behaviors for the OpenFisca immediate response.
  */
-(function($, Drupal, drupalSettings) {
-
+(function ($, Drupal, drupalSettings) {
   /**
    * Preserve the existing event handlers of an element.
    *
@@ -27,15 +26,15 @@
   Drupal.behaviors.webform_openfisca_immediate_response = {
     attach(context, settings) {
       // Redirect to result page upon Openfisca immediate response.
-      $.fn.webformOpenfiscaImmediateResponseRedirect = function(immediate_response) {
+      $.fn.webformOpenfiscaImmediateResponseRedirect = function (immediate_response) {
         if (typeof immediate_response.confirmation_url !== 'undefined' && typeof immediate_response.query !== 'undefined') {
           window.location = immediate_response.confirmation_url + '?' + immediate_response.query;
         }
       };
 
       // Trigger the preserved events as immediate response has no result.
-      $.fn.webformOpenfiscaImmediateResponseContinue = function(triggering_element) {
-        if (triggering_element !== null) {
+      $.fn.webformOpenfiscaImmediateResponseContinue = function (triggering_element) {
+        if (triggering_element !== NULL) {
           let element = $('[data-openfisca-webform-id=' + triggering_element.webform + '][data-openfisca-immediate-response=true][name=' + triggering_element.name + '][data-drupal-selector=' + triggering_element.selector + ']').get(0);
           if (!element && triggering_element.original_selector !== '') {
             // The selector may be changed but the element is not rebuilt.

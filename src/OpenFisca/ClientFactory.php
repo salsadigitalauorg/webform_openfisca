@@ -40,7 +40,7 @@ class ClientFactory implements ClientFactoryInterface {
    * @see https://docs.guzzlephp.org/en/latest/request-options.html
    */
   public function create(string $api_endpoint, array $options = [], array $webform_openfisca_context = []): ClientInterface {
-    $options['base_uri'] = Client::sanitiseUri($api_endpoint);
+    $options['base_uri'] = Client::sanitiseUri($api_endpoint) . '/';
 
     // Allow other modules and the active theme to modify the options.
     $context = ['api_endpoint' => $options['base_uri']];

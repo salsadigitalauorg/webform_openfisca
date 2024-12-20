@@ -57,7 +57,7 @@ abstract class WebformFormAlterBase {
     if ($form_object instanceof EntityFormInterface) {
       $webform = $form_object->getEntity();
     }
-    else if ($form_object instanceof WebformUiElementFormInterface) {
+    elseif ($form_object instanceof WebformUiElementFormInterface) {
       $webform = $form_object->getWebform();
     }
 

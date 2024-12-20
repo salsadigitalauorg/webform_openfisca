@@ -107,7 +107,7 @@ class Client implements ClientInterface {
       return ResponsePayload::fromHttpResponse($response)
         ?->setDebugData('openfisca_api_endpoint', $this->baseApiUri . '/' . $openfisca_endpoint);
     }
-    catch (GuzzleException|RequestException $guzzle_exception) {
+    catch (GuzzleException | RequestException $guzzle_exception) {
       $this->logger->error('Error fetching data from OpenFisca API (@uri/@endpoint). Exception: @exception', [
         '@uri' => $this->baseApiUri,
         '@endpoint' => $openfisca_endpoint,
@@ -129,7 +129,7 @@ class Client implements ClientInterface {
       return ResponsePayload::fromHttpResponse($response)
         ?->setDebugData('openfisca_api_endpoint', $this->baseApiUri . '/' . $openfisca_endpoint);
     }
-    catch (GuzzleException|RequestException $guzzle_exception) {
+    catch (GuzzleException | RequestException $guzzle_exception) {
       $this->logger->error('Error posting to OpenFisca API (@uri/@endpoint). Exception: @exception', [
         '@uri' => $this->baseApiUri,
         '@endpoint' => $openfisca_endpoint,

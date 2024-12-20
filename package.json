@@ -1,0 +1,20 @@
+{
+  "name": "@drupal/webform_openfisca",
+  "version": "0.1.0",
+  "description": "Provides webform_openfisca functionality..",
+  "license": "GPL-2.0-or-later",
+  "contributors": [],
+  "scripts": {
+    "lint": "echo Would run code lint",
+    "lint-fix": "echo Would run code lint fix",
+    "test": "echo Would run tests",
+    "build": "echo Would run build"
+  },
+  "engines": {
+    "npm": ">=8.0.0",
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "is-positive": "^3.1.0"
+  }
+}

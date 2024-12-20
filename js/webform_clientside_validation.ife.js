@@ -4,7 +4,6 @@
  */
 
 (function ($, drupalSettings) {
-
   'use strict';
 
   // Disable clientside validation for webforms submitted using Ajax.
