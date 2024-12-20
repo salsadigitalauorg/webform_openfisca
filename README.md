@@ -15,6 +15,7 @@ allowing for seamless communication and calculation based on OpenFisca rules.
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/webform_openfisca/webform_openfisca)
 ![LICENSE](https://img.shields.io/github/license/salsadigitalauorg/webform_openfisca)
 ![Renovate](https://img.shields.io/badge/renovate-enabled-green?logo=renovatebot)
+[![codecov](https://codecov.io/github/salsadigitalauorg/webform_openfisca/graph/badge.svg?token=4EC9LB0WDX)](https://codecov.io/github/salsadigitalauorg/webform_openfisca)
 
 ![PHP 8.2](https://img.shields.io/badge/PHP-8.2-777BB4.svg)
 ![PHP 8.3](https://img.shields.io/badge/PHP-8.3-777BB4.svg)
