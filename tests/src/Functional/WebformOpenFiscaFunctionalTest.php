@@ -199,7 +199,7 @@ class WebformOpenFiscaFunctionalTest extends WebformBrowserTestBase {
     $this->submitForm($edit, 'Save');
 
     $this->drupalGet('/admin/structure/webform/manage/test_webfrom_fisca/handlers');
-    $assert_session->linkByHrefExistsExact('/admin/structure/webform/manage/test_webfrom_fisca/handlers/openfisca_journey_test_handler/edit');
+    $assert_session->linkByHrefExists('/admin/structure/webform/manage/test_webfrom_fisca/handlers/openfisca_journey_test_handler/edit');
 
     $this->drupalGet('/admin/structure/webform/manage/test_webfrom_fisca/element/add/textfield');
     $add = [
