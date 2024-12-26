@@ -18,6 +18,7 @@ parameters:
   excludePaths:
     - vendor/*
     - node_modules/*
+    - rector.php
 
   ignoreErrors:
     -
@@ -27,8 +28,8 @@ parameters:
         - '#.* no value type specified in iterable type array#'
         - '#.* has no return type specified#'
       paths:
-        - web/modules/custom/*
-        - web/themes/custom/*
+        - *
+        - *
       reportUnmatched: false
 
   reportUnmatchedIgnoredErrors: false
