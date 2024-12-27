@@ -23,9 +23,6 @@
         "drupal/webform": "^6.2 || ^6.3@alpha",
         "drupal/token": "^1.0"
     },
-    "require-dev": {
-        "phpcompatibility/php-compatibility": "^9.3"
-    },
     "suggest": {
         "drupal/key": "Key provides the ability to improve Drupal security by managing sensitive keys (such as API and encryption keys)."
     },

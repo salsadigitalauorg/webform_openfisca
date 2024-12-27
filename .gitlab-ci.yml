@@ -31,11 +31,65 @@ variables:
   OPT_IN_TEST_NEXT_MAJOR: 1
   OPT_IN_TEST_PREVIOUS_MAJOR: 1
   OPT_IN_TEST_MAX_PHP: 1
-  # Drupal CI does not have code coverage driver for PHP.
-  _PHPUNIT_EXTRA: --no-coverage
+  _PHPUNIT_EXTRA: --coverage-text --colors=never
   # Convenient, and we have no secrets.
   _SHOW_ENVIRONMENT_VARIABLES: 1
 
+.composer-base:
+  before_script:
+    - apt-get update && apt-get install -qy --no-install-recommends jq
+    - echo "Merging configuration from composer.dev.json"
+    - |
+      if [[ -f composer.dev.json ]]; then
+        php -r "echo json_encode(array_replace_recursive(json_decode(file_get_contents('composer.dev.json'), true),json_decode(file_get_contents('composer.json'), true)),JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES);" > "composer2.json" && mv -f "composer.json" "composer.json.orginal" && mv -f "composer2.json" "composer.json"
+      fi
+  after_script:
+    - echo "Restore composer.json"
+    - |
+      if [[ -f composer.json.original ]]; then
+        mv -f "composer.json.original" "composer.json"
+      fi
+    - echo "Installing suggested dependencies from extension's composer.json."
+    - |
+        composer_suggests=$(cat composer.json | jq -r 'select(.suggest != null) | .suggest | keys[]')
+        for composer_suggest in $composer_suggests; do
+          composer require "${composer_suggest}"
+        done
+
+.phpunit-base:
+  before_script:
+    # Install and enable PCOV.
+    - echo -e "\e[0Ksection_start:`date +%s`:php_ext_install[collapsed=true]\r\e[0KInstall PHP Extensions"
+    # See https://www.drupal.org/node/3443619
+    - |
+      PCOV_INSTALLED=$(/usr/local/bin/pecl list | /bin/grep -i pcov | /usr/bin/wc -l) && true;
+      if [ "$PCOV_INSTALLED" == "0" ]; then
+        apt-get update && apt-get install -qy --no-install-recommends $PHPIZE_DEPS
+        pecl install pcov
+      fi
+    - echo -e '[pcov]\npcov.directory=.' > /usr/local/etc/php/conf.d/pcov.ini
+    - docker-php-ext-enable pcov
+    - echo -e "\e[0Ksection_end:`date +%s`:php_ext_install\r\e[0K"
+  after_script:
+    - echo "Check code coverage report."
+    - |
+      [[ -d ../.logs ]] && mv -f "../.logs" "$CI_PROJECT_DIR/$_WEB_ROOT/"
+      COVERAGE_CHECK_VERSION=$(vendor/bin/coverage-check --version)
+      if [[ "$COVERAGE_CHECK_VERSION" == *"PHPUnit Coverage Check 1"* ]]; then
+        COVERAGE_CHECK_COMMAND="coverage:check"
+      fi
+      vendor/bin/coverage-check ${COVERAGE_CHECK_COMMAND:-} $CI_PROJECT_DIR/$_WEB_ROOT/.logs/coverage/phpunit/clover.xml 50 || true
+  # Capture line coverage counts for GitLab UI display.
+  coverage: /^\s*Lines:\s*\d+.\d+\%/
+  artifacts:
+    paths:
+      - $CI_PROJECT_DIR/$_WEB_ROOT/.logs/
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: $CI_PROJECT_DIR/$_WEB_ROOT/.logs/coverage/phpunit/cobertura.xml
+
+
 phpunit (previous major):
   variables:
-    _PHPUNIT_EXTRA: --no-coverage --configuration ${CI_PROJECT_DIR}/phpunit.d10.xml
+    _PHPUNIT_EXTRA: --coverage-text --colors=never --configuration ${CI_PROJECT_DIR}/phpunit.d10.xml

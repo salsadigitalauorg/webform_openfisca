@@ -61,7 +61,7 @@ commands:
     usage: Run tests.
     cmd: |
       pushd "build" >/dev/null || exit 1
-      php -d pcov.directory=.. vendor/bin/phpunit
+      php -d pcov.directory=.. vendor/bin/phpunit --coverage-text
       popd >/dev/null || exit 1
 
   test-unit:
