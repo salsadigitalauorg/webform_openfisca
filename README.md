@@ -28,9 +28,12 @@ allowing for seamless communication and calculation based on OpenFisca rules.
 
 ## Features
 
-- Handles communication with the OpenFisca API through Guzzle HTTP client.
+- Handles communication with the OpenFisca API through Guzzle HTTP client. 
 - Provides methods to post data, retrieve variables, parameters,
   and calculations from the OpenFisca API.
+- API calls to private OpenFisca instances are supported with Authorization 
+  header. [Key module](https://www.drupal.org/project/key) can be utilised to 
+  store the authorization header token with the submodule Authorization Key.
 - Webform handler for processing submissions & interacting with OpenFisca API.
 - Provides a mechanism for creating redirect rules
   based on OpenFisca responses.
@@ -64,8 +67,8 @@ and matching rules trigger redirects.
 ## Local development
 
 1. Install PHP with SQLite support and Composer
-3. Clone this repository
-4. Run `ahoy build`
+2. Clone this repository
+3. Run `ahoy build`
 
 ## Building website
 
