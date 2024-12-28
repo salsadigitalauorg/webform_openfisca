@@ -36,24 +36,28 @@ class WebformThirdPartySettingsFormAlter extends WebformFormAlterBase {
       '#title' => $this->t('Enable OpenFisca RaC integration'),
       '#description' => '',
       '#default_value' => $openfisca_settings->isEnabled(),
+      '#weight' => -100,
     ];
     $form['third_party_settings']['webform_openfisca']['fisca_debug_mode'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Enable debug mode'),
       '#description' => '',
       '#default_value' => $openfisca_settings->isDebugEnabled(),
+      '#weight' => -90,
     ];
     $form['third_party_settings']['webform_openfisca']['fisca_logging_mode'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Log OpenFisca calculation'),
       '#description' => '',
       '#default_value' => $openfisca_settings->isLoggingEnabled(),
+      '#weight' => -80,
     ];
     $form['third_party_settings']['webform_openfisca']['fisca_api_endpoint'] = [
       '#type' => 'textfield',
       '#title' => $this->t('OpenFisca API endpoint'),
       '#description' => $this->t('Specify the API endpoint to the Fisca Rule'),
       '#default_value' => $openfisca_settings->getApiEndpoint(),
+      '#weight' => -70,
     ];
     $form['third_party_settings']['webform_openfisca']['fisca_api_authorization_header'] = [
       '#type' => 'textfield',
@@ -61,6 +65,7 @@ class WebformThirdPartySettingsFormAlter extends WebformFormAlterBase {
       '#description' => $this->t('Specify the Authorization header to connect to a private OpenFisca API, e.g. a Basic auth or a Bearer token.'),
       '#default_value' => $openfisca_settings->getApiAuthorizationHeader(),
       '#field_prefix' => $this->t('Authorization:'),
+      '#weight' => -60,
     ];
     $form['third_party_settings']['webform_openfisca']['fisca_return_key'] = [
       '#type' => 'webform_codemirror',
@@ -69,6 +74,7 @@ class WebformThirdPartySettingsFormAlter extends WebformFormAlterBase {
       '#title' => $this->t('The keys for the return value'),
       '#description' => $this->t('Specify the keys for the return value that needs to be checked. Comma separated.'),
       '#default_value' => $openfisca_settings->getPlainReturnKeys(),
+      '#weight' => -50,
     ];
     $form['third_party_settings']['webform_openfisca']['fisca_field_mappings'] = [
       '#type' => 'webform_codemirror',
@@ -81,6 +87,7 @@ class WebformThirdPartySettingsFormAlter extends WebformFormAlterBase {
       '#title' => $this->t('OpenFisca Field mappings'),
       '#description' => $this->t('Specify the field mappings'),
       '#default_value' => $openfisca_settings->getJsonFieldMappings(),
+      '#weight' => -40,
     ];
     $form['third_party_settings']['webform_openfisca']['fisca_variables'] = [
       '#type' => 'webform_codemirror',
@@ -93,6 +100,7 @@ class WebformThirdPartySettingsFormAlter extends WebformFormAlterBase {
       '#title' => $this->t('OpenFisca Variables'),
       '#description' => $this->t('Specify the variables from OpenFisca API'),
       '#default_value' => $openfisca_settings->getJsonVariables(),
+      '#weight' => -30,
     ];
     $form['third_party_settings']['webform_openfisca']['fisca_parameter_tokens'] = [
       '#type' => 'webform_codemirror',
@@ -101,6 +109,7 @@ class WebformThirdPartySettingsFormAlter extends WebformFormAlterBase {
       '#title' => $this->t('OpenFisca parameter tokens'),
       '#description' => $this->t('Specify the OpenFisca parameters used as tokens. Comma separated.'),
       '#default_value' => $openfisca_settings->getPlainParameterTokens(),
+      '#weight' => -20,
     ];
     $form['third_party_settings']['webform_openfisca']['fisca_entity_roles'] = [
       '#type' => 'webform_codemirror',
@@ -113,6 +122,7 @@ class WebformThirdPartySettingsFormAlter extends WebformFormAlterBase {
       '#title' => $this->t('OpenFisca Field Entity Roles'),
       '#description' => $this->t('Specify the field entity roles for OpenFisca API'),
       '#default_value' => $openfisca_settings->getJsonEntityRoles(),
+      '#weight' => -10,
     ];
     $form['third_party_settings']['webform_openfisca']['fisca_immediate_response_mapping'] = [
       '#type' => 'webform_codemirror',
@@ -125,6 +135,7 @@ class WebformThirdPartySettingsFormAlter extends WebformFormAlterBase {
       '#title' => $this->t('OpenFisca immediate response mapping'),
       '#description' => $this->t('Specify the field immediate response mapping'),
       '#default_value' => $openfisca_settings->getJsonImmediateResponseMapping(),
+      '#weight' => 0,
     ];
     $form['third_party_settings']['webform_openfisca']['fisca_immediate_exit_mapping'] = [
       '#type' => 'webform_codemirror',
@@ -133,12 +144,14 @@ class WebformThirdPartySettingsFormAlter extends WebformFormAlterBase {
       '#title' => $this->t('OpenFisca immediate exit mapping'),
       '#description' => $this->t('Specify the return keys of OpenFisca response to map to immediate exit. Comma separated.'),
       '#default_value' => $openfisca_settings->getPlainImmediateExitKeys(),
+      '#weight' => 10,
     ];
     $form['third_party_settings']['webform_openfisca']['fisca_immediate_response_ajax_indicator'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Display Ajax indicator'),
       '#description' => $this->t('Whether to display an Ajax indicator when an immediate response is required.'),
       '#default_value' => $openfisca_settings->hasImmediateResponseAjaxIndicator(),
+      '#weight' => 20,
     ];
     $form['#validate'][] = [$this, 'validateForm'];
   }

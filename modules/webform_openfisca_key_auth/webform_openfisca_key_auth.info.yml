@@ -1,0 +1,8 @@
+name: Webform OpenFisca - Authorization Key
+type: module
+description: Add support of authorization token with Key module to Webform OpenFisca.
+package: Webform
+core_version_requirement: ^10 || ^11
+dependencies:
+  - webform_openfisca:webform_openfisca
+  - key:key
