@@ -142,6 +142,13 @@ class Client implements ClientInterface {
   /**
    * {@inheritDoc}
    */
+  public function getBaseUri(): string {
+    return $this->baseApiUri;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
   public static function sanitiseUri(string $uri): string {
     return trim($uri, '/');
   }

@@ -65,7 +65,8 @@ abstract class Payload {
    */
   public static function fromJson(string $json) : static {
     $payload = new static();
-    $payload->payload = !empty($json) ? Json::decode($json) : [];
+    $data = !empty($json) ? Json::decode($json) : [];
+    $payload->payload = is_array($data) ? $data : [];
     return $payload;
   }
 
@@ -75,7 +76,7 @@ abstract class Payload {
    * @param array|string $key_path
    *   The key path in the format:
    *   - array: ['persons', 'PersonA', 'age'].
-   *   - string: 'persons.PersonsA.age'.
+   *   - string: 'persons.PersonA.age'.
    *
    * @return bool
    *   TRUE if the key path exists.
@@ -95,7 +96,7 @@ abstract class Payload {
    * @param array|string $key_path
    *   The key path in the format:
    *   - array: ['persons', 'PersonA', 'age'].
-   *   - string: 'persons.PersonsA.age'.
+   *   - string: 'persons.PersonA.age'.
    *
    * @return mixed
    *   The value.
@@ -143,7 +144,7 @@ abstract class Payload {
    * @return array|null
    *   The path of the first matching key, or NULL if not found.
    */
-  public function findKeyRecursive(array $data, string $key, array $parents = []): ?array {
+  protected function findKeyRecursive(array $data, string $key, array $parents = []): ?array {
     foreach ($data as $data_key => $data_value) {
       $parents[] = $data_key;
       if ($data_key === $key) {

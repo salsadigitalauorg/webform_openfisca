@@ -1,0 +1,9 @@
+{
+  "defaultValue": false,
+  "definitionPeriod": "DAY",
+  "description": "Are you Aboriginal or Torres Strait Islander?",
+  "entity": "person",
+  "id": "aboriginal_torres_strait_islander",
+  "source": "https://github.com/openfisca/country-template/blob/0.0.1/openfisca_rules/variables/sa.py#L93-L97",
+  "valueType": "Boolean"
+}

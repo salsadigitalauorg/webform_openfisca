@@ -58,22 +58,22 @@ class Helper {
       $keys = explode('.', trim($field_mapping));
       $group_entity = NULL;
       $entity = NULL;
+
+      array_walk($keys, static fn ($key) : string => !empty($key) ? trim((string) $key) : '');
+      $path = $keys;
+
       // The last element is the variable, e.g 'salary'.
       $variable = array_pop($keys);
-      $path = [$variable];
+      $parents = $keys;
+
       // The second element is the entity, e.g 'PersonA'.
       if (isset($keys[1])) {
         $entity = trim($keys[1]);
-        array_unshift($path, $entity);
       }
       // The first element is the group entity, e.g 'persons'.
       if (isset($keys[0])) {
         $group_entity = trim($keys[0]);
-        array_unshift($path, $group_entity);
       }
-
-      $parents = $path;
-      array_pop($parents);
 
       return $variable ?: '';
     }
@@ -142,7 +142,7 @@ class Helper {
       'DAY' => $date->format('Y-m-d'),
       // Date format yyyy-Wxx eg. 2022-W44.
       'WEEK' => $date->format('Y-\WW'),
-      // Date format yyyy-Wxx-x eg. 2022-W44-2 (2 = Tuesday the weekday number).
+      // Date format yyyy-Wxx-x eg. 2022-W44-3 (3 = Wednesday the weekday no.).
       'WEEKDAY' => $date->format('Y-\WW-N'),
       // Date format yyyy-mm eg. 2022-11.
       'MONTH' => $date->format('Y-m'),

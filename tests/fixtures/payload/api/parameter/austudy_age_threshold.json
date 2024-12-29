@@ -1,0 +1,9 @@
+{
+  "description": "Minimum age at which a person is eligible for AU Study.",
+  "id": "austudy_age_threshold",
+  "metadata": {},
+  "source": "https://github.com/openfisca/country-template/blob/0.0.1/openfisca_rules/parameters/austudy_age_threshold.yaml",
+  "values": {
+    "2024-05-01": 25
+  }
+}

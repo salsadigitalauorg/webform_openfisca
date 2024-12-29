@@ -27,6 +27,14 @@ interface ClientInterface {
   public const string ENDPOINT_VARIABLES = 'variables';
 
   /**
+   * Get the base URI of the API Client.
+   *
+   * @return string
+   *   The base URI.
+   */
+  public function getBaseUri(): string;
+
+  /**
    * Get data from an OpenFisca endpoint.
    *
    * @param string $endpoint

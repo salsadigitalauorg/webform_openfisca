@@ -151,7 +151,7 @@ jobs:
 
       - name: Run tests
         working-directory: build
-        run: php -d pcov.directory=.. vendor/bin/phpunit || [ "${CI_TEST_IGNORE_FAILURE:-0}" -eq 1 ] || [ "${CI_TEST_ACCEPT_CANARY_FAILURE:-0}" -eq 1 ]
+        run: php -d pcov.directory=.. vendor/bin/phpunit --coverage-text --colors=never || [ "${CI_TEST_IGNORE_FAILURE:-0}" -eq 1 ] || [ "${CI_TEST_ACCEPT_CANARY_FAILURE:-0}" -eq 1 ]
         env:
           BROWSERTEST_OUTPUT_DIRECTORY: /tmp
           CI_TEST_IGNORE_FAILURE: ${{ vars.CI_TEST_IGNORE_FAILURE }}
@@ -160,11 +160,12 @@ jobs:
 
       - name: Check code coverage
         working-directory: build
-        run: vendor/bin/coverage-check ${CI_CHECK_COVERAGE_COMMAND:-} ../.logs/coverage/phpunit/clover.xml "${CI_CHECK_COVERAGE_THRESHOLD:-50}" || [ "${CI_CHECK_COVERAGE_IGNORE_FAILURE:-0}" -eq 1 ]
+        run: vendor/bin/coverage-check ${CI_CHECK_COVERAGE_EXTRA:-} ${CI_CHECK_COVERAGE_COMMAND:-} ../.logs/coverage/phpunit/clover.xml "${CI_CHECK_COVERAGE_THRESHOLD:-50}" || [ "${CI_CHECK_COVERAGE_IGNORE_FAILURE:-0}" -eq 1 ]
         if: always()
         env:
           # Drupal 10 uses older version of coverage-check which requires an extra param.
           CI_CHECK_COVERAGE_COMMAND: ${{ contains(matrix.name, 'd10') && 'coverage:check' || '' }}
+          CI_CHECK_COVERAGE_EXTRA: ${{ contains(matrix.name, 'd10') && '--no-ansi' || '' }}
           # TODO: Increase the threshold to 80-90% when we have enough tests.
           CI_CHECK_COVERAGE_THRESHOLD: ${{ vars.CI_CHECK_COVERAGE_THRESHOLD || 50 }}
           # Temporarily accept code coverage check failure.
