@@ -1,0 +1,9 @@
+{
+  "description": "Disability allowance maximum income threshold",
+  "id": "disability_allowance_max_income",
+  "metadata": {},
+  "source": "https://github.com/openfisca/country-template/blob/0.0.1/openfisca_rules/parameters/disability_allowance_max_income.yaml",
+  "values": {
+    "2024-01-01": 500
+  }
+}

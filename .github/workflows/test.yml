@@ -151,7 +151,7 @@ jobs:
 
       - name: Run tests
         working-directory: build
-        run: php -d pcov.directory=.. vendor/bin/phpunit --coverage-text --colors=never || [ "${CI_TEST_IGNORE_FAILURE:-0}" -eq 1 ] || [ "${CI_TEST_ACCEPT_CANARY_FAILURE:-0}" -eq 1 ]
+        run: php -d pcov.directory="../.." vendor/bin/phpunit --coverage-text --colors=never || [ "${CI_TEST_IGNORE_FAILURE:-0}" -eq 1 ] || [ "${CI_TEST_ACCEPT_CANARY_FAILURE:-0}" -eq 1 ]
         env:
           BROWSERTEST_OUTPUT_DIRECTORY: /tmp
           CI_TEST_IGNORE_FAILURE: ${{ vars.CI_TEST_IGNORE_FAILURE }}

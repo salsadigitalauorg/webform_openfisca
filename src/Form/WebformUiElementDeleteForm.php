@@ -29,8 +29,10 @@ class WebformUiElementDeleteForm extends WebformUiElementDeleteFormBase {
 
       $this->webform->save();
     }
+    // @codeCoverageIgnoreStart
     catch (EntityStorageException $entity_storage_exception) {
       $this->messenger()->addError($entity_storage_exception->getMessage());
+      // @codeCoverageIgnoreEnd
     }
 
     parent::submitForm($form, $form_state);

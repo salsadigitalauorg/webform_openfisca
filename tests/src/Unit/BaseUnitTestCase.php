@@ -9,6 +9,7 @@ use Drupal\Core\Http\ClientFactory as HttpClientFactory;
 use Drupal\Core\Logger\LoggerChannelInterface;
 use Drupal\Core\Serialization\Yaml;
 use Drupal\Core\Theme\ThemeManagerInterface;
+use Drupal\Tests\UnitTestCase;
 use Drupal\webform\WebformInterface;
 use Drupal\webform_openfisca\OpenFisca\ClientFactory;
 use Drupal\webform_openfisca\OpenFisca\ClientFactoryInterface;
@@ -22,9 +23,9 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamInterface;
 
 /**
- * Trait with helper methods for unit testing.
+ * Base class for unit tests.
  */
-trait UnitTestTrait {
+abstract class BaseUnitTestCase extends UnitTestCase {
 
   /**
    * Mock an OpenFisca Client Factory service.

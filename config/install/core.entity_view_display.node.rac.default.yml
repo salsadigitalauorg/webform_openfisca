@@ -2,7 +2,6 @@ langcode: en
 status: true
 dependencies:
   config:
-    - field.field.node.rac.body
     - field.field.node.rac.field_rules
     - field.field.node.rac.field_webform
     - node.type.rac
@@ -16,13 +15,6 @@ targetEntityType: node
 bundle: rac
 mode: default
 content:
-  body:
-    type: text_default
-    label: hidden
-    settings: {  }
-    third_party_settings: {  }
-    weight: 2
-    region: content
   field_rules:
     type: entity_reference_revisions_entity_view
     label: visually_hidden

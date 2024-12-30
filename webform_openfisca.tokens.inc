@@ -81,6 +81,7 @@ function webform_openfisca_tokens(string $type, array $tokens, array $data, arra
   $webform_openfisca_settings = [];
   foreach ($tokens as $name => $original) {
     if (str_starts_with($name, 'wo_params:')) {
+      $openfisca_settings = NULL;
       // Default replacement is empty string.
       $replacements[$original] = '';
       // Extract Webform ID and Parameter from the token.

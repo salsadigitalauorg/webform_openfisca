@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Drupal\Tests\webform_openfisca\Unit;
 
-use Drupal\Tests\UnitTestCase;
 use Drupal\webform_openfisca\OpenFisca\ClientInterface;
 
 /**
@@ -13,9 +12,7 @@ use Drupal\webform_openfisca\OpenFisca\ClientInterface;
  * @group webform_openfisca
  * @coversDefaultClass \Drupal\webform_openfisca\OpenFisca\ClientFactory
  */
-class OpenFiscaClientFactoryUnitTest extends UnitTestCase {
-
-  use UnitTestTrait;
+class OpenFiscaClientFactoryUnitTest extends BaseUnitTestCase {
 
   /**
    * Tests the create() method of OpenFisca Client Factory.

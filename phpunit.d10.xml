@@ -106,6 +106,7 @@
             <file>web/modules/custom/webform_openfisca/webform_openfisca.module</file>
             <file>web/modules/custom/webform_openfisca/webform_openfisca.install</file>
             <file>web/modules/custom/webform_openfisca/webform_openfisca.tokens.inc</file>
+            <file>web/modules/custom/webform_openfisca/modules/webform_openfisca_key_auth/webform_openfisca_key_auth.module</file>
         </include>
 
         <exclude>

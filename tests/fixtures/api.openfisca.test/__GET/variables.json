@@ -1,0 +1,78 @@
+{
+  "act_child_work_compliant": {
+    "description": "ACT child work compliant",
+    "href": "https://api.openfisca.test/variable/act_child_work_compliant"
+  },
+  "aus_citizen": {
+    "description": "Australian citizen or permanent resident",
+    "href": "https://api.openfisca.test/variable/aus_citizen"
+  },
+  "child_adequate_supervision_and_work_safety": {
+    "description": "There <are/are not> adequate supervision and work and safety standards in place",
+    "href": "https://api.openfisca.test/variable/child_adequate_supervision_and_work_safety"
+  },
+  "child_age": {
+    "description": "How old is the child?",
+    "href": "https://api.openfisca.test/variable/child_age"
+  },
+  "child_currently_at_school": {
+    "description": "The child <is/is not> currently at school?",
+    "href": "https://api.openfisca.test/variable/child_currently_at_school"
+  },
+  "child_weekly_work_hours": {
+    "description": "How many hours per week will the child be working",
+    "href": "https://api.openfisca.test/variable/child_weekly_work_hours"
+  },
+  "child_work_outside_school_hours": {
+    "description": "The work <is/is not> outside of school hours?",
+    "href": "https://api.openfisca.test/variable/child_work_outside_school_hours"
+  },
+  "disability_allowance_benefit": {
+    "description": "Disability allowance eligibility amount",
+    "href": "https://api.openfisca.test/variable/disability_allowance_benefit"
+  },
+  "disability_allowance_eligible": {
+    "description": "Disability allowance eligibility",
+    "href": "https://api.openfisca.test/variable/disability_allowance_eligible"
+  },
+  "has_disability": {
+    "description": "I <do/do not> have a disability",
+    "href": "https://api.openfisca.test/variable/has_disability"
+  },
+  "income_tax": {
+    "description": "Income tax",
+    "href": "https://api.openfisca.test/variable/income_tax"
+  },
+  "junior_child": {
+    "description": "ACT junior child",
+    "href": "https://api.openfisca.test/variable/junior_child"
+  },
+  "junior_child_work_hours_over_threshold": {
+    "description": "ACT junior child work hours over threshold",
+    "href": "https://api.openfisca.test/variable/junior_child_work_hours_over_threshold"
+  },
+  "monthly_income": {
+    "description": "What is your monthly income",
+    "href": "https://api.openfisca.test/variable/monthly_income"
+  },
+  "monthly_income_exceeds_limit": {
+    "description": "Monthly Income exceeds limit",
+    "href": "https://api.openfisca.test/variable/monthly_income_exceeds_limit"
+  },
+  "requires_ongoing_supervision_or_treatment": {
+    "description": "I <do/do not require> ongoing supervision or treatment by a health practitioner",
+    "href": "https://api.openfisca.test/variable/requires_ongoing_supervision_or_treatment"
+  },
+  "requires_ongoing_support": {
+    "description": "I <do/do not> require support for everyday life functions.",
+    "href": "https://api.openfisca.test/variable/requires_ongoing_support"
+  },
+  "salary": {
+    "description": "What is your salary",
+    "href": "https://api.openfisca.test/variable/salary"
+  },
+  "senior_child": {
+    "description": "ACT senior child",
+    "href": "https://api.openfisca.test/variable/senior_child"
+  }
+}

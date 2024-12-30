@@ -45,5 +45,7 @@ function webform_openfisca_help(string $route_name, RouteMatchInterface $route_m
     $output .= '</dl>';
     return $output;
   }
+  // @codeCoverageIgnoreStart
   return '';
+  // @codeCoverageIgnoreEnd
 }

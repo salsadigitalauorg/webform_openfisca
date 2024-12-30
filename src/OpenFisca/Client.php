@@ -26,13 +26,23 @@ class Client implements ClientInterface {
    *   The HTTP Client service.
    * @param \Psr\Log\LoggerInterface $logger
    *   The logger service.
+   * @param array $httpClientOptions
+   *   The options initialising the HTTP Client (used by the client factory).
    */
   public function __construct(
     protected string $baseApiUri,
     protected GuzzleClientInterface $httpClient,
     protected LoggerInterface $logger,
+    protected array $httpClientOptions = [],
   ) {
     $this->baseApiUri = static::sanitiseUri($this->baseApiUri);
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function getHttpClientOptions(): array {
+    return $this->httpClientOptions;
   }
 
   /**

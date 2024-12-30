@@ -30,11 +30,15 @@ function webform_openfisca_key_auth_config_schema_info_alter(array &$definitions
 function webform_openfisca_key_auth_webform_third_party_settings_form_alter(array &$form, FormStateInterface $form_state) : void {
   $form_object = $form_state->getFormObject();
   if (!$form_object instanceof EntityFormInterface) {
+    // @codeCoverageIgnoreStart
     return;
+    // @codeCoverageIgnoreEnd
   }
   $webform = $form_object->getEntity();
   if (!$webform instanceof WebformInterface) {
+    // @codeCoverageIgnoreStart
     return;
+    // @codeCoverageIgnoreEnd
   }
 
   $token_key = (string) $webform->getThirdPartySetting('webform_openfisca', 'fisca_api_authorization_header_token_key', '');
@@ -55,12 +59,16 @@ function webform_openfisca_key_auth_webform_openfisca_client_options_alter(array
   /** @var \Drupal\webform_openfisca\WebformOpenFiscaSettings $webform_openfisca_settings */
   $webform_openfisca_settings = $webform_openfisca_context['webform_openfisca_settings'] ?? NULL;
   if (!$webform_openfisca_settings instanceof WebformOpenFiscaSettings) {
+    // @codeCoverageIgnoreStart
     return;
+    // @codeCoverageIgnoreEnd
   }
 
   $webform = Webform::load($webform_openfisca_settings->getWebformId());
   if (!$webform instanceof WebformInterface) {
+    // @codeCoverageIgnoreStart
     return;
+    // @codeCoverageIgnoreEnd
   }
 
   $token_key = (string) $webform->getThirdPartySetting('webform_openfisca', 'fisca_api_authorization_header_token_key', '');

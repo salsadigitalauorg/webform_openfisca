@@ -48,7 +48,7 @@ class ClientFactory implements ClientFactoryInterface {
     $this->themeManager->alter('webform_openfisca_client_options', $options, $context, $webform_openfisca_context);
 
     $http_client = $this->httpClientFactory->fromOptions($options);
-    return new Client($options['base_uri'], $http_client, $this->logger);
+    return new Client($options['base_uri'], $http_client, $this->logger, $options);
   }
 
 }

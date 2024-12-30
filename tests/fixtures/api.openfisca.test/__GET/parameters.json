@@ -1,0 +1,30 @@
+{
+  "act.junior_child_max_age": {
+    "description": "ACT child junior maximum age",
+    "href": "https://api.openfisca.test/parameter/act/junior_child_max_age"
+  },
+  "act.junior_child_max_work_hours": {
+    "description": "ACT child junior maximum weekly work hours",
+    "href": "https://api.openfisca.test/parameter/act/junior_child_max_work_hours"
+  },
+  "act.senior_child_max_age": {
+    "description": "ACT child senior maximum age",
+    "href": "https://api.openfisca.test/parameter/act/senior_child_max_age"
+  },
+  "act.senior_child_min_age": {
+    "description": "ACT child senior minimum age",
+    "href": "https://api.openfisca.test/parameter/act/senior_child_min_age"
+  },
+  "disability_allowance_benefit": {
+    "description": "Disability allowance if eligible",
+    "href": "https://api.openfisca.test/parameter/disability_allowance_benefit"
+  },
+  "disability_allowance_max_income": {
+    "description": "Disability allowance maximum income threshold",
+    "href": "https://api.openfisca.test/parameter/disability_allowance_max_income"
+  },
+  "income_tax_rate": {
+    "description": "Income tax rate",
+    "href": "https://api.openfisca.test/parameter/income_tax_rate"
+  }
+}

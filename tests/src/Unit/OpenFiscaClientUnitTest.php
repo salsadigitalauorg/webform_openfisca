@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Drupal\Tests\webform_openfisca\Unit;
 
 use Drupal\Component\Utility\NestedArray;
-use Drupal\Tests\UnitTestCase;
 use Drupal\webform_openfisca\OpenFisca\Client;
 use Drupal\webform_openfisca\OpenFisca\Helper;
 
@@ -15,9 +14,7 @@ use Drupal\webform_openfisca\OpenFisca\Helper;
  * @group webform_openfisca
  * @coversDefaultClass \Drupal\webform_openfisca\OpenFisca\Client
  */
-class OpenFiscaClientUnitTest extends UnitTestCase {
-
-  use UnitTestTrait;
+class OpenFiscaClientUnitTest extends BaseUnitTestCase {
 
   /**
    * Tests the get() method of OpenFisca Client.
@@ -26,13 +23,18 @@ class OpenFiscaClientUnitTest extends UnitTestCase {
    * @covers \Drupal\webform_openfisca\OpenFisca\Client::getEntities
    * @covers \Drupal\webform_openfisca\OpenFisca\Client::__construct
    * @covers \Drupal\webform_openfisca\OpenFisca\Client::getBaseUri
+   * @covers \Drupal\webform_openfisca\OpenFisca\Client::getHttpClientOptions
    * @covers \Drupal\webform_openfisca\OpenFisca\Client::sanitiseUri
    */
   public function testGet(): void {
     $logger = $this->mockLogger();
     $http_client = $this->mockHttpClient('payload/api/api.json');
-    $client = new Client('https://openfisca.test/api/', $http_client, $logger);
+    $client = new Client('https://openfisca.test/api/', $http_client, $logger, ['headers' => ['Authorization' => 'Bearer TOKEN']]);
     $this->assertSame('https://openfisca.test/api', $client->getBaseUri());
+    $http_client_options = $client->getHttpClientOptions();
+    $this->assertArrayHasKey('headers', $http_client_options);
+    $this->assertArrayHasKey('Authorization', $http_client_options['headers']);
+    $this->assertEquals('Bearer TOKEN', $http_client_options['headers']['Authorization']);
 
     // Tests the generic get() method.
     $response_payload = $client->get('/');

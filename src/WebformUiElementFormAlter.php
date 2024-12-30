@@ -21,12 +21,16 @@ class WebformUiElementFormAlter extends WebformFormAlterBase {
   public function alterForm(array &$form, FormStateInterface $form_state) : void {
     $webform = $this->getWebformFromFormState($form_state);
     if (!$webform instanceof WebformInterface) {
+      // @codeCoverageIgnoreStart
       return;
+      // @codeCoverageIgnoreEnd
     }
 
     $element_key = $this->getWebformElementKey($form_state);
     if (empty($element_key)) {
+      // @codeCoverageIgnoreStart
       return;
+      // @codeCoverageIgnoreEnd
     }
 
     $openfisca_settings = WebformOpenFiscaSettings::load($webform);
@@ -96,21 +100,29 @@ class WebformUiElementFormAlter extends WebformFormAlterBase {
   public function submitForm(array &$form, FormStateInterface $form_state) : void {
     $webform = $this->getWebformFromFormState($form_state);
     if (!$webform instanceof WebformInterface) {
+      // @codeCoverageIgnoreStart
       return;
+      // @codeCoverageIgnoreEnd
     }
 
     $element_key = $this->getWebformElementKey($form_state);
     if (empty($element_key)) {
+      // @codeCoverageIgnoreStart
       return;
+      // @codeCoverageIgnoreEnd
     }
 
     if ($form_state->getValue('key') !== $element_key) {
+      // @codeCoverageIgnoreStart
       return;
+      // @codeCoverageIgnoreEnd
     }
 
     $openfisca_settings = WebformOpenFiscaSettings::load($webform);
     if (!$openfisca_settings->isEnabled() || !$openfisca_settings->hasApiEndpoint()) {
+      // @codeCoverageIgnoreStart
       return;
+      // @codeCoverageIgnoreEnd
     }
     $fisca_field_mappings = $openfisca_settings->getFieldMappings();
     $fisca_variables = $openfisca_settings->getVariables();
@@ -162,11 +174,12 @@ class WebformUiElementFormAlter extends WebformFormAlterBase {
       }
     }
     // Remove OpenFisca variable and field mapping for this element key.
+    // @todo Remove the old variable when the field mapping is changed.
     else {
       $field_mapping = $openfisca_settings->getFieldMapping($element_key);
       if ($field_mapping !== FALSE) {
         $fisca_variable = OpenFiscaHelper::parseOpenFiscaFieldMapping($field_mapping);
-        unset($fisca_field_mappings[$field_mapping], $fisca_variables[$fisca_variable]);
+        unset($fisca_field_mappings[$element_key], $fisca_variables[$fisca_variable]);
       }
       // Remove the entity role too.
       unset($fisca_entity_roles[$element_key]);
@@ -189,9 +202,11 @@ class WebformUiElementFormAlter extends WebformFormAlterBase {
       $webform->setThirdPartySetting('webform_openfisca', 'fisca_immediate_response_mapping', OpenFiscaHelper::jsonEncodePretty($fisca_immediate_response_mapping));
       $webform->save();
     }
+    // @codeCoverageIgnoreStart
     catch (EntityStorageException $entity_storage_exception) {
       $this->messenger->addError($entity_storage_exception->getMessage());
     }
+    // @codeCoverageIgnoreEnd
   }
 
   /**
@@ -219,7 +234,9 @@ class WebformUiElementFormAlter extends WebformFormAlterBase {
    */
   protected function getOpenFiscaVariables(WebformOpenFiscaSettings $settings) : array {
     if (!$settings->hasApiEndpoint()) {
+      // @codeCoverageIgnoreStart
       return [];
+      // @codeCoverageIgnoreEnd
     }
 
     $openfisca_client = $settings->getOpenFiscaClient($this->openFiscaClientFactory);

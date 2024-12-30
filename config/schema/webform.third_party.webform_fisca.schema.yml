@@ -3,7 +3,7 @@ webform.settings.third_party.webform_openfisca:
   label: 'OpenFisca settings'
   mapping:
     fisca_enabled:
-      type: string
+      type: boolean
       label: 'OpenFisca integration enabled'
     fisca_debug_mode:
       type: boolean

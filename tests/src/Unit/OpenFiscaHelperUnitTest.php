@@ -7,7 +7,6 @@ namespace Drupal\Tests\webform_openfisca\Unit;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Language\LanguageInterface;
 use Drupal\Core\Language\LanguageManagerInterface;
-use Drupal\Tests\UnitTestCase;
 use Drupal\webform_openfisca\OpenFisca\Helper;
 
 /**
@@ -16,7 +15,7 @@ use Drupal\webform_openfisca\OpenFisca\Helper;
  * @group webform_openfisca
  * @coversDefaultClass \Drupal\webform_openfisca\OpenFisca\Helper
  */
-class OpenFiscaHelperUnitTest extends UnitTestCase {
+class OpenFiscaHelperUnitTest extends BaseUnitTestCase {
 
   /**
    * {@inheritDoc}
