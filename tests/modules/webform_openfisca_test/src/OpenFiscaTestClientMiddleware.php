@@ -62,17 +62,26 @@ class OpenFiscaTestClientMiddleware {
 
     $query = $uri->getQuery();
     if ($query !== '') {
-      $suffixes[] = hash('sha256', $query);
+      $suffixes[] = substr(hash('sha256', $query), 0, 24);
     }
 
     $method = strtoupper($request->getMethod());
     if ($method === 'POST') {
       $body = (string) $request->getBody();
-      $suffixes[] = hash('sha256', $body);
+      $suffixes[] = substr(hash('sha256', $body), 0, 24);
     }
 
     $fixture = $this->getFixturePath($host, $path, $method, implode('-', $suffixes));
-    return file_exists($fixture) ? file_get_contents($fixture) : FALSE;
+    if (!file_exists($fixture)) {
+      // Attempt to match a fixture with '-notes-*' suffix.
+      $pattern = str_replace('.json', '-notes-*.json', $fixture);
+      $matches = glob($pattern);
+      if (empty($matches)) {
+        return FALSE;
+      }
+      $fixture = reset($matches);
+    }
+    return file_get_contents($fixture);
   }
 
   /**

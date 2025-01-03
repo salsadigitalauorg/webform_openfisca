@@ -6,10 +6,10 @@ dependencies:
 third_party_settings:
   webform_openfisca:
     fisca_enabled: true
-    fisca_debug_mode: true
+    fisca_debug_mode: false
     fisca_logging_mode: true
-    fisca_api_endpoint: 'https://api.openfisca.test/'
-    fisca_api_authorization_header: 'Token WEBFORM-OPENFISCA-TEST-TOKEN'
+    fisca_api_endpoint: 'https://invalid-api.openfisca.test'
+    fisca_api_authorization_header: ''
     fisca_field_mappings: |-
       {
           "what_is_your_monthly_income_": "persons.personA.monthly_income",
@@ -19,7 +19,9 @@ third_party_settings:
           "disability_allowance_eligible": "persons.personA.disability_allowance_eligible",
           "aus_citizen_or_permanent_resident": "persons.personA.aus_citizen",
           "disability_allowance_benefit": "persons.personA.disability_allowance_benefit",
-          "monthly_income_exceeds_limit": "persons.personA.monthly_income_exceeds_limit"
+          "monthly_income_exceeds_limit": "persons.personA.monthly_income_exceeds_limit",
+          "hidden_field": "_nil",
+          "period": "period"
       }
     fisca_variables: |-
       {
@@ -35,22 +37,6 @@ third_party_settings:
               ],
               "source": "https:\/\/github.com\/openfisca\/country-template\/blob\/6.0.1\/openfisca_rules\/variables\/disability_allowance.py#L27-L33",
               "valueType": "Float"
-          },
-          "exit": {
-              "defaultValue": false,
-              "definitionPeriod": "DAY",
-              "description": "Eligibility for immediate exit",
-              "entity": "person",
-              "formulas": {
-                "0001-01-01": {
-                  "content": "def formula(person, period):\n    \u0022\u0022\u0022Calculate the eligibility for immediate exit.\u0022\u0022\u0022n    # Retrieve the values of the input variables\n    australian_citizen_or_permanent_resident = person(\u0022australian_citizen_or_permanent_resident\u0022, period)\n    has_disability = person(\u0022has_disability\u0022, period)\n    giving_care_to_disabled = person(\u0022giving_care_to_disabled\u0022, period)\n    meets_pension_age = person(\u0022meets_pension_age\u0022, period)\n    dependant_children = person(\u0022dependant_children\u0022, period)\n    looking_for_work_unable_to_work = person(\u0022looking_for_work_unable_to_work\u0022, period)\n    currently_studying = person(\u0022currently_studying\u0022, period)\n\n    # Check if any condition is met for eligibility\n    eligible_conditions = (\n        has_disability | giving_care_to_disabled | meets_pension_age | dependant_children | looking_for_work_unable_to_work | currently_studying\n    )\n\n    # Determine eligibility\n    return select(\n        [\n            australian_citizen_or_permanent_resident & eligible_conditions,\n            logical_not(australian_citizen_or_permanent_resident),\n        ],\n        [\n            True,\n            True,\n        ],\n    )\n",
-                  "documentation": "Calculate the eligibility for immediate exit.",
-                  "source": "https://github.com/openfisca/country-template/blob/0.0.1/openfisca_rules/variables/sa.py#L343-L369"
-                }
-              },
-              "id": "exit",
-              "source": "https://github.com/openfisca/country-template/blob/0.0.1/openfisca_rules/variables/sa.py#L335-L368",
-              "valueType": "Boolean"
           },
           "has_disability": {
               "defaultValue": false,
@@ -172,39 +158,25 @@ third_party_settings:
           }
       }
     fisca_parameter_tokens: 'disability_allowance_max_income,income_tax_rate'
-    fisca_parameters: |-
+    fisca_parameters: '[]'
+    fisca_entity_roles: |-
       {
-          "disability_allowance_max_income": {
-              "description": "Disability allowance maximum income threshold",
-              "id": "disability_allowance_max_income",
-              "metadata": [],
-              "source": "https:\/\/github.com\/openfisca\/country-template\/blob\/0.0.1\/openfisca_rules\/parameters\/disability_allowance_max_income.yaml",
-              "values": {
-                  "2024-01-01": 500
-              }
+          "requires_ongoing_support": {
+              "role": "families.family.principal.personA",
+              "is_array": true
           },
-          "income_tax_rate": {
-              "description": "Income tax rate",
-              "id": "income_tax_rate",
-              "metadata": {
-                  "unit": "\/1"
-              },
-              "source": "https:\/\/github.com\/openfisca\/country-template\/blob\/0.0.1\/openfisca_rules\/parameters\/income_tax_rate.yaml",
-              "values": {
-                  "2023-01-01": 0.14,
-                  "2024-01-01": 0.15,
-                  "2025-01-01": 0.16
-              }
+          "requires_ongoing_supervision_or_treatment": {
+              "role": "families.family.principal.personA",
+              "is_array": false
           }
       }
-    fisca_entity_roles: '[]'
     fisca_immediate_response_mapping: |-
       {
           "aus_citizen_or_permanent_resident": true,
           "has_disability": true
       }
     fisca_immediate_response_ajax_indicator: true
-    fisca_immediate_exit_mapping: 'persons.personA.exit,persons.personA.exit2'
+    fisca_immediate_exit_mapping: 'persons.personA.exit'
     fisca_return_key: 'persons.personA.disability_allowance_eligible,persons.personA.disability_allowance_benefit,persons.personA.monthly_income_exceeds_limit'
 weight: 0
 open: null
@@ -212,8 +184,8 @@ close: null
 uid: 2
 template: false
 archive: false
-id: test_dac
-title: 'Disability Allowance Checker'
+id: test_invalid_api_period
+title: 'Disability Allowance Checker - Invalid API with Period webform key'
 description: ''
 categories: {  }
 elements: |-
@@ -287,6 +259,12 @@ elements: |-
   monthly_income_exceeds_limit:
     '#type': hidden
     '#title': monthly_income_exceeds_limit
+  period:
+    '#type': hidden
+    '#title': period
+  hidden_field:
+    '#type': hidden
+    '#title': hidden_field
   markup:
     '#type': webform_markup
     '#states':

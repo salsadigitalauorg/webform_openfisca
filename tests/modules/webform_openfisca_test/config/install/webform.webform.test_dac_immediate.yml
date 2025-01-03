@@ -204,16 +204,16 @@ third_party_settings:
           "has_disability": true
       }
     fisca_immediate_response_ajax_indicator: true
-    fisca_immediate_exit_mapping: 'persons.personA.exit,persons.personA.exit2'
-    fisca_return_key: 'persons.personA.disability_allowance_eligible,persons.personA.disability_allowance_benefit,persons.personA.monthly_income_exceeds_limit'
+    fisca_immediate_exit_mapping: 'persons.personA.exit'
+    fisca_return_key: 'persons.personA.disability_allowance_eligible,persons.personA.disability_allowance_benefit,persons.personA.monthly_income_exceeds_limit,persons.personA.aus_citizen'
 weight: 0
 open: null
 close: null
 uid: 2
 template: false
 archive: false
-id: test_dac
-title: 'Disability Allowance Checker'
+id: test_dac_immediate
+title: 'Disability Allowance Checker - Immediate response'
 description: ''
 categories: {  }
 elements: |-

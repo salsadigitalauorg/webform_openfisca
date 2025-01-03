@@ -160,16 +160,14 @@ jobs:
 
       - name: Check code coverage
         working-directory: build
-        run: vendor/bin/coverage-check ${CI_CHECK_COVERAGE_EXTRA:-} ${CI_CHECK_COVERAGE_COMMAND:-} ../.logs/coverage/phpunit/clover.xml "${CI_CHECK_COVERAGE_THRESHOLD:-50}" || [ "${CI_CHECK_COVERAGE_IGNORE_FAILURE:-0}" -eq 1 ]
+        run: vendor/bin/coverage-check ${CI_CHECK_COVERAGE_EXTRA:-} ${CI_CHECK_COVERAGE_COMMAND:-} ../.logs/coverage/phpunit/clover.xml "${CI_CHECK_COVERAGE_THRESHOLD:-90}" || [ "${CI_CHECK_COVERAGE_IGNORE_FAILURE:-0}" -eq 1 ]
         if: always()
         env:
           # Drupal 10 uses older version of coverage-check which requires an extra param.
           CI_CHECK_COVERAGE_COMMAND: ${{ contains(matrix.name, 'd10') && 'coverage:check' || '' }}
           CI_CHECK_COVERAGE_EXTRA: ${{ contains(matrix.name, 'd10') && '--no-ansi' || '' }}
-          # TODO: Increase the threshold to 80-90% when we have enough tests.
-          CI_CHECK_COVERAGE_THRESHOLD: ${{ vars.CI_CHECK_COVERAGE_THRESHOLD || 50 }}
-          # Temporarily accept code coverage check failure.
-          CI_CHECK_COVERAGE_IGNORE_FAILURE: ${{ vars.CI_CHECK_COVERAGE_IGNORE_FAILURE || 1}}
+          CI_CHECK_COVERAGE_THRESHOLD: ${{ vars.CI_CHECK_COVERAGE_THRESHOLD || 90 }}
+          CI_CHECK_COVERAGE_IGNORE_FAILURE: ${{ vars.CI_CHECK_COVERAGE_IGNORE_FAILURE || 0 }}
 
       - name: Upload test results as an artifact
         uses: actions/upload-artifact@v4

@@ -23,3 +23,21 @@ function webform_openfisca_update_8001() : void {
     $third_party_settings_manager->unsetThirdPartySetting('webform_openfisca', $key);
   }
 }
+
+/**
+ * Convert fisca_enabled in webform yaml to boolean.
+ *
+ * @codeCoverageIgnore
+ */
+function webform_openfisca_update_8002() : void {
+  $webform_storage = \Drupal::entityTypeManager()->getStorage('webform');
+  /** @var \Drupal\webform\WebformInterface[] $webforms */
+  $webforms = $webform_storage->loadMultiple();
+  foreach ($webforms as $webform) {
+    $settings = $webform->getThirdPartySettings('webform_openfisca');
+    if (isset($settings['fisca_enabled'])) {
+      $webform->setThirdPartySetting('webform_openfisca', 'fisca_enabled', (bool) $settings['fisca_enabled'])
+        ->save();
+    }
+  }
+}

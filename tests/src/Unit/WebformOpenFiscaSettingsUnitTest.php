@@ -24,7 +24,7 @@ class WebformOpenFiscaSettingsUnitTest extends OpenFiscaHelperUnitTest {
     $openfisca_settings = WebformOpenFiscaSettings::load($webform);
     $this->assertEquals('test_dac', $openfisca_settings->getWebformId());
     $this->assertTrue($openfisca_settings->isEnabled());
-    $this->assertFalse($openfisca_settings->isDebugEnabled());
+    $this->assertTrue($openfisca_settings->isDebugEnabled());
     $this->assertTrue($openfisca_settings->isLoggingEnabled());
     $this->assertTrue($openfisca_settings->hasApiEndpoint());
     $this->assertEquals('https://api.openfisca.test/', $openfisca_settings->getApiEndpoint());
@@ -92,8 +92,8 @@ class WebformOpenFiscaSettingsUnitTest extends OpenFiscaHelperUnitTest {
 
     $this->assertTrue($openfisca_settings->hasImmediateResponseAjaxIndicator());
 
-    $this->assertEquals('persons.personA.exit', $openfisca_settings->getPlainImmediateExitKeys());
-    $this->assertEquals(['persons.personA.exit'], $openfisca_settings->getImmediateExitKeys());
+    $this->assertEquals('persons.personA.exit,persons.personA.exit2', $openfisca_settings->getPlainImmediateExitKeys());
+    $this->assertEquals(['persons.personA.exit', 'persons.personA.exit2'], $openfisca_settings->getImmediateExitKeys());
 
     $this->assertEquals('2024-12-31', $openfisca_settings->formatVariablePeriod('has_disability', '2024-12-31'));
     $this->assertEquals('', $openfisca_settings->formatVariablePeriod('non-existent-mapping', '2024-12-31'));

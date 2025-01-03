@@ -35,6 +35,10 @@
     "description": "Disability allowance eligibility",
     "href": "https://api.openfisca.test/variable/disability_allowance_eligible"
   },
+  "exit": {
+    "description": "Eligibility for immediate exit",
+    "href": "https://api.openfisca.test/variable/exit"
+  },
   "has_disability": {
     "description": "I <do/do not> have a disability",
     "href": "https://api.openfisca.test/variable/has_disability"

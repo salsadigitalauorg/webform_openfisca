@@ -113,7 +113,9 @@
             <directory>web/modules/custom/*/tests</directory>
             <directory>web/themes/custom/*/tests</directory>
             <file>web/modules/custom/webform_openfisca/rector.php</file>
-            <file>web/themes/custom/webform_openfisca/rector.php</file>
+            <file>web/modules/custom/webform_openfisca/rector.php</file>
+            <file>web/modules/custom/webform_openfisca/.twig-cs-fixer.php</file>
+            <file>web/themes/custom/webform_openfisca/.twig-cs-fixer.php</file>
             <file>web/themes/custom/webform_openfisca/webform_openfisca.api.php</file>
         </exclude>
 

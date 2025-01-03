@@ -1,0 +1,19 @@
+{
+  "defaultValue": 0,
+  "definitionPeriod": "DAY",
+  "description": "Disability allowance eligibility amount",
+  "entity": "person",
+  "formulas": {
+    "0001-01-01": {
+      "content": "def formula(person, period, parameters):\n    \"\"\"Calculate Disability Allowance eligibility amount.\"\"\"\n    # Retrieve the values of the input variables\n    disability_allowance_eligible = person(\"disability_allowance_eligible\", period)\n\n    # Retrieve the values of the parameters\n    disability_allowance_benefit = parameters(period).disability_allowance_benefit\n\n    # Return the benefit amount if eligible, 0 otherwise\n    return where(disability_allowance_eligible, disability_allowance_benefit, 0)\n",
+      "documentation": "Calculate Disability Allowance eligibility amount.",
+      "source": "https://github.com/openfisca/country-template/blob/0.0.1/openfisca_rules/variables/disability_allowance.py#L109-L118"
+    }
+  },
+  "id": "disability_allowance_benefit",
+  "references": [
+    "https://law.gov.example/disability_allowance_benefit"
+  ],
+  "source": "https://github.com/openfisca/country-template/blob/0.0.1/openfisca_rules/variables/disability_allowance.py#L101-L117",
+  "valueType": "Float"
+}

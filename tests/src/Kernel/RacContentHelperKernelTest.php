@@ -34,14 +34,8 @@ class RacContentHelperKernelTest extends BaseKernelTestCase {
     $redirect = $helper->findRacRedirectForWebform('test', []);
     $this->assertNull($redirect);
 
-    $page1 = $this->createNode([
-      'type' => 'page',
-      'title' => 'Test page 1',
-    ]);
-    $page2 = $this->createNode([
-      'type' => 'page',
-      'title' => 'Test page 2',
-    ]);
+    $page1 = $this->createTestPage('Test page 1');
+    $page2 = $this->createTestPage('Test page 2');
 
     // Page 3 is not a node.
     $page3 = EntityTest::create(['id' => 123]);

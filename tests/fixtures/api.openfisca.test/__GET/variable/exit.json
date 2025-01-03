@@ -1,0 +1,16 @@
+{
+  "defaultValue": false,
+  "definitionPeriod": "DAY",
+  "description": "Eligibility for immediate exit",
+  "entity": "person",
+  "formulas": {
+    "0001-01-01": {
+      "content": "def formula(person, period):\n    \"\"\"Calculate the eligibility for immediate exit.\"\"\"\n    # Retrieve the values of the input variables\n    australian_citizen_or_permanent_resident = person(\"australian_citizen_or_permanent_resident\", period)\n    has_disability = person(\"has_disability\", period)\n    giving_care_to_disabled = person(\"giving_care_to_disabled\", period)\n    meets_pension_age = person(\"meets_pension_age\", period)\n    dependant_children = person(\"dependant_children\", period)\n    looking_for_work_unable_to_work = person(\"looking_for_work_unable_to_work\", period)\n    currently_studying = person(\"currently_studying\", period)\n\n    # Check if any condition is met for eligibility\n    eligible_conditions = (\n        has_disability | giving_care_to_disabled | meets_pension_age | dependant_children | looking_for_work_unable_to_work | currently_studying\n    )\n\n    # Determine eligibility\n    return select(\n        [\n            australian_citizen_or_permanent_resident & eligible_conditions,\n            logical_not(australian_citizen_or_permanent_resident),\n        ],\n        [\n            True,\n            True,\n        ],\n    )\n",
+      "documentation": "Calculate the eligibility for immediate exit.",
+      "source": "https://github.com/openfisca/country-template/blob/0.0.1/openfisca_rules/variables/sa.py#L343-L369"
+    }
+  },
+  "id": "exit",
+  "source": "https://github.com/openfisca/country-template/blob/0.0.1/openfisca_rules/variables/sa.py#L335-L368",
+  "valueType": "Boolean"
+}

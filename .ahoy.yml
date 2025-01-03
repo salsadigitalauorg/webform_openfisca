@@ -93,7 +93,7 @@ commands:
       if [[ "$COVERAGE_CHECK_VERSION" == *"PHPUnit Coverage Check 1"* ]]; then
         COVERAGE_CHECK_COMMAND="coverage:check"
       fi
-      vendor/bin/coverage-check ${COVERAGE_CHECK_COMMAND:-} ../.logs/coverage/phpunit/clover.xml 50
+      vendor/bin/coverage-check ${COVERAGE_CHECK_COMMAND:-} ../.logs/coverage/phpunit/clover.xml 90
       popd >/dev/null || exit 1
 
   reset:

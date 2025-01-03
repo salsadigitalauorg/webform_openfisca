@@ -18,7 +18,6 @@ use Drupal\webform_openfisca\WebformOpenFiscaSettings;
  *
  * @group webform_openfisca
  * @group webform_alter
- * @group webform_alter_wip
  * @coversDefaultClass \Drupal\webform_openfisca\WebformThirdPartySettingsFormAlter
  */
 class WebformThirdPartySettingsFormAlterKernelTest extends BaseKernelTestCase {
@@ -58,7 +57,7 @@ class WebformThirdPartySettingsFormAlterKernelTest extends BaseKernelTestCase {
 
     $this->assertArrayHasKey('fisca_debug_mode', $openfisca_settings_form);
     $this->assertEquals('checkbox', $openfisca_settings_form['fisca_debug_mode']['#type']);
-    $this->assertFalse($openfisca_settings_form['fisca_debug_mode']['#default_value']);
+    $this->assertTrue($openfisca_settings_form['fisca_debug_mode']['#default_value']);
 
     $this->assertArrayHasKey('fisca_logging_mode', $openfisca_settings_form);
     $this->assertEquals('checkbox', $openfisca_settings_form['fisca_logging_mode']['#type']);
@@ -100,6 +99,7 @@ class WebformThirdPartySettingsFormAlterKernelTest extends BaseKernelTestCase {
     $mappings = Json::decode($json);
     $this->assertEquals([
       'salary',
+      'exit',
       'has_disability',
       'requires_ongoing_support',
       'disability_allowance_eligible',
@@ -134,7 +134,7 @@ class WebformThirdPartySettingsFormAlterKernelTest extends BaseKernelTestCase {
     $this->assertArrayHasKey('fisca_immediate_exit_mapping', $openfisca_settings_form);
     $this->assertEquals('webform_codemirror', $openfisca_settings_form['fisca_immediate_exit_mapping']['#type']);
     $this->assertEquals('text', $openfisca_settings_form['fisca_immediate_exit_mapping']['#mode']);
-    $this->assertEquals('persons.personA.exit', $openfisca_settings_form['fisca_immediate_exit_mapping']['#default_value']);
+    $this->assertEquals('persons.personA.exit,persons.personA.exit2', $openfisca_settings_form['fisca_immediate_exit_mapping']['#default_value']);
 
     $this->assertArrayHasKey('fisca_immediate_response_ajax_indicator', $openfisca_settings_form);
     $this->assertEquals('checkbox', $openfisca_settings_form['fisca_immediate_response_ajax_indicator']['#type']);
@@ -142,7 +142,7 @@ class WebformThirdPartySettingsFormAlterKernelTest extends BaseKernelTestCase {
 
     $openfisca_settings = WebformOpenFiscaSettings::load($webform);
     $this->assertTrue($openfisca_settings->isEnabled());
-    $this->assertFalse($openfisca_settings->isDebugEnabled());
+    $this->assertTrue($openfisca_settings->isDebugEnabled());
     $this->assertTrue($openfisca_settings->isLoggingEnabled());
     $this->assertNotEmpty($openfisca_settings->getParameterTokens());
     $this->assertNotEmpty($openfisca_settings->getImmediateExitKeys());
@@ -166,18 +166,19 @@ class WebformThirdPartySettingsFormAlterKernelTest extends BaseKernelTestCase {
     $this->assertEmpty($openfisca_settings->getImmediateExitKeys());
     $this->assertFalse($openfisca_settings->hasImmediateResponseAjaxIndicator());
 
-    $this->assertFalse($openfisca_settings->getVariable('exit'));
+    $this->assertNotEmpty($openfisca_settings->getVariable('exit'));
     $this->assertFalse($openfisca_settings->getVariable('child_currently_at_school'));
     // Reload the form - set immediate exit keys.
     $settings_form = $this->reloadSettingsForm($webform, $form_object, $form_state);
-    $this->setWebformOpenFiscaFormStateValue($form_state, 'fisca_immediate_exit_mapping', 'persons.personA.exit,persons.personA.child_currently_at_school');
+    $this->setWebformOpenFiscaFormStateValue($form_state, 'fisca_immediate_exit_mapping', 'persons.personA.exit,persons.personA.exit2,persons.personA.child_currently_at_school');
     $form_builder->submitForm($form_object, $form_state);
     $form_object->save($settings_form, $form_state);
     $webform = Webform::load('test_dac');
     $openfisca_settings = WebformOpenFiscaSettings::load($webform);
-    $this->assertEquals(['persons.personA.exit', 'persons.personA.child_currently_at_school'], $openfisca_settings->getImmediateExitKeys());
+    $this->assertEquals(['persons.personA.exit', 'persons.personA.exit2', 'persons.personA.child_currently_at_school'], $openfisca_settings->getImmediateExitKeys());
     $this->assertIsArray($openfisca_settings->getVariable('child_currently_at_school'));
-    $this->assertFalse($openfisca_settings->getVariable('exit'));
+    $this->assertIsArray($openfisca_settings->getVariable('exit'));
+    $this->assertFalse($openfisca_settings->getVariable('exit2'));
 
     $this->assertTrue($openfisca_settings->hasApiEndpoint());
     // Reload the form - clear API endpoint.
@@ -277,7 +278,8 @@ class WebformThirdPartySettingsFormAlterKernelTest extends BaseKernelTestCase {
     $token_key = (string) $webform->getThirdPartySetting('webform_openfisca', 'fisca_api_authorization_header_token_key', '');
     $this->assertEmpty($token_key);
 
-    $webform->setThirdPartySetting('webform_openfisca', 'fisca_api_authorization_header_token_key', 'invalid_token_key');
+    $webform->setThirdPartySetting('webform_openfisca', 'fisca_api_authorization_header_token_key', 'invalid_token_key')
+      ->save();
     $openfisca_settings = WebformOpenFiscaSettings::load($webform);
     $client = $openfisca_settings->getOpenFiscaClient(\Drupal::service('webform_openfisca.openfisca_client_factory'));
     $http_client_options = $client->getHttpClientOptions();

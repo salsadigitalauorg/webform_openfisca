@@ -79,7 +79,7 @@ variables:
       if [[ "$COVERAGE_CHECK_VERSION" == *"PHPUnit Coverage Check 1"* ]]; then
         COVERAGE_CHECK_COMMAND="coverage:check"
       fi
-      vendor/bin/coverage-check ${COVERAGE_CHECK_COMMAND:-} $CI_PROJECT_DIR/$_WEB_ROOT/.logs/coverage/phpunit/clover.xml 50 || true
+      vendor/bin/coverage-check ${COVERAGE_CHECK_COMMAND:-} $CI_PROJECT_DIR/$_WEB_ROOT/.logs/coverage/phpunit/clover.xml ${CI_CHECK_COVERAGE_THRESHOLD:-90}
   # Capture line coverage counts for GitLab UI display.
   coverage: /^\s*Lines:\s*\d+.\d+\%/
   artifacts:
@@ -89,7 +89,8 @@ variables:
       coverage_report:
         coverage_format: cobertura
         path: $CI_PROJECT_DIR/$_WEB_ROOT/.logs/coverage/phpunit/cobertura.xml
-
+  variables:
+    CI_CHECK_COVERAGE_THRESHOLD: 90
 
 phpunit (previous major):
   variables:

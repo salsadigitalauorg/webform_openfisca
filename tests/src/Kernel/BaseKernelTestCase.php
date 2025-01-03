@@ -93,6 +93,22 @@ abstract class BaseKernelTestCase extends KernelTestBase {
   }
 
   /**
+   * Create a test Page node.
+   *
+   * @param string $title
+   *   The node title.
+   *
+   * @return \Drupal\node\NodeInterface
+   *   The node.
+   */
+  protected function createTestPage(string $title): NodeInterface {
+    return $this->createNode([
+      'type' => 'page',
+      'title' => $title,
+    ]);
+  }
+
+  /**
    * Create a test RAC node.
    *
    * @param string $webform_id
