@@ -52,6 +52,13 @@ class OpenFiscaJourneyHandler extends WebformHandlerBase {
   protected RacContentHelperInterface $racContentHelper;
 
   /**
+   * The debug data from the last API call to OpenFisca.
+   *
+   * @var array<string, \Drupal\webform_openfisca\OpenFisca\Payload>
+   */
+  protected array $recentDebugData = [];
+
+  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) : static {
@@ -83,7 +90,9 @@ class OpenFiscaJourneyHandler extends WebformHandlerBase {
   public function alterElement(array &$element, FormStateInterface $form_state, array $context) : void {
     $form_object = $form_state->getFormObject();
     if (!$form_object instanceof WebformSubmissionForm) {
+      // @codeCoverageIgnoreStart
       return;
+      // @codeCoverageIgnoreEnd
     }
     if ($form_object->getOperation() !== 'add') {
       return;
@@ -157,7 +166,7 @@ class OpenFiscaJourneyHandler extends WebformHandlerBase {
     }
     else {
       $triggering_element = $form_state->getTriggeringElement();
-      if (isset($values[$triggering_element['#name']])) {
+      if (isset($triggering_element['#name'], $values[$triggering_element['#name']])) {
         $data = [
           'name' => $triggering_element['#name'],
           'webform' => $triggering_element['#webform'] ?? $webform->id(),
@@ -260,7 +269,9 @@ class OpenFiscaJourneyHandler extends WebformHandlerBase {
       $role = $fisca_entity_role['role'] ?? NULL;
       $is_array = $fisca_entity_role['is_array'] ?? FALSE;
       if (empty($role)) {
+        // @codeCoverageIgnoreStart
         continue;
+        // @codeCoverageIgnoreEnd
       }
       // The role will be in the format
       // group_entity.group_entity_key.role.entity_key
@@ -350,7 +361,10 @@ class OpenFiscaJourneyHandler extends WebformHandlerBase {
     foreach ($fisca_field_mappings as $webform_key => $openfisca_key) {
       // Always ignore period key.
       if ($webform_key === 'period') {
+        // @codeCoverageIgnoreStart
+        // Period should be alread unset while being prepared.
         continue;
+        // @codeCoverageIgnoreEnd
       }
       if ($openfisca_key !== '_nil') {
         // The openfisca_key will be in the format
@@ -461,6 +475,15 @@ class OpenFiscaJourneyHandler extends WebformHandlerBase {
   public function logDebug(RequestPayload $request_payload, ?ResponsePayload $response_payload, bool $show_message = TRUE) : void {
     $webform = $this->getWebform();
     $openfisca_settings = WebformOpenFiscaSettings::load($webform);
+
+    // Set the debug data.
+    if ($openfisca_settings->isDebugEnabled()) {
+      $this->recentDebugData = [
+        'request' => $request_payload,
+        'response' => $response_payload,
+      ];
+    }
+
     if (!$openfisca_settings->isDebugEnabled() && !$openfisca_settings->isLoggingEnabled()) {
       return;
     }
@@ -552,6 +575,18 @@ class OpenFiscaJourneyHandler extends WebformHandlerBase {
     if ($openfisca_settings->isLoggingEnabled()) {
       $this->getLogger('webform_openfisca')->debug($message);
     }
+  }
+
+  /**
+   * Return the debug data from the last API call to OpenFisca.
+   *
+   * @return \Drupal\webform_openfisca\OpenFisca\Payload[]
+   *   The data array with 2 keys if debug mode is enabled:
+   *   - request
+   *   - response
+   */
+  public function getRecentDebugData() : array {
+    return $this->recentDebugData;
   }
 
 }

@@ -1,0 +1,5 @@
+services:
+  webform_openfisca_test.client_middleware:
+    class: Drupal\webform_openfisca_test\OpenFiscaTestClientMiddleware
+    tags:
+      - { name: http_client_middleware }

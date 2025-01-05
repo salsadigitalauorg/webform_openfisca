@@ -184,7 +184,7 @@ You can run specific tests by passing a path to the test file or PHPUnit CLI
 option (`--filter`, `--group`, etc.) to the `ahoy test` command:
 
 ```bash
-ahoy test-unit tests/src/Unit/MyUnitTest.php
+ahoy test-unit ../tests/src/Unit/MyUnitTest.php
 ahoy test-unit -- --group=wip
 ```
 

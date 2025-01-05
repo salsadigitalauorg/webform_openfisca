@@ -35,6 +35,11 @@ interface ClientInterface {
   public function getBaseUri(): string;
 
   /**
+   * Retrieve the options used to initialise the HTTP Client.
+   */
+  public function getHttpClientOptions(): array;
+
+  /**
    * Get data from an OpenFisca endpoint.
    *
    * @param string $endpoint

@@ -67,7 +67,8 @@ variables:
         apt-get update && apt-get install -qy --no-install-recommends $PHPIZE_DEPS
         pecl install pcov
       fi
-    - echo -e '[pcov]\npcov.directory=.' > /usr/local/etc/php/conf.d/pcov.ini
+    - echo -e "[pcov]\npcov.directory=${CI_PROJECT_DIR}" > /usr/local/etc/php/conf.d/pcov.ini
+    - cat /usr/local/etc/php/conf.d/pcov.ini
     - docker-php-ext-enable pcov
     - echo -e "\e[0Ksection_end:`date +%s`:php_ext_install\r\e[0K"
   after_script:
@@ -78,7 +79,7 @@ variables:
       if [[ "$COVERAGE_CHECK_VERSION" == *"PHPUnit Coverage Check 1"* ]]; then
         COVERAGE_CHECK_COMMAND="coverage:check"
       fi
-      vendor/bin/coverage-check ${COVERAGE_CHECK_COMMAND:-} $CI_PROJECT_DIR/$_WEB_ROOT/.logs/coverage/phpunit/clover.xml 50 || true
+      vendor/bin/coverage-check ${COVERAGE_CHECK_COMMAND:-} $CI_PROJECT_DIR/$_WEB_ROOT/.logs/coverage/phpunit/clover.xml ${CI_CHECK_COVERAGE_THRESHOLD:-90}
   # Capture line coverage counts for GitLab UI display.
   coverage: /^\s*Lines:\s*\d+.\d+\%/
   artifacts:
@@ -88,7 +89,8 @@ variables:
       coverage_report:
         coverage_format: cobertura
         path: $CI_PROJECT_DIR/$_WEB_ROOT/.logs/coverage/phpunit/cobertura.xml
-
+  variables:
+    CI_CHECK_COVERAGE_THRESHOLD: 90
 
 phpunit (previous major):
   variables:

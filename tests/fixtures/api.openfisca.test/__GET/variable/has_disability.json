@@ -1,0 +1,12 @@
+{
+  "defaultValue": false,
+  "definitionPeriod": "DAY",
+  "description": "I <do/do not> have a disability",
+  "entity": "person",
+  "id": "has_disability",
+  "references": [
+    "https://law.gov.example/has_disability"
+  ],
+  "source": "https://github.com/openfisca/country-template/blob/0.0.1/openfisca_rules/variables/disability_allowance.py#L37-L42",
+  "valueType": "Boolean"
+}

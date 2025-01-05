@@ -4,6 +4,7 @@ namespace Drupal\Tests\webform_openfisca\Functional;
 
 use Drupal\paragraphs\Entity\Paragraph;
 use Drupal\Tests\webform\Functional\WebformBrowserTestBase;
+use Drupal\user\UserInterface;
 use Drupal\webform\Entity\Webform;
 
 /**
@@ -34,9 +35,9 @@ class WebformOpenFiscaFunctionalTest extends WebformBrowserTestBase {
   /**
    * An administrative user to configure the test environment.
    *
-   * @var \Drupal\user\Entity\User|false
+   * @var \Drupal\user\UserInterface|false
    */
-  protected $adminUser;
+  protected UserInterface|false $adminUser;
 
   /**
    * {@inheritdoc}
@@ -51,7 +52,7 @@ class WebformOpenFiscaFunctionalTest extends WebformBrowserTestBase {
   /**
    * Tests the webform (entity reference) field.
    */
-  public function testWebformField() {
+  public function testWebformField() : void {
     $assert_session = $this->assertSession();
 
     $this->drupalLogin($this->rootUser);
@@ -96,7 +97,7 @@ class WebformOpenFiscaFunctionalTest extends WebformBrowserTestBase {
   /**
    * Tests the presence of fields in nodes of type 'rac'.
    */
-  public function testNodeFields() {
+  public function testNodeFields() : void {
     $assert_session = $this->assertSession();
     $this->drupalLogin($this->rootUser);
 
@@ -109,9 +110,9 @@ class WebformOpenFiscaFunctionalTest extends WebformBrowserTestBase {
   }
 
   /**
-   * Tests the webfrom.
+   * Tests the webform.
    */
-  public function testWebfrom() {
+  public function testWebform() : void {
     $assert_session = $this->assertSession();
     $this->drupalLogin($this->rootUser);
 
@@ -122,8 +123,8 @@ class WebformOpenFiscaFunctionalTest extends WebformBrowserTestBase {
     ]);
 
     $webform = $this->createWebform([
-      'title' => 'Test Webfrom',
-      'id' => 'test_webfrom_fisca',
+      'title' => 'Test Webform',
+      'id' => 'test_webform_fisca',
     ]);
 
     $paragraph_rac_element = Paragraph::create([
@@ -165,9 +166,9 @@ class WebformOpenFiscaFunctionalTest extends WebformBrowserTestBase {
     $this->drupalGet($node_rac->toUrl());
     $assert_session->elementExists('css', sprintf('h1:contains("%s")', 'Test Rac Node'));
 
-    $webform = Webform::load('test_webfrom_fisca');
+    $webform = Webform::load('test_webform_fisca');
 
-    $this->drupalGet('/admin/structure/webform/manage/test_webfrom_fisca/settings');
+    $this->drupalGet('/admin/structure/webform/manage/test_webform_fisca/settings');
     $assert_session->responseContains('Third party settings');
 
     $edit = [
@@ -177,37 +178,37 @@ class WebformOpenFiscaFunctionalTest extends WebformBrowserTestBase {
     ];
     $this->submitForm($edit, 'Save');
 
-    $webform = $this->reloadWebform('test_webfrom_fisca');
+    $webform = $this->reloadWebform('test_webform_fisca');
     $this->assertEquals(
       TRUE,
-      $this->config('webform.webform.test_webfrom_fisca')->get('third_party_settings.webform_openfisca.fisca_enabled')
+      $this->config('webform.webform.test_webform_fisca')->get('third_party_settings.webform_openfisca.fisca_enabled')
     );
     $this->assertEquals(
       'https://api.fr.openfisca.org/latest',
-      $this->config('webform.webform.test_webfrom_fisca')->get('third_party_settings.webform_openfisca.fisca_api_endpoint')
+      $this->config('webform.webform.test_webform_fisca')->get('third_party_settings.webform_openfisca.fisca_api_endpoint')
     );
     $this->assertEquals(
       'individus.Xyz.aacc_impn,individus.Abc.aacc_impn',
-      $this->config('webform.webform.test_webfrom_fisca')->get('third_party_settings.webform_openfisca.fisca_return_key')
+      $this->config('webform.webform.test_webform_fisca')->get('third_party_settings.webform_openfisca.fisca_return_key')
     );
 
-    $this->drupalGet('/admin/structure/webform/manage/test_webfrom_fisca/handlers/add/openfisca_journey');
+    $this->drupalGet('/admin/structure/webform/manage/test_webform_fisca/handlers/add/openfisca_journey');
     $edit = [
       'handler_id' => 'openfisca_journey_test_handler',
       'label' => 'Openfisca Journey Test Handler',
     ];
     $this->submitForm($edit, 'Save');
 
-    $this->drupalGet('/admin/structure/webform/manage/test_webfrom_fisca/handlers');
-    $assert_session->linkByHrefExists('/admin/structure/webform/manage/test_webfrom_fisca/handlers/openfisca_journey_test_handler/edit');
+    $this->drupalGet('/admin/structure/webform/manage/test_webform_fisca/handlers');
+    $assert_session->linkByHrefExists('/admin/structure/webform/manage/test_webform_fisca/handlers/openfisca_journey_test_handler/edit');
 
-    $this->drupalGet('/admin/structure/webform/manage/test_webfrom_fisca/element/add/textfield');
+    $this->drupalGet('/admin/structure/webform/manage/test_webform_fisca/element/add/textfield');
     $add = [
       'key' => 'test_field_1',
       'properties[title]' => 'Test Field 1',
     ];
     $this->submitForm($add, 'Save');
-    $this->drupalGet('/admin/structure/webform/manage/test_webfrom_fisca/element/test_field_1/edit');
+    $this->drupalGet('/admin/structure/webform/manage/test_webform_fisca/element/test_field_1/edit');
     $edit = [
       'properties[title]' => 'Test Field 1',
       'fisca_entity_key' => 'Abc',
@@ -217,13 +218,13 @@ class WebformOpenFiscaFunctionalTest extends WebformBrowserTestBase {
     ];
     $this->submitForm($edit, 'Save');
 
-    $this->drupalGet('/admin/structure/webform/manage/test_webfrom_fisca/element/add/textfield');
+    $this->drupalGet('/admin/structure/webform/manage/test_webform_fisca/element/add/textfield');
     $add = [
       'key' => 'test_field_2',
       'properties[title]' => 'Test Field 2',
     ];
     $this->submitForm($add, 'Save');
-    $this->drupalGet('/admin/structure/webform/manage/test_webfrom_fisca/element/test_field_2/edit');
+    $this->drupalGet('/admin/structure/webform/manage/test_webform_fisca/element/test_field_2/edit');
     $edit = [
       'properties[title]' => 'Test Field 2',
       'fisca_entity_key' => 'Xyz',
@@ -233,7 +234,7 @@ class WebformOpenFiscaFunctionalTest extends WebformBrowserTestBase {
     ];
     $this->submitForm($edit, 'Save');
 
-    $webform = $this->reloadWebform('test_webfrom_fisca');
+    $webform = $this->reloadWebform('test_webform_fisca');
 
   }
 

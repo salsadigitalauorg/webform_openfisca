@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Drupal\Tests\webform_openfisca\Unit;
 
-use Drupal\Tests\UnitTestCase;
 use Drupal\webform_openfisca\OpenFisca\Payload\RequestPayload;
 use Drupal\webform_openfisca\OpenFisca\Payload\ResponsePayload;
 use Psr\Http\Message\ResponseInterface;
@@ -16,9 +15,7 @@ use Psr\Http\Message\StreamInterface;
  * @group webform_openfisca
  * @coversDefaultClass \Drupal\webform_openfisca\OpenFisca\Payload
  */
-class OpenFiscaPayloadUnitTest extends UnitTestCase {
-
-  use UnitTestTrait;
+class OpenFiscaPayloadUnitTest extends BaseUnitTestCase {
 
   /**
    * Tests the OpenFisca RequestPayload.

@@ -1,5 +1,12 @@
 <?php
 
+/**
+ * @file
+ * Twig CS Fixer.
+ *
+ * @codeCoverageIgnore
+ */
+
 declare(strict_types = 1);
 
 $ruleset = new TwigCsFixer\Ruleset\Ruleset();

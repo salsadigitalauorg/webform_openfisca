@@ -21,7 +21,9 @@ class WebformThirdPartySettingsFormAlter extends WebformFormAlterBase {
   public function alterForm(array &$form, FormStateInterface $form_state): void {
     $webform = $this->getWebformFromFormState($form_state);
     if (!$webform instanceof WebformInterface) {
+      // @codeCoverageIgnoreStart
       return;
+      // @codeCoverageIgnoreEnd
     }
 
     $openfisca_settings = WebformOpenFiscaSettings::load($webform);
@@ -167,7 +169,9 @@ class WebformThirdPartySettingsFormAlter extends WebformFormAlterBase {
   public function validateForm(array $form, FormStateInterface $form_state): void {
     $webform = $this->getWebformFromFormState($form_state);
     if (!$webform instanceof WebformInterface) {
+      // @codeCoverageIgnoreStart
       return;
+      // @codeCoverageIgnoreEnd
     }
 
     $fisca_endpoint = $form_state->getValue(
@@ -254,18 +258,23 @@ class WebformThirdPartySettingsFormAlter extends WebformFormAlterBase {
     ) ?: '';
 
     if (empty($fisca_parameter_tokens)) {
-      return;
+      $fisca_parameter_tokens = [];
     }
-    $fisca_parameter_tokens = OpenFiscaHelper::expandCsvString($fisca_parameter_tokens);
+    else {
+      $fisca_parameter_tokens = OpenFiscaHelper::expandCsvString($fisca_parameter_tokens);
 
-    $parameters = $openfisca_client->getParameters();
-    $invalid_parameters = array_diff($fisca_parameter_tokens, array_keys($parameters));
-    if (!empty($invalid_parameters)) {
-      $form_state->setErrorByName('[third_party_settings][webform_openfisca][fisca_parameter_tokens', $this->t('Invalid OpenFisca parameters: "%parameters".<br/> Please check <a href=":link" target="_blank">OpenFisca</a> for the list of parameters.', [
-        '%parameters' => implode(', ', $invalid_parameters),
-        ':link' => $openfisca_settings->getApiEndpoint() . '/' . $openfisca_client::ENDPOINT_PARAMETERS,
-      ]));
-      return;
+      $parameters = $openfisca_client->getParameters() ?? [];
+      $invalid_parameters = array_diff($fisca_parameter_tokens,
+        array_keys($parameters));
+      if (!empty($invalid_parameters)) {
+        $form_state->setErrorByName('[third_party_settings][webform_openfisca][fisca_parameter_tokens',
+          $this->t('Invalid OpenFisca parameters: "%parameters".<br/> Please check <a href=":link" target="_blank">OpenFisca</a> for the list of parameters.',
+            [
+              '%parameters' => implode(', ', $invalid_parameters),
+              ':link' => $openfisca_settings->getApiEndpoint() . '/' . $openfisca_client::ENDPOINT_PARAMETERS,
+            ]));
+        return;
+      }
     }
 
     $fisca_parameters = [];

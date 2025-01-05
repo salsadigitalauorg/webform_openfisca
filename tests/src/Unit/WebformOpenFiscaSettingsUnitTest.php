@@ -11,24 +11,23 @@ use Drupal\webform_openfisca\WebformOpenFiscaSettings;
  * Tests the WebformOpenFiscaSettings class.
  *
  * @group webform_openfisca
+ * @group webform_openfisca_settings
  * @coversDefaultClass \Drupal\webform_openfisca\WebformOpenFiscaSettings
  */
 class WebformOpenFiscaSettingsUnitTest extends OpenFiscaHelperUnitTest {
-
-  use UnitTestTrait;
 
   /**
    * Tests the WebformOpenFiscaSettings class.
    */
   public function testWebformOpenFiscaSettings(): void {
-    $webform = $this->mockWebform('webform/webform.webform.disability_allowance_checker.yml');
+    $webform = $this->mockWebform('../modules/webform_openfisca_test/config/install/webform.webform.test_dac.yml');
     $openfisca_settings = WebformOpenFiscaSettings::load($webform);
-    $this->assertEquals('disability_allowance_checker', $openfisca_settings->getWebformId());
+    $this->assertEquals('test_dac', $openfisca_settings->getWebformId());
     $this->assertTrue($openfisca_settings->isEnabled());
-    $this->assertFalse($openfisca_settings->isDebugEnabled());
+    $this->assertTrue($openfisca_settings->isDebugEnabled());
     $this->assertTrue($openfisca_settings->isLoggingEnabled());
     $this->assertTrue($openfisca_settings->hasApiEndpoint());
-    $this->assertEquals('https://training-rac.salsadev.au/', $openfisca_settings->getApiEndpoint());
+    $this->assertEquals('https://api.openfisca.test/', $openfisca_settings->getApiEndpoint());
     $this->assertTrue($openfisca_settings->hasApiAuthorizationHeader());
     $this->assertEquals('Token WEBFORM-OPENFISCA-TEST-TOKEN', $openfisca_settings->getApiAuthorizationHeader());
 
@@ -93,8 +92,8 @@ class WebformOpenFiscaSettingsUnitTest extends OpenFiscaHelperUnitTest {
 
     $this->assertTrue($openfisca_settings->hasImmediateResponseAjaxIndicator());
 
-    $this->assertEquals('persons.personA.exit', $openfisca_settings->getPlainImmediateExitKeys());
-    $this->assertEquals(['persons.personA.exit'], $openfisca_settings->getImmediateExitKeys());
+    $this->assertEquals('persons.personA.exit,persons.personA.exit2', $openfisca_settings->getPlainImmediateExitKeys());
+    $this->assertEquals(['persons.personA.exit', 'persons.personA.exit2'], $openfisca_settings->getImmediateExitKeys());
 
     $this->assertEquals('2024-12-31', $openfisca_settings->formatVariablePeriod('has_disability', '2024-12-31'));
     $this->assertEquals('', $openfisca_settings->formatVariablePeriod('non-existent-mapping', '2024-12-31'));
@@ -104,23 +103,24 @@ class WebformOpenFiscaSettingsUnitTest extends OpenFiscaHelperUnitTest {
     $this->assertFalse($new_openfisca_settings->getVariable('has_disability'));
     $this->assertFalse($new_openfisca_settings->fieldHasImmediateResponse('has_disability'));
 
-    $new_openfisca_settings = $openfisca_settings->updateApiEndpoint('https://openfisca.test/api');
-    $this->assertEquals('https://openfisca.test/api', $new_openfisca_settings->getApiEndpoint());
-  }
-
-  /**
-   * Tests the WebformOpenFiscaSettings::getOpenFiscaClient() method.
-   */
-  public function testWebformOpenFiscaSettingsGetClient(): void {
+    // Test the getOpenFiscaClient() method.
     $factory = $this->mockClientFactory();
-    $webform = $this->mockWebform('webform/webform.webform.disability_allowance_checker.yml');
-    $openfisca_settings = WebformOpenFiscaSettings::load($webform);
     $client = $openfisca_settings->getOpenFiscaClient($factory, []);
-    $this->assertEquals('https://training-rac.salsadev.au', $client->getBaseUri());
+    $this->assertEquals('https://api.openfisca.test', $client->getBaseUri());
 
-    $new_openfisca_settings = $openfisca_settings->updateApiEndpoint('https://openfisca.test/api/');
+    $new_openfisca_settings = $openfisca_settings->updateApiEndpoint('https://v2.openfisca.test/api');
+    $this->assertEquals('https://v2.openfisca.test/api', $new_openfisca_settings->getApiEndpoint());
     $client = $new_openfisca_settings->getOpenFiscaClient($factory, []);
-    $this->assertEquals('https://openfisca.test/api', $client->getBaseUri());
+    $this->assertEquals('https://v2.openfisca.test/api', $client->getBaseUri());
+
+    // Test the No API webform.
+    $webform = $this->mockWebform('../modules/webform_openfisca_test/config/install/webform.webform.test_no_api.yml');
+    $openfisca_settings = WebformOpenFiscaSettings::load($webform);
+    $this->assertEquals('test_no_api', $openfisca_settings->getWebformId());
+    $this->assertFalse($openfisca_settings->hasApiEndpoint());
+    $this->assertFalse($openfisca_settings->hasApiAuthorizationHeader());
+    $client = $openfisca_settings->getOpenFiscaClient($factory);
+    $this->assertEmpty($client->getBaseUri());
   }
 
 }

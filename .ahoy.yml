@@ -61,28 +61,28 @@ commands:
     usage: Run tests.
     cmd: |
       pushd "build" >/dev/null || exit 1
-      php -d pcov.directory=.. vendor/bin/phpunit --coverage-text
+      php -d pcov.directory="../.." vendor/bin/phpunit --coverage-text
       popd >/dev/null || exit 1
 
   test-unit:
     usage: Run unit tests.
     cmd: |
       pushd "build" >/dev/null || exit 1
-      php -d pcov.directory=.. vendor/bin/phpunit --testsuite unit "$@"
+      php -d pcov.directory="../.." vendor/bin/phpunit --testsuite unit "$@"
       popd >/dev/null || exit 1
 
   test-kernel:
     usage: Run kernel tests.
     cmd: |
       pushd "build" >/dev/null || exit 1
-      php -d pcov.directory=.. vendor/bin/phpunit --testsuite kernel "$@"
+      php -d pcov.directory="../.." vendor/bin/phpunit --testsuite kernel "$@"
       popd >/dev/null || exit 1
 
   test-functional:
     usage: Run functional tests.
     cmd: |
       pushd "build" >/dev/null || exit 1
-      php -d pcov.directory=.. vendor/bin/phpunit --testsuite functional "$@"
+      php -d pcov.directory="../.." vendor/bin/phpunit --testsuite functional "$@"
       popd >/dev/null || exit 1
 
   check-code-coverage:
@@ -93,7 +93,7 @@ commands:
       if [[ "$COVERAGE_CHECK_VERSION" == *"PHPUnit Coverage Check 1"* ]]; then
         COVERAGE_CHECK_COMMAND="coverage:check"
       fi
-      vendor/bin/coverage-check ${COVERAGE_CHECK_COMMAND:-} ../.logs/coverage/phpunit/clover.xml 50
+      vendor/bin/coverage-check ${COVERAGE_CHECK_COMMAND:-} ../.logs/coverage/phpunit/clover.xml 90
       popd >/dev/null || exit 1
 
   reset:

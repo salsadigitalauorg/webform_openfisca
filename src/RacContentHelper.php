@@ -79,6 +79,7 @@ class RacContentHelper implements RacContentHelperInterface {
         if (!$node instanceof NodeInterface
           || !$node->hasField('field_rules')
           || !($node->get('field_rules') instanceof EntityReferenceFieldItemListInterface)
+          || $node->get('field_rules')->isEmpty()
         ) {
           continue;
         }
@@ -86,11 +87,13 @@ class RacContentHelper implements RacContentHelperInterface {
         return $node;
       }
     }
+    // @codeCoverageIgnoreStart
     catch (InvalidPluginDefinitionException | PluginNotFoundException) {
       return NULL;
     }
 
     return NULL;
+    // @codeCoverageIgnoreEnd
   }
 
   /**
@@ -131,20 +134,25 @@ class RacContentHelper implements RacContentHelperInterface {
       if (!$rac_elements instanceof EntityReferenceFieldItemListInterface
         || $rac_elements->isEmpty()
       ) {
+        // @codeCoverageIgnoreStart
         continue;
+        // @codeCoverageIgnoreEnd
       }
 
       $redirect_to = $paragraph->get('field_redirect_to');
       if (!$redirect_to instanceof EntityReferenceFieldItemListInterface
         || $redirect_to->isEmpty()
       ) {
+        // @codeCoverageIgnoreStart
         continue;
+        // @codeCoverageIgnoreEnd
       }
-      /** @var \Drupal\node\NodeInterface[] */
+      /** @var \Drupal\node\NodeInterface[] $redirect_nodes */
       $redirect_nodes = $redirect_to->referencedEntities();
       $redirect_node = reset($redirect_nodes);
       if (!$redirect_node instanceof NodeInterface) {
-        return NULL;
+        // Skip this rule as the redirect is not a node.
+        continue;
       }
 
       $redirect_rule = [

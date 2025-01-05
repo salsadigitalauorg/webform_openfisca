@@ -1,4 +1,3 @@
-uuid: cfe7400f-8b74-4093-9d4f-b1462292b9bb
 langcode: en
 status: open
 dependencies:
@@ -6,11 +5,11 @@ dependencies:
     - webform_openfisca
 third_party_settings:
   webform_openfisca:
-    fisca_enabled: '1'
+    fisca_enabled: true
     fisca_debug_mode: false
     fisca_logging_mode: true
-    fisca_api_endpoint: 'https://training-rac.salsadev.au/'
-    fisca_api_authorization_header: 'Token WEBFORM-OPENFISCA-TEST-TOKEN'
+    fisca_api_endpoint: 'https://invalid-api.openfisca.test'
+    fisca_api_authorization_header: ''
     fisca_field_mappings: |-
       {
           "what_is_your_monthly_income_": "persons.personA.monthly_income",
@@ -157,31 +156,7 @@ third_party_settings:
           }
       }
     fisca_parameter_tokens: 'disability_allowance_max_income,income_tax_rate'
-    fisca_parameters: |-
-      {
-          "disability_allowance_max_income": {
-              "description": "Disability allowance maximum income threshold",
-              "id": "disability_allowance_max_income",
-              "metadata": [],
-              "source": "https:\/\/github.com\/openfisca\/country-template\/blob\/0.0.1\/openfisca_rules\/parameters\/disability_allowance_max_income.yaml",
-              "values": {
-                  "2024-01-01": 500
-              }
-          },
-          "income_tax_rate": {
-              "description": "Income tax rate",
-              "id": "income_tax_rate",
-              "metadata": {
-                  "unit": "\/1"
-              },
-              "source": "https:\/\/github.com\/openfisca\/country-template\/blob\/0.0.1\/openfisca_rules\/parameters\/income_tax_rate.yaml",
-              "values": {
-                  "2023-01-01": 0.14,
-                  "2024-01-01": 0.15,
-                  "2025-01-01": 0.16
-              }
-          }
-      }
+    fisca_parameters: '[]'
     fisca_entity_roles: '[]'
     fisca_immediate_response_mapping: |-
       {
@@ -197,8 +172,8 @@ close: null
 uid: 2
 template: false
 archive: false
-id: disability_allowance_checker
-title: 'Disability Allowance Checker'
+id: test_invalid_api
+title: 'Disability Allowance Checker - Invalid API'
 description: ''
 categories: {  }
 elements: |-
@@ -481,7 +456,5 @@ handlers:
     status: true
     conditions: {  }
     weight: 0
-    settings:
-      format: yaml
-      submission: false
+    settings: {  }
 variants: {  }
