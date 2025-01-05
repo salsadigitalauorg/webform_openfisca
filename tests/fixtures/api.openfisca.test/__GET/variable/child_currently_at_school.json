@@ -1,0 +1,12 @@
+{
+  "defaultValue": false,
+  "definitionPeriod": "DAY",
+  "description": "The child <is/is not> currently at school?",
+  "entity": "person",
+  "id": "child_currently_at_school",
+  "references": [
+    "https://law.gov.example/child_currently_at_school"
+  ],
+  "source": "https://github.com/openfisca/country-template/blob/0.0.1/openfisca_rules/variables/act_child_worker.py#L27-L32",
+  "valueType": "Boolean"
+}

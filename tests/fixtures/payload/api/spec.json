@@ -1,0 +1,1035 @@
+{
+  "components": {
+    "headers": {
+      "Country-Package": {
+        "description": "The name of the country package currently loaded in this API server",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "Country-Package-Version": {
+        "description": "The version of the country package currently loaded in this API server",
+        "schema": {
+          "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-((?:0|[1-9][0-9]*|[0-9]*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9][0-9]*|[0-9]*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
+          "type": "string"
+        }
+      }
+    },
+    "schemas": {
+      "Brackets": {
+        "additionalProperties": {
+          "format": "float",
+          "type": "number"
+        },
+        "type": "object"
+      },
+      "Entities": {
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "documentation": {
+            "type": "string"
+          },
+          "plural": {
+            "type": "string"
+          },
+          "roles": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Roles"
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      },
+      "Formula": {
+        "properties": {
+          "content": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "Parameter": {
+        "example": {
+          "description": "Minimum age at which a person is eligible for AU Study.",
+          "id": "austudy_age_threshold",
+          "metadata": {},
+          "source": "https://github.com/openfisca/country-template/blob/0.0.1/openfisca_rules/parameters/austudy_age_threshold.yaml",
+          "values": {
+            "2024-05-01": 25
+          }
+        },
+        "properties": {
+          "brackets": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Brackets"
+            },
+            "type": "object"
+          },
+          "description": {
+            "type": "string"
+          },
+          "id": {
+            "format": "string",
+            "type": "integer"
+          },
+          "metadata": {
+            "type": "object"
+          },
+          "source": {
+            "type": "string"
+          },
+          "subparams": {
+            "additionalProperties": {
+              "properties": {
+                "definition": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "type": "object"
+          },
+          "values": {
+            "$ref": "#/components/schemas/Values"
+          }
+        },
+        "type": "object"
+      },
+      "Parameters": {
+        "additionalProperties": {
+          "properties": {
+            "description": {
+              "type": "string"
+            },
+            "href": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "type": "object"
+      },
+      "Person": {
+        "additionalProperties": false,
+        "properties": {
+          "aboriginal_torres_strait_islander": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "type": "object"
+          },
+          "age": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object"
+          },
+          "australian_citizen_or_permanent_resident": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "type": "object"
+          },
+          "base_rate": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object"
+          },
+          "benefit_abstudy_maybe_eligible": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "type": "object"
+          },
+          "benefit_age_pension_maybe_eligible": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "type": "object"
+          },
+          "benefit_austudy_maybe_eligible": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "type": "object"
+          },
+          "benefit_carer_payment_maybe_eligible": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "type": "object"
+          },
+          "benefit_child_care_subsidy_maybe_eligible": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "type": "object"
+          },
+          "benefit_disability_support_payment_maybe_eligible": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "type": "object"
+          },
+          "benefit_eligible": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "type": "object"
+          },
+          "benefit_family_tax_benefit_maybe_eligible": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "type": "object"
+          },
+          "benefit_farm_household_allowance_maybe_eligible": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "type": "object"
+          },
+          "benefit_jobseekers_maybe_eligible": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "type": "object"
+          },
+          "benefit_parental_leave_pay_maybe_eligible": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "type": "object"
+          },
+          "benefit_parenting_payment_maybe_eligible": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "type": "object"
+          },
+          "benefit_youth_allowance_for_jobseekers_maybe_eligible": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "type": "object"
+          },
+          "benefit_youth_allowance_maybe_eligible": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "type": "object"
+          },
+          "children_age": {
+            "additionalProperties": {
+              "enum": [
+                "under_school_age",
+                "school_aged"
+              ],
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "children_age_requirement": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "type": "object"
+          },
+          "children_junior_age_count": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object"
+          },
+          "children_middle_age_count": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object"
+          },
+          "children_senior_age_count": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object"
+          },
+          "combined_family_income": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object"
+          },
+          "combined_family_income_over_threshold": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "type": "object"
+          },
+          "currently_studying": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "type": "object"
+          },
+          "dependant_children": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "type": "object"
+          },
+          "exit": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "type": "object"
+          },
+          "ftb_junior_weekly": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object"
+          },
+          "ftb_junior_yearly": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object"
+          },
+          "ftb_middle_weekly": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object"
+          },
+          "ftb_middle_yearly": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object"
+          },
+          "ftb_senior_weekly": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object"
+          },
+          "ftb_senior_yearly": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object"
+          },
+          "ftb_weekly": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object"
+          },
+          "ftb_yearly": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object"
+          },
+          "giving_care_to_disabled": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "type": "object"
+          },
+          "has_disability": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "type": "object"
+          },
+          "income_bracket": {
+            "additionalProperties": {
+              "enum": [
+                "none",
+                "low",
+                "middle",
+                "high"
+              ],
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "junior_age_requirement": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "type": "object"
+          },
+          "junior_max_rate": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object"
+          },
+          "junior_rate_reduction": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object"
+          },
+          "looking_for_work_unable_to_work": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "type": "object"
+          },
+          "meets_pension_age": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "type": "object"
+          },
+          "middle_age_requirement": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "type": "object"
+          },
+          "middle_max_rate": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object"
+          },
+          "middle_rate_reduction": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object"
+          },
+          "pregnant_or_adopting_child": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "type": "object"
+          },
+          "running_farm": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "type": "object"
+          },
+          "senior_age_requirement": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "type": "object"
+          },
+          "senior_max_rate": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object"
+          },
+          "senior_rate_reduction": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      },
+      "Roles": {
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "max": {
+            "type": "integer"
+          },
+          "plural": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "SituationInput": {
+        "additionalProperties": false,
+        "example": "No simulation example has been defined for this tax and benefit system. If you are the maintainer of Openfisca-Rules, you can define an example by following this documentation: https://openfisca.org/doc/openfisca-web-api/config-openapi.html",
+        "properties": {
+          "persons": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Person"
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      },
+      "SituationOutput": {
+        "additionalProperties": false,
+        "example": "No simulation example has been defined for this tax and benefit system. If you are the maintainer of Openfisca-Rules, you can define an example by following this documentation: https://openfisca.org/doc/openfisca-web-api/config-openapi.html",
+        "properties": {
+          "persons": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Person"
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      },
+      "Trace": {
+        "example": "No simulation example has been defined for this tax and benefit system. If you are the maintainer of Openfisca-Rules, you can define an example by following this documentation: https://openfisca.org/doc/openfisca-web-api/config-openapi.html",
+        "properties": {
+          "entitiesDescription": {
+            "additionalProperties": false,
+            "properties": {
+              "persons": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            },
+            "type": "object"
+          },
+          "requestedCalculations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "trace": {
+            "additionalProperties": {
+              "properties": {
+                "dependencies": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "parameters": {
+                  "additionalProperties": {
+                    "type": "object"
+                  },
+                  "type": "object"
+                },
+                "value": {
+                  "items": {},
+                  "type": "array"
+                }
+              },
+              "type": "object"
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      },
+      "Value": {
+        "oneOf": [
+          {
+            "type": "boolean"
+          },
+          {
+            "format": "float",
+            "type": "number"
+          },
+          {
+            "items": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            },
+            "type": "array"
+          }
+        ]
+      },
+      "Values": {
+        "additionalProperties": {
+          "$ref": "#/components/schemas/Value"
+        },
+        "description": "All keys are ISO dates. Values can be numbers, booleans, or arrays of a single type (number, boolean or string).",
+        "type": "object"
+      },
+      "Variable": {
+        "example": {
+          "defaultValue": 0,
+          "definitionPeriod": "DAY",
+          "description": "Family Tax Benefit Base Rate Yearly",
+          "entity": "person",
+          "formulas": {
+            "0001-01-01": {
+              "content": "def formula(person, period, parameters):\n    \"\"\"Calculate the family tax benefit yearly base rate.\"\"\"\n    return parameters(period).ftb.part_a.base_rate * fortnights_in_a_year\n",
+              "documentation": "Calculate the family tax benefit yearly base rate.",
+              "source": "https://github.com/openfisca/country-template/blob/0.0.1/openfisca_rules/variables/ftb_part_a.py#L102-L104"
+            }
+          },
+          "id": "base_rate",
+          "source": "https://github.com/openfisca/country-template/blob/0.0.1/openfisca_rules/variables/ftb_part_a.py#L94-L103",
+          "valueType": "Float"
+        },
+        "properties": {
+          "defaultValue": {
+            "type": "string"
+          },
+          "definitionPeriod": {
+            "enum": [
+              "MONTH",
+              "YEAR",
+              "ETERNITY"
+            ],
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "entity": {
+            "type": "string"
+          },
+          "formulas": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Formula"
+            },
+            "type": "object"
+          },
+          "id": {
+            "type": "string"
+          },
+          "reference": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "source": {
+            "type": "string"
+          },
+          "valueType": {
+            "enum": [
+              "Int",
+              "Float",
+              "Boolean",
+              "Date",
+              "String"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "Variables": {
+        "additionalProperties": {
+          "properties": {
+            "description": {
+              "type": "string"
+            },
+            "href": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "contact": {
+      "email": "contact@openfisca.org"
+    },
+    "description": "The OpenFisca Web API lets you get up-to-date information and formulas included in the Openfisca-Rules legislation.",
+    "license": {
+      "name": "AGPL",
+      "url": "https://www.gnu.org/licenses/agpl-3.0"
+    },
+    "termsOfService": "https://openfisca.org/doc/licence.html",
+    "title": "Openfisca-Rules Web API",
+    "version": "0.0.1"
+  },
+  "openapi": "3.0.0",
+  "paths": {
+    "/calculate": {
+      "post": {
+        "operationId": "calculate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SituationInput"
+              }
+            }
+          },
+          "description": "Describe the situation (persons and entities). Add the variable you wish to calculate in the proper entity, with null as the value. Learn more in our official documentation: https://openfisca.org/doc/openfisca-web-api/input-output-data.html",
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SituationOutput"
+                }
+              }
+            },
+            "description": "The calculation result is sent back in the response body",
+            "headers": {
+              "Country-Package": {
+                "$ref": "#/components/headers/Country-Package"
+              },
+              "Country-Package-Version": {
+                "$ref": "#/components/headers/Country-Package-Version"
+              }
+            }
+          },
+          "400": {
+            "description": "The request is invalid. Details about the error are sent back in the response body",
+            "headers": {
+              "Country-Package": {
+                "$ref": "#/components/headers/Country-Package"
+              },
+              "Country-Package-Version": {
+                "$ref": "#/components/headers/Country-Package-Version"
+              }
+            }
+          },
+          "404": {
+            "description": "A variable mentioned in the input situation does not exist in the loaded tax and benefit system. Details are sent back in the response body",
+            "headers": {
+              "Country-Package": {
+                "$ref": "#/components/headers/Country-Package"
+              },
+              "Country-Package-Version": {
+                "$ref": "#/components/headers/Country-Package-Version"
+              }
+            }
+          }
+        },
+        "summary": "Run a simulation",
+        "tags": [
+          "Calculations"
+        ]
+      }
+    },
+    "/entities": {
+      "get": {
+        "operationId": "getEntities",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Entities"
+                }
+              }
+            },
+            "description": "The list of the entities as well as their information is sent back in the response body",
+            "headers": {
+              "Country-Package": {
+                "$ref": "#/components/headers/Country-Package"
+              },
+              "Country-Package-Version": {
+                "$ref": "#/components/headers/Country-Package-Version"
+              }
+            }
+          }
+        },
+        "summary": "List all available Entities",
+        "tags": [
+          "Entities"
+        ]
+      }
+    },
+    "/parameter/{parameterID}": {
+      "get": {
+        "operationId": "getParameter",
+        "parameters": [
+          {
+            "description": "ID of parameter. IDs can be obtained by enumerating the /parameters endpoint",
+            "in": "path",
+            "name": "parameterID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Parameter"
+                }
+              }
+            },
+            "description": "The requested parameter's information is sent back in the response body",
+            "headers": {
+              "Country-Package": {
+                "$ref": "#/components/headers/Country-Package"
+              },
+              "Country-Package-Version": {
+                "$ref": "#/components/headers/Country-Package-Version"
+              }
+            }
+          },
+          "404": {
+            "description": "The requested parameter does not exist",
+            "headers": {
+              "Country-Package": {
+                "$ref": "#/components/headers/Country-Package"
+              },
+              "Country-Package-Version": {
+                "$ref": "#/components/headers/Country-Package-Version"
+              }
+            }
+          }
+        },
+        "summary": "Get information about a specific parameter",
+        "tags": [
+          "Parameters"
+        ]
+      }
+    },
+    "/parameters": {
+      "get": {
+        "operationId": "getParameters",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Parameters"
+                }
+              }
+            },
+            "description": "The list of parameters is sent back in the response body",
+            "headers": {
+              "Country-Package": {
+                "$ref": "#/components/headers/Country-Package"
+              },
+              "Country-Package-Version": {
+                "$ref": "#/components/headers/Country-Package-Version"
+              }
+            }
+          }
+        },
+        "summary": "List all available parameters",
+        "tags": [
+          "Parameters"
+        ]
+      }
+    },
+    "/spec": {
+      "get": {
+        "operationId": "spec",
+        "responses": {
+          "200": {
+            "description": "The API documentation is sent back in the response body",
+            "headers": {
+              "Country-Package": {
+                "$ref": "#/components/headers/Country-Package"
+              },
+              "Country-Package-Version": {
+                "$ref": "#/components/headers/Country-Package-Version"
+              }
+            }
+          }
+        },
+        "summary": "Provide the API documentation in an OpenAPI format",
+        "tags": [
+          "Documentation"
+        ]
+      }
+    },
+    "/trace": {
+      "post": {
+        "operationId": "trace",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SituationInput"
+              }
+            }
+          },
+          "description": "Describe the situation (persons and entities). Add the variable you wish to calculate in the proper entity, with null as the value.",
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Trace"
+                }
+              }
+            },
+            "description": "The calculation details are sent back in the response body",
+            "headers": {
+              "Country-Package": {
+                "$ref": "#/components/headers/Country-Package"
+              },
+              "Country-Package-Version": {
+                "$ref": "#/components/headers/Country-Package-Version"
+              }
+            }
+          },
+          "400": {
+            "description": "The request is invalid. Details about the error are sent back in the response body",
+            "headers": {
+              "Country-Package": {
+                "$ref": "#/components/headers/Country-Package"
+              },
+              "Country-Package-Version": {
+                "$ref": "#/components/headers/Country-Package-Version"
+              }
+            }
+          },
+          "404": {
+            "description": "A variable mentioned in the input situation does not exist in the loaded tax and benefit system. Details are sent back in the response body",
+            "headers": {
+              "Country-Package": {
+                "$ref": "#/components/headers/Country-Package"
+              },
+              "Country-Package-Version": {
+                "$ref": "#/components/headers/Country-Package-Version"
+              }
+            }
+          }
+        },
+        "summary": "Explore a simulation's steps in details.",
+        "tags": [
+          "Calculations"
+        ]
+      }
+    },
+    "/variable/{variableID}": {
+      "get": {
+        "operationId": "getVariable",
+        "parameters": [
+          {
+            "description": "ID of a variable. IDs can be obtained by enumerating the /variables endpoint.",
+            "in": "path",
+            "name": "variableID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Variable"
+                }
+              }
+            },
+            "description": "The requested variable's information is sent back in the response body",
+            "headers": {
+              "Country-Package": {
+                "$ref": "#/components/headers/Country-Package"
+              },
+              "Country-Package-Version": {
+                "$ref": "#/components/headers/Country-Package-Version"
+              }
+            }
+          },
+          "404": {
+            "description": "The requested variable does not exist",
+            "headers": {
+              "Country-Package": {
+                "$ref": "#/components/headers/Country-Package"
+              },
+              "Country-Package-Version": {
+                "$ref": "#/components/headers/Country-Package-Version"
+              }
+            }
+          }
+        },
+        "summary": "Get information about a specific variable",
+        "tags": [
+          "Variables"
+        ]
+      }
+    },
+    "/variables": {
+      "get": {
+        "operationId": "getVariables",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Variables"
+                }
+              }
+            },
+            "description": "The list of variables is sent back in the response body",
+            "headers": {
+              "Country-Package": {
+                "$ref": "#/components/headers/Country-Package"
+              },
+              "Country-Package-Version": {
+                "$ref": "#/components/headers/Country-Package-Version"
+              }
+            }
+          }
+        },
+        "summary": "List all available variables",
+        "tags": [
+          "Variables"
+        ]
+      }
+    }
+  },
+  "servers": [
+    {
+      "url": "https://fisca-py.main.rac-sandpit-c04-sa.lagoon.salsa.hosting"
+    }
+  ],
+  "tags": [
+    {
+      "description": "A parameter is a numeric property of the legislation that can evolve over time.",
+      "externalDocs": {
+        "description": "Parameters documentation",
+        "url": "https://openfisca.org/doc/key-concepts/parameters.html"
+      },
+      "name": "Parameters"
+    },
+    {
+      "description": "A variable depends on a person, or an entity (e.g. zip code, salary, income tax).",
+      "externalDocs": {
+        "description": "Variables documentation",
+        "url": "https://openfisca.org/doc/key-concepts/variables.html"
+      },
+      "name": "Variables"
+    },
+    {
+      "description": "An entity is a person of a group of individuals (such as a household).",
+      "externalDocs": {
+        "description": "Entities documentation",
+        "url": "https://openfisca.org/doc/key-concepts/person,_entities,_role.html"
+      },
+      "name": "Entities"
+    },
+    {
+      "name": "Calculations"
+    },
+    {
+      "name": "Documentation"
+    }
+  ]
+}

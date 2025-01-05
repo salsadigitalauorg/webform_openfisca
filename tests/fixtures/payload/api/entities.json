@@ -1,0 +1,7 @@
+{
+  "person": {
+    "description": "An individual. The minimal legal entity on which Centrelink provides a range of social security payments and services.",
+    "documentation": "",
+    "plural": "persons"
+  }
+}

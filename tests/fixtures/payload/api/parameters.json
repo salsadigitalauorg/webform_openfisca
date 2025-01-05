@@ -1,0 +1,58 @@
+{
+  "austudy_age_threshold": {
+    "description": "Minimum age at which a person is eligible for AU Study.",
+    "href": "https://fisca-py.main.rac-sandpit-c04-sa.lagoon.salsa.hosting/parameter/austudy_age_threshold"
+  },
+  "ftb.part_a.base_rate": {
+    "description": "Family Tax Benefit Part A child base rate.",
+    "href": "https://fisca-py.main.rac-sandpit-c04-sa.lagoon.salsa.hosting/parameter/ftb/part_a/base_rate"
+  },
+  "ftb.part_a.income_high_threshold": {
+    "description": "Family Tax Benefit Part A high income threshold.",
+    "href": "https://fisca-py.main.rac-sandpit-c04-sa.lagoon.salsa.hosting/parameter/ftb/part_a/income_high_threshold"
+  },
+  "ftb.part_a.income_low_threshold": {
+    "description": "Family Tax Benefit Part A low income threshold.",
+    "href": "https://fisca-py.main.rac-sandpit-c04-sa.lagoon.salsa.hosting/parameter/ftb/part_a/income_low_threshold"
+  },
+  "ftb.part_a.income_max_threshold": {
+    "description": "Family Tax Benefit Part A max income threshold.",
+    "href": "https://fisca-py.main.rac-sandpit-c04-sa.lagoon.salsa.hosting/parameter/ftb/part_a/income_max_threshold"
+  },
+  "ftb.part_a.max_rate_junior_child": {
+    "description": "Family Tax Benefit Part A junior child maximum rate.",
+    "href": "https://fisca-py.main.rac-sandpit-c04-sa.lagoon.salsa.hosting/parameter/ftb/part_a/max_rate_junior_child"
+  },
+  "ftb.part_a.max_rate_middle_child": {
+    "description": "Family Tax Benefit Part A middle child maximum rate.",
+    "href": "https://fisca-py.main.rac-sandpit-c04-sa.lagoon.salsa.hosting/parameter/ftb/part_a/max_rate_middle_child"
+  },
+  "ftb.part_a.max_rate_senior_child": {
+    "description": "Family Tax Benefit Part A senior child maximum rate.",
+    "href": "https://fisca-py.main.rac-sandpit-c04-sa.lagoon.salsa.hosting/parameter/ftb/part_a/max_rate_senior_child"
+  },
+  "ftb.part_a.rate_reduction_higher": {
+    "description": "Family Tax Benefit Part A rate reduction for income over maximum thresholds.",
+    "href": "https://fisca-py.main.rac-sandpit-c04-sa.lagoon.salsa.hosting/parameter/ftb/part_a/rate_reduction_higher"
+  },
+  "ftb.part_a.rate_reduction_lower": {
+    "description": "Family Tax Benefit Part A rate reduction for income between minimum and maximum thresholds.",
+    "href": "https://fisca-py.main.rac-sandpit-c04-sa.lagoon.salsa.hosting/parameter/ftb/part_a/rate_reduction_lower"
+  },
+  "jobseeker_age_threshold": {
+    "description": "Minimum age at which a person is eligible for Jobseeker.",
+    "href": "https://fisca-py.main.rac-sandpit-c04-sa.lagoon.salsa.hosting/parameter/jobseeker_age_threshold"
+  },
+  "pension_age_threshold": {
+    "description": "Minimum age at which a person is eligible for Pension.",
+    "href": "https://fisca-py.main.rac-sandpit-c04-sa.lagoon.salsa.hosting/parameter/pension_age_threshold"
+  },
+  "youth_allowance_age_threshold": {
+    "description": "Maximum age at which a person is eligible for Youth Allowance.",
+    "href": "https://fisca-py.main.rac-sandpit-c04-sa.lagoon.salsa.hosting/parameter/youth_allowance_age_threshold"
+  },
+  "youth_allowance_for_jobseekers_age_threshold": {
+    "description": "Maximum age at which a person is eligible for Youth Allowance for Jobseekers.",
+    "href": "https://fisca-py.main.rac-sandpit-c04-sa.lagoon.salsa.hosting/parameter/youth_allowance_for_jobseekers_age_threshold"
+  }
+}

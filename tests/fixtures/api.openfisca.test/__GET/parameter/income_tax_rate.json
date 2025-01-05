@@ -1,0 +1,13 @@
+{
+  "description": "Income tax rate",
+  "id": "income_tax_rate",
+  "metadata": {
+    "unit": "/1"
+  },
+  "source": "https://github.com/openfisca/country-template/blob/0.0.1/openfisca_rules/parameters/income_tax_rate.yaml",
+  "values": {
+    "2023-01-01": 0.14,
+    "2024-01-01": 0.15,
+    "2025-01-01": 0.16
+  }
+}

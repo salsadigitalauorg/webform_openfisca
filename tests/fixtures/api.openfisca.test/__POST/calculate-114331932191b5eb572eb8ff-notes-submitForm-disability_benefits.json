@@ -1,0 +1,30 @@
+{
+  "persons": {
+    "personA": {
+      "aus_citizen": {
+        "2025-01-01": true
+      },
+      "disability_allowance_benefit": {
+        "2025-01-01": 1
+      },
+      "disability_allowance_eligible": {
+        "2025-01-01": true
+      },
+      "has_disability": {
+        "2025-01-01": true
+      },
+      "monthly_income": {
+        "2025-01-01": "100"
+      },
+      "monthly_income_exceeds_limit": {
+        "2025-01-01": false
+      },
+      "requires_ongoing_supervision_or_treatment": {
+        "2025-01-01": true
+      },
+      "requires_ongoing_support": {
+        "2025-01-01": true
+      }
+    }
+  }
+}

@@ -1,0 +1,92 @@
+<?php
+
+/**
+ * @file
+ * Webform OpenFisca Key Authentication.
+ */
+
+declare(strict_types=1);
+
+use Drupal\Core\Entity\EntityFormInterface;
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\key\KeyInterface;
+use Drupal\webform\Entity\Webform;
+use Drupal\webform\WebformInterface;
+use Drupal\webform_openfisca\WebformOpenFiscaSettings;
+
+/**
+ * Implements hook_config_schema_info_alter().
+ */
+function webform_openfisca_key_auth_config_schema_info_alter(array &$definitions) : void {
+  $definitions['webform.settings.third_party.webform_openfisca']['mapping']['fisca_api_authorization_header_token_key'] = [
+    'type' => 'string',
+    'label' => 'Fisca API Authorization Header - Token Key',
+  ];
+}
+
+/**
+ * Implements hook_webform_third_party_settings_form_alter().
+ */
+function webform_openfisca_key_auth_webform_third_party_settings_form_alter(array &$form, FormStateInterface $form_state) : void {
+  $form_object = $form_state->getFormObject();
+  if (!$form_object instanceof EntityFormInterface) {
+    // @codeCoverageIgnoreStart
+    return;
+    // @codeCoverageIgnoreEnd
+  }
+  $webform = $form_object->getEntity();
+  if (!$webform instanceof WebformInterface) {
+    // @codeCoverageIgnoreStart
+    return;
+    // @codeCoverageIgnoreEnd
+  }
+
+  $token_key = (string) $webform->getThirdPartySetting('webform_openfisca', 'fisca_api_authorization_header_token_key', '');
+  $form['third_party_settings']['webform_openfisca']['fisca_api_authorization_header_token_key'] = [
+    '#type' => 'key_select',
+    '#key_filters' => ['type' => 'authentication'],
+    '#title' => t('Authorization token key'),
+    '#description' => t('Specify the key storing the token for the Authorization header above. The token will be appended to the Authorization header when making API calls to OpenFisca.'),
+    '#default_value' => $token_key,
+    '#weight' => -59,
+  ];
+}
+
+/**
+ * Implements hook_webform_openfisca_client_options_alter().
+ */
+function webform_openfisca_key_auth_webform_openfisca_client_options_alter(array &$options, array &$context, array &$webform_openfisca_context) : void {
+  /** @var \Drupal\webform_openfisca\WebformOpenFiscaSettings $webform_openfisca_settings */
+  $webform_openfisca_settings = $webform_openfisca_context['webform_openfisca_settings'] ?? NULL;
+  if (!$webform_openfisca_settings instanceof WebformOpenFiscaSettings) {
+    // @codeCoverageIgnoreStart
+    return;
+    // @codeCoverageIgnoreEnd
+  }
+
+  $webform = Webform::load($webform_openfisca_settings->getWebformId());
+  if (!$webform instanceof WebformInterface) {
+    // @codeCoverageIgnoreStart
+    return;
+    // @codeCoverageIgnoreEnd
+  }
+
+  $token_key = (string) $webform->getThirdPartySetting('webform_openfisca', 'fisca_api_authorization_header_token_key', '');
+  if (!$token_key) {
+    return;
+  }
+
+  /** @var \Drupal\key\KeyRepositoryInterface $key_repository */
+  $key_repository = \Drupal::service('key.repository');
+  $key = $key_repository->getKey($token_key);
+  if (!$key instanceof KeyInterface) {
+    return;
+  }
+
+  $token = $key->getKeyValue();
+  if (!empty($token)) {
+    $auth_header = $options['headers']['Authorization'] ?? '';
+    $auth_header = trim($auth_header) . ' ' . $token;
+    $options['headers']['Authorization'] = $auth_header;
+  }
+}

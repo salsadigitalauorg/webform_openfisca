@@ -1,0 +1,54 @@
+{
+  "persons": {
+    "Person": {
+      "australian_citizen_or_permanent_resident": {
+        "2024-10-31": "No"
+      },
+      "benefit_abstudy_maybe_eligible": {
+        "2024-10-31": false
+      },
+      "benefit_age_pension_maybe_eligible": {
+        "2024-10-31": false
+      },
+      "benefit_austudy_maybe_eligible": {
+        "2024-10-31": false
+      },
+      "benefit_carer_payment_maybe_eligible": {
+        "2024-10-31": false
+      },
+      "benefit_child_care_subsidy_maybe_eligible": {
+        "2024-10-31": false
+      },
+      "benefit_disability_support_payment_maybe_eligible": {
+        "2024-10-31": false
+      },
+      "benefit_eligible": {
+        "2024-10-31": false
+      },
+      "benefit_family_tax_benefit_maybe_eligible": {
+        "2024-10-31": 0
+      },
+      "benefit_farm_household_allowance_maybe_eligible": {
+        "2024-10-31": false
+      },
+      "benefit_jobseekers_maybe_eligible": {
+        "2024-10-31": false
+      },
+      "benefit_parental_leave_pay_maybe_eligible": {
+        "2024-10-31": false
+      },
+      "benefit_parenting_payment_maybe_eligible": {
+        "2024-10-31": false
+      },
+      "benefit_youth_allowance_for_jobseekers_maybe_eligible": {
+        "2024-10-31": false
+      },
+      "benefit_youth_allowance_maybe_eligible": {
+        "2024-10-31": false
+      },
+      "exit": {
+        "2024-10-31": false
+      }
+    }
+  }
+}
