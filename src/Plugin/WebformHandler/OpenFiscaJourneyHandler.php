@@ -22,7 +22,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
- * Webform submission debug handler.
+ * Webform OpenFisca Journey handler.
  *
  * @WebformHandler(
  *   id = "openfisca_journey",
@@ -54,7 +54,7 @@ class OpenFiscaJourneyHandler extends WebformHandlerBase {
   /**
    * The debug data from the last API call to OpenFisca.
    *
-   * @var array<string, \Drupal\webform_openfisca\OpenFisca\Payload>
+   * @var array<string, \Drupal\webform_openfisca\OpenFisca\Payload|null>
    */
   protected array $recentDebugData = [];
 
@@ -150,6 +150,7 @@ class OpenFiscaJourneyHandler extends WebformHandlerBase {
     $query_append = $openfisca_response?->getDebugData('query_append') ?: [];
 
     $immediate_response = [];
+    // Override the confirmation URL if there is a benefit or an immediate exit.
     if (($total_benefits !== 0 || !empty($query_append['immediate_exit']))
       && $openfisca_response instanceof ResponsePayload
     ) {
@@ -362,7 +363,7 @@ class OpenFiscaJourneyHandler extends WebformHandlerBase {
       // Always ignore period key.
       if ($webform_key === 'period') {
         // @codeCoverageIgnoreStart
-        // Period should be alread unset while being prepared.
+        // Period should be already unset while being prepared.
         continue;
         // @codeCoverageIgnoreEnd
       }
@@ -370,7 +371,7 @@ class OpenFiscaJourneyHandler extends WebformHandlerBase {
         // The openfisca_key will be in the format
         // variable_entity.entity_key.variable_name
         // eg. persons.personA.age
-        // We need to dynamically create an multidimensional array
+        // We need to dynamically create a multidimensional array
         // from the list of keys and then set the value.
         $path = [];
         OpenFiscaHelper::parseOpenFiscaFieldMapping($openfisca_key, path: $path);
@@ -578,9 +579,9 @@ class OpenFiscaJourneyHandler extends WebformHandlerBase {
   }
 
   /**
-   * Return the debug data from the last API call to OpenFisca.
+   * Return the debug data from the last API calculation to OpenFisca.
    *
-   * @return \Drupal\webform_openfisca\OpenFisca\Payload[]
+   * @return array<string, \Drupal\webform_openfisca\OpenFisca\Payload|null>
    *   The data array with 2 keys if debug mode is enabled:
    *   - request
    *   - response
