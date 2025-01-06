@@ -138,7 +138,7 @@ class WebformOpenFiscaSettings {
   protected string $immediateExitKeys = '';
 
   /**
-   * Constructor.
+   * Constructs a new \Drupal\webform_openfisca\WebformOpenFiscaSettings object.
    *
    * @param \Drupal\webform\WebformInterface $webform
    *   The webform.

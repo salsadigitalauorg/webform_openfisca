@@ -22,7 +22,7 @@ abstract class WebformFormAlterBase {
   use StringTranslationTrait;
 
   /**
-   * Constructor.
+   * Constructs a new \Drupal\webform_openfisca\WebformFormAlterBase object.
    *
    * @param \Drupal\webform_openfisca\OpenFisca\ClientFactoryInterface $openFiscaClientFactory
    *   OpenFisca connector.

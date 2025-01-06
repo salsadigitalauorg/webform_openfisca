@@ -18,7 +18,7 @@ use Psr\Log\LoggerInterface;
 class Client implements ClientInterface {
 
   /**
-   * Constructor.
+   * Constructs a new \Drupal\webform_openfisca\OpenFisca\Client object.
    *
    * @param string $baseApiUri
    *   The base API endpoint.

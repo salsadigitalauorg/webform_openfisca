@@ -17,7 +17,7 @@ use Drupal\paragraphs\ParagraphInterface;
 class RacContentHelper implements RacContentHelperInterface {
 
   /**
-   * Constructor.
+   * Constructs a new \Drupal\webform_openfisca\RacContentHelper object.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
    *   Entity Type Manager service.

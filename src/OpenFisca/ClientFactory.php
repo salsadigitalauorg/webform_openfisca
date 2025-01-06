@@ -15,7 +15,7 @@ use Psr\Log\LoggerInterface;
 class ClientFactory implements ClientFactoryInterface {
 
   /**
-   * Constructor.
+   * Constructs a new \Drupal\webform_openfisca\OpenFisca\ClientFactory object.
    *
    * @param \Drupal\Core\Http\ClientFactory $httpClientFactory
    *   HTTP Client Factory service.

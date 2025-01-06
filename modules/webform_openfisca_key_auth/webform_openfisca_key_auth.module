@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Webform OpenFisca Key Authentication.
+ * Hook implementations for the Webform OpenFisca - Authorization Key module.
  */
 
 declare(strict_types=1);

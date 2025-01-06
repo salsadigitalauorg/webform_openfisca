@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Webform OpenFisca module.
+ * Hook implementations for the Webform OpenFisca module.
  */
 
 use Drupal\Core\Form\FormStateInterface;

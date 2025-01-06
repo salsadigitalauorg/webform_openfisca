@@ -27,7 +27,7 @@ abstract class Payload {
   protected array $debugData = [];
 
   /**
-   * Constructor.
+   * Constructs a new \Drupal\webform_openfisca\OpenFisca\Payload object.
    */
   final public function __construct() {}
 
