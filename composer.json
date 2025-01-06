@@ -35,11 +35,21 @@
         "exclude": [
             ".ahoy.yml",
             ".devtools",
+            ".editorconfig",
             ".github",
+            ".gitlab-ci.yml",
             ".logs",
+            ".twig-cs-fixer.php",
             "build",
+            "codecov.yml",
             "composer.dev.json",
             "package-lock.json",
+            "phpcs.xml",
+            "phpmd.xml",
+            "phpstan.neon",
+            "phpunit.d10.xml",
+            "phpunit.xml",
+            "rector.php",
             "renovate.json",
             "tests"
         ]
