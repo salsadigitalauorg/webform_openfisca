@@ -51,7 +51,7 @@ abstract class WebformFormAlterBase {
    * @return \Drupal\webform\WebformInterface|null
    *   The webform.
    */
-  protected function getWebformFromFormState(FormStateInterface $form_state): ?WebformInterface {
+  protected static function getWebformFromFormState(FormStateInterface $form_state): ?WebformInterface {
     $webform = NULL;
     $form_object = $form_state->getFormObject();
     if ($form_object instanceof EntityFormInterface) {

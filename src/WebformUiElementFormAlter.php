@@ -19,14 +19,14 @@ class WebformUiElementFormAlter extends WebformFormAlterBase {
    * {@inheritdoc}
    */
   public function alterForm(array &$form, FormStateInterface $form_state) : void {
-    $webform = $this->getWebformFromFormState($form_state);
+    $webform = static::getWebformFromFormState($form_state);
     if (!$webform instanceof WebformInterface) {
       // @codeCoverageIgnoreStart
       return;
       // @codeCoverageIgnoreEnd
     }
 
-    $element_key = $this->getWebformElementKey($form_state);
+    $element_key = static::getWebformElementKey($form_state);
     if (empty($element_key)) {
       // @codeCoverageIgnoreStart
       return;
@@ -86,7 +86,9 @@ class WebformUiElementFormAlter extends WebformFormAlterBase {
       '#default_value' => $openfisca_settings->fieldHasImmediateResponse($element_key),
     ];
 
-    $form['#submit'][] = [$this, 'submitForm'];
+    // Must use static callback here to avoid Closure serialization error upon
+    // Ajax calls when editing a webform element.
+    $form['#submit'][] = [static::class, 'submitForm'];
   }
 
   /**
@@ -97,15 +99,15 @@ class WebformUiElementFormAlter extends WebformFormAlterBase {
    * @param \Drupal\Core\Form\FormStateInterface $form_state
    *   Form state.
    */
-  public function submitForm(array &$form, FormStateInterface $form_state) : void {
-    $webform = $this->getWebformFromFormState($form_state);
+  public static function submitForm(array &$form, FormStateInterface $form_state) : void {
+    $webform = static::getWebformFromFormState($form_state);
     if (!$webform instanceof WebformInterface) {
       // @codeCoverageIgnoreStart
       return;
       // @codeCoverageIgnoreEnd
     }
 
-    $element_key = $this->getWebformElementKey($form_state);
+    $element_key = static::getWebformElementKey($form_state);
     if (empty($element_key)) {
       // @codeCoverageIgnoreStart
       return;
@@ -128,14 +130,16 @@ class WebformUiElementFormAlter extends WebformFormAlterBase {
     $fisca_variables = $openfisca_settings->getVariables();
     $fisca_entity_roles = $openfisca_settings->getEntityRoles();
 
-    $openfisca_client = $openfisca_settings->getOpenFiscaClient($this->openFiscaClientFactory);
+    /** @var \Drupal\webform_openfisca\OpenFisca\ClientFactory $openfisca_client_factory */
+    $openfisca_client_factory = \Drupal::service('webform_openfisca.openfisca_client_factory');
+    $openfisca_client = $openfisca_settings->getOpenFiscaClient($openfisca_client_factory);
 
     $fisca_machine_name = $form_state->getValue('fisca_machine_name');
     $fisca_entity_key = $form_state->getValue('fisca_entity_key');
     $fisca_entity_role = $form_state->getValue('fisca_entity_role');
     $fisca_entity_role_array = (bool) $form_state->getValue('fisca_entity_role_array');
     // Update OpenFisca variables and field mappings.
-    if (!array_key_exists($fisca_machine_name, $this->getGenericOpenFiscaVariables())) {
+    if (!array_key_exists($fisca_machine_name, static::getGenericOpenFiscaVariables())) {
       // Get OpenFisca entities.
       $fisca_entities = $openfisca_client->getEntities();
       // Get OpenFisca variable.
@@ -204,7 +208,7 @@ class WebformUiElementFormAlter extends WebformFormAlterBase {
     }
     // @codeCoverageIgnoreStart
     catch (EntityStorageException $entity_storage_exception) {
-      $this->messenger->addError($entity_storage_exception->getMessage());
+      \Drupal::messenger()->addError($entity_storage_exception->getMessage());
     }
     // @codeCoverageIgnoreEnd
   }
@@ -218,7 +222,7 @@ class WebformUiElementFormAlter extends WebformFormAlterBase {
    * @return string|null
    *   The key.
    */
-  protected function getWebformElementKey(FormStateInterface $form_state) : ?string {
+  protected static function getWebformElementKey(FormStateInterface $form_state) : ?string {
     $form_object = $form_state->getFormObject();
     return ($form_object instanceof WebformUiElementFormInterface) ? $form_object->getKey() : NULL;
   }
@@ -242,7 +246,7 @@ class WebformUiElementFormAlter extends WebformFormAlterBase {
     $openfisca_client = $settings->getOpenFiscaClient($this->openFiscaClientFactory);
 
     // Allow a generic key to be allocated to identify a person.
-    $fisca_variables = $this->getGenericOpenFiscaVariables();
+    $fisca_variables = static::getGenericOpenFiscaVariables();
 
     $variables = $openfisca_client->getVariables();
     if ($variables === NULL) {
@@ -264,11 +268,11 @@ class WebformUiElementFormAlter extends WebformFormAlterBase {
    * @return array<string, \Drupal\Component\Render\MarkupInterface|string>
    *   The variables.
    */
-  protected function getGenericOpenFiscaVariables() : array {
+  protected static function getGenericOpenFiscaVariables() : array {
     return [
-      '_nil' => $this->t('- Exclude from mapping -'),
-      'name_key' => $this->t('Name'),
-      'period' => $this->t('Period'),
+      '_nil' => t('- Exclude from mapping -'),
+      'name_key' => t('Name'),
+      'period' => t('Period'),
     ];
   }
 

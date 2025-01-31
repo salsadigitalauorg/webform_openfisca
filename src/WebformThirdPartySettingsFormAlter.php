@@ -19,7 +19,7 @@ class WebformThirdPartySettingsFormAlter extends WebformFormAlterBase {
    * {@inheritdoc}
    */
   public function alterForm(array &$form, FormStateInterface $form_state): void {
-    $webform = $this->getWebformFromFormState($form_state);
+    $webform = static::getWebformFromFormState($form_state);
     if (!$webform instanceof WebformInterface) {
       // @codeCoverageIgnoreStart
       return;
@@ -167,7 +167,7 @@ class WebformThirdPartySettingsFormAlter extends WebformFormAlterBase {
    *   Form state.
    */
   public function validateForm(array $form, FormStateInterface $form_state): void {
-    $webform = $this->getWebformFromFormState($form_state);
+    $webform = static::getWebformFromFormState($form_state);
     if (!$webform instanceof WebformInterface) {
       // @codeCoverageIgnoreStart
       return;
