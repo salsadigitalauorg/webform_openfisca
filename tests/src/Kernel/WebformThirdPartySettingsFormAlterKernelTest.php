@@ -68,7 +68,7 @@ class WebformThirdPartySettingsFormAlterKernelTest extends BaseKernelTestCase {
     $this->assertEquals('https://api.openfisca.test/', $openfisca_settings_form['fisca_api_endpoint']['#default_value']);
 
     $this->assertArrayHasKey('fisca_api_authorization_header', $openfisca_settings_form);
-    $this->assertEquals('textfield', $openfisca_settings_form['fisca_api_authorization_header']['#type']);
+    $this->assertEquals('textarea', $openfisca_settings_form['fisca_api_authorization_header']['#type']);
     $this->assertEquals('Token WEBFORM-OPENFISCA-TEST-TOKEN', $openfisca_settings_form['fisca_api_authorization_header']['#default_value']);
 
     $this->assertArrayHasKey('fisca_return_key', $openfisca_settings_form);

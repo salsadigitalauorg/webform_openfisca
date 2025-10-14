@@ -62,7 +62,7 @@ class WebformThirdPartySettingsFormAlter extends WebformFormAlterBase {
       '#weight' => -70,
     ];
     $form['third_party_settings']['webform_openfisca']['fisca_api_authorization_header'] = [
-      '#type' => 'textfield',
+      '#type' => 'textarea',
       '#title' => $this->t('Authorization header to connect to OpenFisca API'),
       '#description' => $this->t('Specify the Authorization header to connect to a private OpenFisca API, e.g. a Basic auth or a Bearer token.'),
       '#default_value' => $openfisca_settings->getApiAuthorizationHeader(),

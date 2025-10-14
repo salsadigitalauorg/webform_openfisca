@@ -113,7 +113,7 @@ class OpenFiscaTestClientMiddleware {
    *   The path to the fixture.
    */
   protected function getFixturePath(string $host, string $path, string $method = 'GET', string $suffix = ''): string {
-    return $this->getFixtureDirectory($host) . '/' . '__' . $method . '/' . $path . ($suffix ? "-$suffix" : '') . '.json';
+    return $this->getFixtureDirectory($host) . '/__' . $method . '/' . $path . ($suffix ? "-$suffix" : '') . '.json';
   }
 
   /**
