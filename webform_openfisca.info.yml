@@ -3,7 +3,6 @@ type: module
 description: Adds OpenFisca support for RaC enabled webforms.
 package: Webform
 core_version_requirement: ^10 || ^11
-configure: webform_openfisca.settings
 dependencies:
   - webform:webform
   - webform:webform_ui
