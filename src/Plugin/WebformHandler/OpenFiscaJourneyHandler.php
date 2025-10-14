@@ -104,6 +104,11 @@ class OpenFiscaJourneyHandler extends WebformHandlerBase {
       return;
     }
 
+    // Added check for webform_key to prevent errors on elements without keys.
+    if (!isset($element['#webform_key'])) {
+      return;
+    }
+
     $element_key = $element['#webform_key'];
     // Add the immediate response handling to webform element.
     $fisca_immediate_response_ajax_indicator = $openfisca_settings->hasImmediateResponseAjaxIndicator();
