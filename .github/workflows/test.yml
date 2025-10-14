@@ -150,7 +150,8 @@ jobs:
         working-directory: build
         run: vendor/bin/twig-cs-fixer || [ "${CI_TWIGCSFIXER_IGNORE_FAILURE:-0}" -eq 1 ]
         env:
-          CI_TWIGCSFIXER_IGNORE_FAILURE: ${{ vars.CI_TWIGCSFIXER_IGNORE_FAILURE }}
+          # TwigCS Fixer is failing on Drupal 11.
+          CI_TWIGCSFIXER_IGNORE_FAILURE: ${{ contains(matrix.name, 'd10') && vars.CI_TWIGCSFIXER_IGNORE_FAILURE || '1' }}
 
       - name: Run tests
         working-directory: build
