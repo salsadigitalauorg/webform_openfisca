@@ -180,7 +180,7 @@ class WebformThirdPartySettingsFormAlter extends WebformFormAlterBase {
 
     $enabled = $form_state->getValue(['third_party_settings', 'webform_openfisca', 'fisca_enabled']);
     if ($enabled) {
-      \Drupal::messenger()->addWarning(
+      $this->messenger->addWarning(
         $this->t('Please make sure that you have disabled saving of submissions for this form.')
       );
     }
