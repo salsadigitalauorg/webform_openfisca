@@ -35,12 +35,3 @@ webform.settings.third_party.webform_openfisca:
     fisca_entity_roles:
       type: string
       label: 'JSON encoded entity roles'
-    fisca_immediate_response_mapping:
-      type: string
-      label: 'JSON encoded immediate response mapping'
-    fisca_immediate_response_ajax_indicator:
-      type: boolean
-      label: 'Display Ajax indicator for immediate response'
-    fisca_immediate_exit_mapping:
-      type: string
-      label: 'OpenFisca return keys for immediate exit (comma-separated)'

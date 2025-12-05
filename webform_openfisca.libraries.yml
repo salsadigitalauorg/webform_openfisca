@@ -1,7 +1,5 @@
-immediate_response:
+openfisca-checkbox-popup:
   js:
-    js/webform_openfisca.immediate_response.js: {}
+    js/openfisca-checkbox-popup.js: {}
   dependencies:
-    - core/drupal
-    - core/jquery
-    - core/once
+    - core/drupal.dialog
