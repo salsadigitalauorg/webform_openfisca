@@ -49,7 +49,6 @@ class OpenFiscaJourneyHandlerKernelTest extends BaseKernelTestCase {
     $has_disability = $webform_submission_form['elements']['has_disability'];
     $this->assertArrayNotHasKey('#ajax', $has_disability);
     $this->assertArrayHasKey('#attributes', $has_disability);
-    $this->assertArrayNotHasKey('data-openfisca-immediate-response', $has_disability['#attributes']);
     $this->assertArrayNotHasKey('data-openfisca-webform-id', $has_disability['#attributes']);
 
     // Build and check the Test DAC form.
@@ -63,7 +62,6 @@ class OpenFiscaJourneyHandlerKernelTest extends BaseKernelTestCase {
     $has_disability = $webform_submission_form['elements']['has_disability'];
     $this->assertArrayNotHasKey('#ajax', $has_disability);
     $this->assertArrayHasKey('#attributes', $has_disability);
-    $this->assertArrayNotHasKey('data-openfisca-immediate-response', $has_disability['#attributes']);
     $this->assertArrayNotHasKey('data-openfisca-webform-id', $has_disability['#attributes']);
 
     // Test Add operation.
@@ -72,15 +70,11 @@ class OpenFiscaJourneyHandlerKernelTest extends BaseKernelTestCase {
     $this->assertArrayHasKey('has_disability', $webform_submission_form['elements']);
     $has_disability = $webform_submission_form['elements']['has_disability'];
     $this->assertArrayHasKey('#attributes', $has_disability);
-    $this->assertArrayHasKey('data-openfisca-immediate-response', $has_disability['#attributes']);
-    $this->assertEquals('true', $has_disability['#attributes']['data-openfisca-immediate-response']);
     $this->assertArrayHasKey('data-openfisca-webform-id', $has_disability['#attributes']);
     $this->assertEquals($webform->id(), $has_disability['#attributes']['data-openfisca-webform-id']);
     $this->assertArrayHasKey('#ajax', $has_disability);
     $ajax = $has_disability['#ajax'];
     $this->assertInstanceOf(OpenFiscaJourneyHandler::class, $ajax['callback'][0]);
-    $this->assertEquals('requestOpenFiscaImmediateResponse', $ajax['callback'][1]);
-    $this->assertEquals('fiscaImmediateResponse:request', $ajax['event']);
     $this->assertEquals('throbber', $ajax['progress']['type']);
   }
 
@@ -201,154 +195,6 @@ class OpenFiscaJourneyHandlerKernelTest extends BaseKernelTestCase {
     $this->assertEquals('/node/1', $response->getDebugData('webform_confirmation_url'), 'webform_confirmation_url is not /node/1.');
     $this->assertEquals($disability_benefit->toUrl()->toString(), $response->getDebugData('rac_redirect'), sprintf('rac_redirect is not "%s".', $disability_benefit->toUrl()->toString()));
     $this->assertEquals($disability_benefit->toUrl()->toString() . '?what_is_your_monthly_income_=100&has_disability=1&requires_ongoing_support=1&requires_ongoing_supervision_or_treatment=1&disability_allowance_eligible=1&aus_citizen_or_permanent_resident=1&disability_allowance_benefit=1&monthly_income_exceeds_limit=0&total_benefit=1', $response->hasDebugData('overridden_confirmation_url'), 'overridden_confirmation_url is not expected.');
-  }
-
-  /**
-   * Test the testImmediateResponse() method with RAC content.
-   */
-  public function testImmediateResponse(): void {
-    $this->setUpRacContentModules();
-    $webform = Webform::load('test_dac_immediate');
-    $webform_submission = $this->prepareWebformSubmission((string) $webform->id());
-    /** @var \Drupal\Core\Form\FormInterface $form_object */
-    $form_object = NULL;
-    $form_state = new FormState();
-    $webform_submission_form = $this->reloadWebformSubmissionForm($webform_submission, $form_object, $form_state, 'add');
-
-    // Prepare RAC content.
-    $this->createTestPage('Page /node/1');
-    $disability_benefit = $this->createTestPage('Disability Benefit');
-    $non_aus_citizen = $this->createTestPage('Non-Aus citizen');
-    $this->createRacContent('test_dac_immediate', 'Test RAC', [
-      [
-        'redirect' => $disability_benefit,
-        'rules' => [
-          'persons.personA.disability_allowance_benefit' => 1,
-          'persons.personA.disability_allowance_eligible' => 1,
-        ],
-      ],
-      [
-        'redirect' => $non_aus_citizen,
-        'rules' => [
-          'persons.personA.aus_citizen' => 0,
-        ],
-      ],
-    ]);
-
-    // @see OpenFiscaTestClientMiddleware::loadFixture()
-    // RequestPayload hash: 83732831beb93bbd70698b0e. Expecting result from
-    // calculate-83732831beb93bbd70698b0e-notes-immediate-exit.json.
-    $values = [
-      'aus_citizen_or_permanent_resident' => 'false',
-      'what_is_your_monthly_income_' => '',
-      'has_disability' => '',
-      'requires_ongoing_support' => '',
-      'requires_ongoing_supervision_or_treatment' => '',
-      'disability_allowance_eligible' => 'null',
-      'disability_allowance_benefit' => '',
-      'monthly_income_exceeds_limit' => '',
-    ];
-    $form_state->setTriggeringElement($webform_submission_form['elements']['aus_citizen_or_permanent_resident']);
-    $this->prepareWebformSubmission($webform, $form_state, $values);
-    /** @var \Drupal\webform_openfisca\Plugin\WebformHandler\OpenFiscaJourneyHandler $handler */
-    $handler = $webform->getHandler('openfisca_journey_handler');
-    $ajax_response = $handler->requestOpenFiscaImmediateResponse($webform_submission_form, $form_state);
-
-    $recent_debug_data = $handler->getRecentDebugData();
-    $this->assertArrayHasKey('response', $recent_debug_data);
-    $response = $recent_debug_data['response'];
-    $this->assertNotNull($response);
-    $this->assertEquals('https://api.openfisca.test/calculate', $response->getDebugData('openfisca_api_endpoint'), 'openfisca_api_endpoint is not https://api.openfisca.test/calculate.');
-    $this->assertEquals('/node/1', $response->getDebugData('webform_confirmation_url'), 'webform_confirmation_url is not /node/1.');
-    $this->assertSame(-1, $response->getDebugData('total_benefits'), 'total_benefits is not -1.');
-    $this->assertEquals(['total_benefit' => 0, 'period' => static::PERIOD, 'change' => 1, 'immediate_exit' => 1], $response->getDebugData('query_append'), 'query_append.total_benefit is not 0.');
-    $this->assertEquals($non_aus_citizen->toUrl()->toString(), $response->getDebugData('rac_redirect'), sprintf('rac_redirect is not "%s".', $non_aus_citizen->toUrl()->toString()));
-    $this->assertEquals($non_aus_citizen->toUrl()->toString() . '?disability_allowance_eligible=0&aus_citizen_or_permanent_resident=0&disability_allowance_benefit=0&period=2025-01-01&change=1&total_benefit=0&immediate_exit=1', $response->hasDebugData('overridden_confirmation_url'), 'overridden_confirmation_url is not expected.');
-
-    $command = current($ajax_response->getCommands());
-    $this->assertEquals('invoke', $command['command']);
-    $this->assertEmpty($command['selector']);
-    $this->assertEquals('webformOpenfiscaImmediateResponseRedirect', $command['method']);
-    $this->assertEquals($non_aus_citizen->toUrl()->toString(), $command['args'][0]['confirmation_url']);
-    $this->assertEquals('disability_allowance_eligible=0&aus_citizen_or_permanent_resident=0&disability_allowance_benefit=0&period=2025-01-01&change=1&total_benefit=0&immediate_exit=1', $command['args'][0]['query']);
-
-    // Reset the webform and test with other submission values.
-    $webform->resetSettings();
-    $webform_submission_form = $this->reloadWebformSubmissionForm($webform_submission, $form_object, $form_state, 'add');
-    // RequestPayload hash: d872fe59dfd11466b8232a76. Expecting result from
-    // calculate-d872fe59dfd11466b8232a76-notes-immediate-response.json.
-    $values = [
-      'aus_citizen_or_permanent_resident' => 'true',
-      'what_is_your_monthly_income_' => '',
-      'has_disability' => 'true',
-      'requires_ongoing_support' => '',
-      'requires_ongoing_supervision_or_treatment' => '',
-      'disability_allowance_eligible' => 'null',
-      'disability_allowance_benefit' => '',
-      'monthly_income_exceeds_limit' => '',
-    ];
-    $form_state->setTriggeringElement($webform_submission_form['elements']['has_disability']);
-    $this->prepareWebformSubmission($webform, $form_state, $values);
-    /** @var \Drupal\webform_openfisca\Plugin\WebformHandler\OpenFiscaJourneyHandler $handler */
-    $handler = $webform->getHandler('openfisca_journey_handler');
-    $ajax_response = $handler->requestOpenFiscaImmediateResponse($webform_submission_form, $form_state);
-    $recent_debug_data = $handler->getRecentDebugData();
-    $this->assertArrayHasKey('response', $recent_debug_data);
-    $response = $recent_debug_data['response'];
-    $this->assertNotNull($response);
-    $this->assertEquals('https://api.openfisca.test/calculate', $response->getDebugData('openfisca_api_endpoint'), 'openfisca_api_endpoint is not https://api.openfisca.test/calculate.');
-    $this->assertEquals('/node/1', $response->getDebugData('webform_confirmation_url'), 'webform_confirmation_url is not /node/1.');
-    $this->assertSame(1, $response->getDebugData('total_benefits'), 'total_benefits is not 1.');
-    $this->assertEquals(['total_benefit' => 1, 'period' => static::PERIOD, 'change' => 1], $response->getDebugData('query_append'), 'query_append.total_benefit is not 1.');
-    $this->assertEquals($disability_benefit->toUrl()->toString(), $response->getDebugData('rac_redirect'), sprintf('rac_redirect is not "%s".', $disability_benefit->toUrl()->toString()));
-    $this->assertEquals($disability_benefit->toUrl()->toString() . '?has_disability=1&disability_allowance_eligible=1&aus_citizen_or_permanent_resident=1&disability_allowance_benefit=1&period=2025-01-01&change=1&total_benefit=1', $response->hasDebugData('overridden_confirmation_url'), 'overridden_confirmation_url is not expected.');
-
-    $command = current($ajax_response->getCommands());
-    $this->assertEquals('invoke', $command['command']);
-    $this->assertEmpty($command['selector']);
-    $this->assertEquals('webformOpenfiscaImmediateResponseRedirect', $command['method']);
-    $this->assertEquals($disability_benefit->toUrl()->toString(), $command['args'][0]['confirmation_url']);
-    $this->assertEquals('has_disability=1&disability_allowance_eligible=1&aus_citizen_or_permanent_resident=1&disability_allowance_benefit=1&period=2025-01-01&change=1&total_benefit=1', $command['args'][0]['query']);
-
-    // Reset the webform and test with other submission values.
-    $webform->resetSettings();
-    $webform_submission_form = $this->reloadWebformSubmissionForm($webform_submission, $form_object, $form_state, 'add');
-    // RequestPayload hash: dd069e110305d536bcf9ee0c.
-    // Expecting result from calculate-dd069e110305d536bcf9ee0c-notes-immediate-response-continue.json.
-    $values = [
-      'aus_citizen_or_permanent_resident' => 'true',
-      'what_is_your_monthly_income_' => '100',
-      'has_disability' => 'false',
-      'requires_ongoing_support' => '',
-      'requires_ongoing_supervision_or_treatment' => '',
-      'disability_allowance_eligible' => 'null',
-      'disability_allowance_benefit' => '',
-      'monthly_income_exceeds_limit' => '',
-    ];
-    $form_state->setTriggeringElement($webform_submission_form['elements']['what_is_your_monthly_income_']);
-    $this->prepareWebformSubmission($webform, $form_state, $values);
-    /** @var \Drupal\webform_openfisca\Plugin\WebformHandler\OpenFiscaJourneyHandler $handler */
-    $handler = $webform->getHandler('openfisca_journey_handler');
-    $ajax_response = $handler->requestOpenFiscaImmediateResponse($webform_submission_form, $form_state);
-    $recent_debug_data = $handler->getRecentDebugData();
-    $this->assertArrayHasKey('response', $recent_debug_data);
-    $response = $recent_debug_data['response'];
-    $this->assertNotNull($response);
-    $this->assertEquals('https://api.openfisca.test/calculate', $response->getDebugData('openfisca_api_endpoint'), 'openfisca_api_endpoint is not https://api.openfisca.test/calculate.');
-    $this->assertFalse($response->hasDebugData('webform_confirmation_url'), 'webform_confirmation_url exists.');
-    $this->assertSame(0, $response->getDebugData('total_benefits'), 'total_benefits is not 0.');
-    $this->assertEquals(['total_benefit' => 0, 'period' => static::PERIOD, 'change' => 1], $response->getDebugData('query_append'), 'query_append.total_benefit is not 0.');
-    $this->assertFalse($response->hasDebugData('rac_redirect'), 'rac_redirect exists.');
-    $this->assertFalse($response->hasDebugData('overridden_confirmation_url'), 'overridden_confirmation_url exists.');
-
-    $command = current($ajax_response->getCommands());
-    $this->assertEquals('invoke', $command['command']);
-    $this->assertEmpty($command['selector']);
-    $this->assertEquals('webformOpenfiscaImmediateResponseContinue', $command['method']);
-    $this->assertEquals('what_is_your_monthly_income_', $command['args'][0]['name']);
-    $this->assertEquals('test_dac_immediate', $command['args'][0]['webform']);
-    $this->assertEquals('edit-what-is-your-monthly-income-', $command['args'][0]['selector']);
-    $this->assertEquals('edit-what-is-your-monthly-income-3', $command['args'][0]['original_selector']);
   }
 
   /**

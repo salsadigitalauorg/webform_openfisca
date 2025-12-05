@@ -77,15 +77,6 @@ class WebformUiElementFormAlter extends WebformFormAlterBase {
       '#default_value' => (bool) ($role['is_array'] ?? FALSE),
     ];
 
-    $form['fisca_immediate_response'] = [
-      '#type' => 'checkbox',
-      '#title' => $this->t('Requires immediate response'),
-      '#description' => [
-        '#markup' => $this->t('Will this element require immediate response from OpenFisca?'),
-      ],
-      '#default_value' => $openfisca_settings->fieldHasImmediateResponse($element_key),
-    ];
-
     // Must use static callback here to avoid Closure serialization error upon
     // Ajax calls when editing a webform element.
     $form['#submit'][] = [static::class, 'submitForm'];
@@ -189,21 +180,11 @@ class WebformUiElementFormAlter extends WebformFormAlterBase {
       unset($fisca_entity_roles[$element_key]);
     }
 
-    $fisca_immediate_response_mapping = $openfisca_settings->getImmediateResponseMapping();
-    $fisca_immediate_response = (bool) $form_state->getValue('fisca_immediate_response');
-    if ($fisca_immediate_response) {
-      $fisca_immediate_response_mapping[$element_key] = TRUE;
-    }
-    else {
-      unset($fisca_immediate_response_mapping[$element_key]);
-    }
-
     // Save OpenFisca settings.
     try {
       $webform->setThirdPartySetting('webform_openfisca', 'fisca_field_mappings', OpenFiscaHelper::jsonEncodePretty($fisca_field_mappings));
       $webform->setThirdPartySetting('webform_openfisca', 'fisca_variables', OpenFiscaHelper::jsonEncodePretty($fisca_variables));
       $webform->setThirdPartySetting('webform_openfisca', 'fisca_entity_roles', OpenFiscaHelper::jsonEncodePretty($fisca_entity_roles));
-      $webform->setThirdPartySetting('webform_openfisca', 'fisca_immediate_response_mapping', OpenFiscaHelper::jsonEncodePretty($fisca_immediate_response_mapping));
       $webform->save();
     }
     // @codeCoverageIgnoreStart

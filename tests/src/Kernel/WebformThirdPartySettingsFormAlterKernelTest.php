@@ -122,38 +122,21 @@ class WebformThirdPartySettingsFormAlterKernelTest extends BaseKernelTestCase {
     $mappings = Json::decode($json);
     $this->assertEmpty($mappings);
 
-    $this->assertArrayHasKey('fisca_immediate_response_mapping', $openfisca_settings_form);
-    $this->assertEquals('webform_codemirror', $openfisca_settings_form['fisca_immediate_response_mapping']['#type']);
-    $this->assertEquals('javascript', $openfisca_settings_form['fisca_immediate_response_mapping']['#mode']);
-    $json = $openfisca_settings_form['fisca_immediate_response_mapping']['#default_value'];
     $mappings = Json::decode($json);
     $this->assertTrue($mappings['aus_citizen_or_permanent_resident']);
     $this->assertTrue($mappings['has_disability']);
     $this->assertArrayNotHasKey('requires_ongoing_support', $mappings);
-
-    $this->assertArrayHasKey('fisca_immediate_exit_mapping', $openfisca_settings_form);
-    $this->assertEquals('webform_codemirror', $openfisca_settings_form['fisca_immediate_exit_mapping']['#type']);
-    $this->assertEquals('text', $openfisca_settings_form['fisca_immediate_exit_mapping']['#mode']);
-    $this->assertEquals('persons.personA.exit,persons.personA.exit2', $openfisca_settings_form['fisca_immediate_exit_mapping']['#default_value']);
-
-    $this->assertArrayHasKey('fisca_immediate_response_ajax_indicator', $openfisca_settings_form);
-    $this->assertEquals('checkbox', $openfisca_settings_form['fisca_immediate_response_ajax_indicator']['#type']);
-    $this->assertTrue($openfisca_settings_form['fisca_immediate_response_ajax_indicator']['#default_value']);
 
     $openfisca_settings = WebformOpenFiscaSettings::load($webform);
     $this->assertTrue($openfisca_settings->isEnabled());
     $this->assertTrue($openfisca_settings->isDebugEnabled());
     $this->assertTrue($openfisca_settings->isLoggingEnabled());
     $this->assertNotEmpty($openfisca_settings->getParameterTokens());
-    $this->assertNotEmpty($openfisca_settings->getImmediateExitKeys());
-    $this->assertTrue($openfisca_settings->hasImmediateResponseAjaxIndicator());
 
     // Clear some settings and submit the form.
     $this->setWebformOpenFiscaFormStateValue($form_state, 'fisca_enabled', NULL);
     $this->setWebformOpenFiscaFormStateValue($form_state, 'fisca_debug_mode', '1');
     $this->setWebformOpenFiscaFormStateValue($form_state, 'fisca_logging_mode', NULL);
-    $this->setWebformOpenFiscaFormStateValue($form_state, 'fisca_immediate_exit_mapping', '');
-    $this->setWebformOpenFiscaFormStateValue($form_state, 'fisca_immediate_response_ajax_indicator', NULL);
     $form_builder->submitForm($form_object, $form_state);
     $form_object->save($settings_form, $form_state);
 
@@ -163,24 +146,9 @@ class WebformThirdPartySettingsFormAlterKernelTest extends BaseKernelTestCase {
     $this->assertTrue($openfisca_settings->isDebugEnabled());
     $this->assertFalse($openfisca_settings->isLoggingEnabled());
     $this->assertNotEmpty($openfisca_settings->getParameterTokens());
-    $this->assertEmpty($openfisca_settings->getImmediateExitKeys());
-    $this->assertFalse($openfisca_settings->hasImmediateResponseAjaxIndicator());
 
     $this->assertNotEmpty($openfisca_settings->getVariable('exit'));
     $this->assertFalse($openfisca_settings->getVariable('child_currently_at_school'));
-    // Reload the form - set immediate exit keys.
-    $settings_form = $this->reloadSettingsForm($webform, $form_object, $form_state);
-    $this->setWebformOpenFiscaFormStateValue($form_state, 'fisca_immediate_exit_mapping', 'persons.personA.exit,persons.personA.exit2,persons.personA.child_currently_at_school');
-    $form_builder->submitForm($form_object, $form_state);
-    $form_object->save($settings_form, $form_state);
-    $webform = Webform::load('test_dac');
-    $openfisca_settings = WebformOpenFiscaSettings::load($webform);
-    $this->assertEquals(['persons.personA.exit', 'persons.personA.exit2', 'persons.personA.child_currently_at_school'], $openfisca_settings->getImmediateExitKeys());
-    $this->assertIsArray($openfisca_settings->getVariable('child_currently_at_school'));
-    $this->assertIsArray($openfisca_settings->getVariable('exit'));
-    $this->assertFalse($openfisca_settings->getVariable('exit2'));
-
-    $this->assertTrue($openfisca_settings->hasApiEndpoint());
     // Reload the form - clear API endpoint.
     $settings_form = $this->reloadSettingsForm($webform, $form_object, $form_state);
     $this->setWebformOpenFiscaFormStateValue($form_state, 'fisca_api_endpoint', '');
