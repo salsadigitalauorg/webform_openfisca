@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Drupal\webform_openfisca;
 
-use Drupal\Component\Serialization\Json;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\webform\WebformInterface;
 use Drupal\webform_openfisca\OpenFisca\ClientInterface;
