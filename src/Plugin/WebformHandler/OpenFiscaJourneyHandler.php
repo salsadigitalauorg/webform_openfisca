@@ -1,4 +1,4 @@
-src/Plugin/WebformHandler/OpenFiscaJourneyHandler.php<?php
+<?php
 
 namespace Drupal\webform_openfisca\Plugin\WebformHandler;
 
