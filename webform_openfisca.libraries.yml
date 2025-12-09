@@ -5,3 +5,9 @@ immediate_response:
     - core/drupal
     - core/jquery
     - core/once
+
+openfisca-checkbox-popup:
+  js:
+    js/openfisca-checkbox-popup.js: {}
+  dependencies:
+    - core/drupal.dialog
