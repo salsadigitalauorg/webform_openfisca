@@ -455,6 +455,11 @@ class OpenFiscaJourneyHandler extends WebformHandlerBase {
     $response_payload->setDebugData('query', $query);
 
     $result_values = $response_payload->getDebugData('result_values') ?: [];
+    $blocks = $this->racContentHelper->findVisibleBlocksForWebform((string) $this->getWebform()->id(), $result_values);
+    $response_payload->setDebugData('blocks', $blocks);
+
+    $debug = $response_payload->getAllDebugData();
+
     $confirmation_url = $this->racContentHelper->findRacRedirectForWebform((string) $this->getWebform()->id(), $result_values);
     // Override webform confirmation URL.
     if (!empty($confirmation_url)) {
@@ -562,6 +567,13 @@ class OpenFiscaJourneyHandler extends WebformHandlerBase {
       'rac_redirect' => [
         '#markup' => $this->t('<strong>RAC Redirect URL:</strong> <pre>@url</pre>', [
           '@url' => ($response_payload?->getDebugData('rac_redirect') ?? 'NULL'),
+        ]),
+        '#prefix' => '<p>',
+        '#suffix' => '</p>',
+      ],
+      'blocks' => [
+        '#markup' => $this->t('<strong>Visible blocks:</strong> <pre>@url</pre>', [
+          '@url' => print_r($response_payload?->getDebugData('blocks') ?? 'NULL', 1),
         ]),
         '#prefix' => '<p>',
         '#suffix' => '</p>',

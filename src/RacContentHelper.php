@@ -7,6 +7,7 @@ namespace Drupal\webform_openfisca;
 use Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException;
 use Drupal\Component\Plugin\Exception\PluginNotFoundException;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\block_content\BlockContentInterface;
 use Drupal\Core\Field\EntityReferenceFieldItemListInterface;
 use Drupal\node\NodeInterface;
 use Drupal\paragraphs\ParagraphInterface;
@@ -87,12 +88,117 @@ class RacContentHelper implements RacContentHelperInterface {
         return $node;
       }
     }
-    // @codeCoverageIgnoreStart
+      // @codeCoverageIgnoreStart
     catch (InvalidPluginDefinitionException | PluginNotFoundException) {
       return NULL;
     }
 
     return NULL;
+    // @codeCoverageIgnoreEnd
+  }
+
+  /**
+   * Find RAC block content IDs referencing a webform.
+   *
+   * @param string $webform_id
+   *   The webform ID.
+   *
+   * @return array
+   *   An array of block content IDs.
+   */
+  protected function findRacBlockContentForWebform(string $webform_id): array {
+    try {
+      /** @var \Drupal\Core\Entity\ContentEntityStorageInterface $block_content_storage */
+      $block_content_storage = $this->entityTypeManager->getStorage('block_content');
+      $blocks = $block_content_storage->getQuery()
+        ->condition('field_webform', $webform_id)
+        ->accessCheck(FALSE)
+        ->execute();
+
+      return array_values($blocks);
+    }
+      // @codeCoverageIgnoreStart
+    catch (InvalidPluginDefinitionException | PluginNotFoundException) {
+      return [];
+    }
+    // @codeCoverageIgnoreEnd
+  }
+
+  /**
+   * Find the rules for a block content entity.
+   *
+   * @param string|int $block_id
+   *   The block content ID.
+   *
+   * @return array|null
+   *   The rules as an array of ['variable' => string, 'value' => string], or NULL if not found.
+   */
+  protected function findRulesForBlock(string|int $block_id): ?array {
+    try {
+      /** @var \Drupal\Core\Entity\ContentEntityStorageInterface $block_content_storage */
+      $block_content_storage = $this->entityTypeManager->getStorage('block_content');
+      /** @var \Drupal\block_content\BlockContentInterface|null $block */
+      $block = $block_content_storage->load($block_id);
+
+      if (!$block instanceof BlockContentInterface
+        || !$block->hasField('field_rules')
+        || !($block->get('field_rules') instanceof EntityReferenceFieldItemListInterface)
+        || $block->get('field_rules')->isEmpty()
+      ) {
+        return NULL;
+      }
+
+      /** @var \Drupal\Core\Field\EntityReferenceFieldItemListInterface $rac_element_paragraphs */
+      $rac_element_paragraphs = $block->get('field_rules');
+      /** @var \Drupal\paragraphs\ParagraphInterface[] $rules_paragraphs */
+      $rules_paragraphs = $rac_element_paragraphs->referencedEntities();
+
+      // Extract the rules.
+      $rules = [];
+      foreach ($rules_paragraphs as $paragraph) {
+        if (!$paragraph instanceof ParagraphInterface
+        || !$paragraph->hasField('field_rac_element')
+        || $paragraph->get('field_rac_element')->isEmpty()
+        ) {
+          continue;
+        }
+
+        $rac_elements = $paragraph->get('field_rac_element');
+        if (!$rac_elements instanceof EntityReferenceFieldItemListInterface
+          || $rac_elements->isEmpty()
+        ) {
+          // @codeCoverageIgnoreStart
+          continue;
+          // @codeCoverageIgnoreEnd
+        }
+
+        /** @var \Drupal\paragraphs\ParagraphInterface $rac_element */
+        foreach ($rac_elements->referencedEntities() as $rac_element) {
+          if (!$rac_element->hasField('field_variable')
+            || !$rac_element->hasField('field_value')
+            || $rac_element->get('field_variable')->isEmpty()
+            || $rac_element->get('field_value')->isEmpty()
+          ) {
+            continue;
+          }
+          $field_variable = $rac_element->get('field_variable')->getString();
+          $field_value = $rac_element->get('field_value')->getString();
+          $redirect_rule['rules'][] = [
+            'variable' => $field_variable,
+            'value' => $field_value,
+          ];
+        }
+        if (!empty($redirect_rule['rules'])) {
+          $rules[] = $redirect_rule;
+        }
+      }
+
+      return $rules;
+    }
+    // @codeCoverageIgnoreStart
+    catch (InvalidPluginDefinitionException | PluginNotFoundException) {
+      return NULL;
+    }
     // @codeCoverageIgnoreEnd
   }
 
@@ -201,6 +307,53 @@ class RacContentHelper implements RacContentHelperInterface {
     // @todo Find a better way to perform strict comparison instead of relying
     // on hidden type-casting from PHP.
     return $value == $rac_rule_value;
+  }
+
+  /**
+   * Find visible blocks for a webform based on matching values.
+   *
+   * @param string $webform_id
+   *   The webform ID.
+   * @param array $matching_values
+   *   The values to match against block rules.
+   *
+   * @return array
+   *   An array of block IDs that match the rules.
+   */
+  public function findVisibleBlocksForWebform(string $webform_id, array $matching_values): array {
+    // Find all the blocks associated with this webform.
+    $block_ids = $this->findRacBlockContentForWebform($webform_id);
+    if (empty($block_ids)) {
+      return [];
+    }
+
+    $visible_blocks = [];
+
+    foreach ($block_ids as $block_id) {
+      // Get the rules for this block.
+      $rules = $this->findRulesForBlock($block_id);
+      if (!is_array($rules) || empty($rules)) {
+        // No rules means the block is always visible.
+        $visible_blocks[] = $block_id;
+        continue;
+      }
+      $rules = $rules[0]['rules'];
+
+      // Check if all rules match (AND logic).
+      $all_rules_match = TRUE;
+      foreach ($rules as $rule) {
+        if (!isset($matching_values[$rule['variable']]) || !$this->compareWithRacRuleValue($matching_values[$rule['variable']], $rule['value'])) {
+          $all_rules_match = FALSE;
+          break;
+        }
+      }
+
+      if ($all_rules_match) {
+        $visible_blocks[] = $block_id;
+      }
+    }
+
+    return $visible_blocks;
   }
 
 }
