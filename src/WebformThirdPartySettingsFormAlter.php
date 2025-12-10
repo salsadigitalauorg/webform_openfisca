@@ -125,7 +125,11 @@ class WebformThirdPartySettingsFormAlter extends WebformFormAlterBase {
       '#default_value' => $openfisca_settings->getJsonEntityRoles(),
       '#weight' => -10,
     ];
+
     $form['#validate'][] = [$this, 'validateForm'];
+
+    // Add popup for fisca_enabled checkbox.
+    $form['#attached']['library'][] = 'webform_openfisca/openfisca-checkbox-popup';
   }
 
   /**
@@ -142,6 +146,13 @@ class WebformThirdPartySettingsFormAlter extends WebformFormAlterBase {
       // @codeCoverageIgnoreStart
       return;
       // @codeCoverageIgnoreEnd
+    }
+
+    $enabled = $form_state->getValue(['third_party_settings', 'webform_openfisca', 'fisca_enabled']);
+    if ($enabled) {
+      $this->messenger->addWarning(
+        $this->t('Please make sure that you have disabled saving of submissions for this form.')
+      );
     }
 
     $fisca_endpoint = $form_state->getValue(
