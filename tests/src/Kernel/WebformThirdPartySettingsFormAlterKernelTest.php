@@ -99,7 +99,6 @@ class WebformThirdPartySettingsFormAlterKernelTest extends BaseKernelTestCase {
     $mappings = Json::decode($json);
     $this->assertEquals([
       'salary',
-      'exit',
       'has_disability',
       'requires_ongoing_support',
       'disability_allowance_eligible',
@@ -147,7 +146,6 @@ class WebformThirdPartySettingsFormAlterKernelTest extends BaseKernelTestCase {
     $this->assertFalse($openfisca_settings->isLoggingEnabled());
     $this->assertNotEmpty($openfisca_settings->getParameterTokens());
 
-    $this->assertNotEmpty($openfisca_settings->getVariable('exit'));
     $this->assertFalse($openfisca_settings->getVariable('child_currently_at_school'));
     // Reload the form - clear API endpoint.
     $settings_form = $this->reloadSettingsForm($webform, $form_object, $form_state);

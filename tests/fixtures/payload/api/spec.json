@@ -284,12 +284,6 @@
             },
             "type": "object"
           },
-          "exit": {
-            "additionalProperties": {
-              "type": "boolean"
-            },
-            "type": "object"
-          },
           "ftb_junior_weekly": {
             "additionalProperties": {
               "type": "number"
