@@ -6,14 +6,11 @@ namespace Drupal\webform_openfisca;
 
 use Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException;
 use Drupal\Component\Plugin\Exception\PluginNotFoundException;
-use Drupal\Core\Entity\ContentEntityStorageInterface;
-use Drupal\Core\Entity\EntityMalformedException;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\block_content\BlockContentInterface;
 use Drupal\Core\Field\EntityReferenceFieldItemListInterface;
 use Drupal\node\NodeInterface;
 use Drupal\paragraphs\ParagraphInterface;
-use InvalidArgumentException;
 
 /**
  * Implementation of RAC content helper service.
@@ -59,7 +56,7 @@ class RacContentHelper implements RacContentHelperInterface {
    * @param string $webform_id
    *   The webform ID.
    *
-   * @return NodeInterface|null
+   * @return \Drupal\node\NodeInterface|null
    *   The node.
    */
   protected function findRacContentForWebform(string $webform_id): ?NodeInterface {
@@ -77,7 +74,7 @@ class RacContentHelper implements RacContentHelperInterface {
       }
 
       foreach ($nodes as $nid) {
-        /** @var NodeInterface $node */
+        /** @var \Drupal\node\NodeInterface $node */
         $node = $node_storage->load($nid);
         // Ignore this node if it does not have the right fields.
         if (!$node instanceof NodeInterface
@@ -91,7 +88,7 @@ class RacContentHelper implements RacContentHelperInterface {
         return $node;
       }
     }
-      // @codeCoverageIgnoreStart
+    // @codeCoverageIgnoreStart
     catch (InvalidPluginDefinitionException | PluginNotFoundException) {
       return NULL;
     }
@@ -111,7 +108,7 @@ class RacContentHelper implements RacContentHelperInterface {
    */
   protected function findRacBlockContentForWebform(string $webform_id): array {
     try {
-      /** @var ContentEntityStorageInterface $block_content_storage */
+      /** @var \Drupal\Core\Entity\ContentEntityStorageInterface $block_content_storage */
       $block_content_storage = $this->entityTypeManager->getStorage('block_content');
       $blocks = $block_content_storage->getQuery()
         ->condition('field_block_webform', $webform_id)
@@ -120,7 +117,7 @@ class RacContentHelper implements RacContentHelperInterface {
 
       return array_values($blocks);
     }
-      // @codeCoverageIgnoreStart
+    // @codeCoverageIgnoreStart
     catch (InvalidPluginDefinitionException | PluginNotFoundException) {
       return [];
     }
@@ -134,13 +131,14 @@ class RacContentHelper implements RacContentHelperInterface {
    *   The block content ID.
    *
    * @return array|null
-   *   The rules as an array of ['variable' => string, 'value' => string], or NULL if not found.
+   *   The rules as an array of ['variable' => string, 'value' => string], or
+   *   NULL if not found.
    */
   protected function findRulesForBlock(string|int $block_id): ?array {
     try {
-      /** @var ContentEntityStorageInterface $block_content_storage */
+      /** @var \Drupal\Core\Entity\ContentEntityStorageInterface $block_content_storage */
       $block_content_storage = $this->entityTypeManager->getStorage('block_content');
-      /** @var BlockContentInterface|null $block */
+      /** @var \Drupal\block_content\BlockContentInterface|null $block */
       $block = $block_content_storage->load($block_id);
 
       if (!$block instanceof BlockContentInterface
@@ -151,14 +149,14 @@ class RacContentHelper implements RacContentHelperInterface {
         return NULL;
       }
 
-      /** @var EntityReferenceFieldItemListInterface $rac_element_paragraphs */
+      /** @var \Drupal\Core\Field\EntityReferenceFieldItemListInterface $rac_element_paragraphs */
       $rac_element_paragraphs = $block->get('field_block_rules');
       $operator = $block->get('field_operator');
 
       // Extract the rules.
       $rules = [];
       foreach ($rac_element_paragraphs as $rules_index => $rac_element_paragraph) {
-        /** @var ParagraphInterface[] $block_rules_paragraphs */
+        /** @var \Drupal\paragraphs\ParagraphInterface[] $block_rules_paragraphs */
         $block_rules_paragraphs = $rac_element_paragraph->referencedEntities();
 
         foreach ($block_rules_paragraphs as $paragraph) {
@@ -179,7 +177,7 @@ class RacContentHelper implements RacContentHelperInterface {
             // @codeCoverageIgnoreEnd
           }
 
-          /** @var ParagraphInterface $rac_element */
+          /** @var \Drupal\paragraphs\ParagraphInterface $rac_element */
           foreach ($block_rac_elements->referencedEntities() as $block_rac_element) {
             if (!$block_rac_element->hasField('field_block_variable')
               || !$block_rac_element->hasField('field_block_value')
@@ -207,7 +205,7 @@ class RacContentHelper implements RacContentHelperInterface {
 
       return $rules;
     }
-      // @codeCoverageIgnoreStart
+    // @codeCoverageIgnoreStart
     catch (InvalidPluginDefinitionException | PluginNotFoundException) {
       return NULL;
     }
@@ -223,7 +221,7 @@ class RacContentHelper implements RacContentHelperInterface {
    * @return array|null
    *   The rules.
    *
-   * @throws EntityMalformedException
+   * @throws \Drupal\Core\Entity\EntityMalformedException
    */
   protected function findRacRulesForWebform(string $webform_id): ?array {
     // Find the RAC node for this webform ID.
@@ -231,9 +229,9 @@ class RacContentHelper implements RacContentHelperInterface {
     if (!$node instanceof NodeInterface) {
       return NULL;
     }
-    /** @var EntityReferenceFieldItemListInterface<ParagraphInterface> $rac_element_paragraphs */
+    /** @var \Drupal\Core\Field\EntityReferenceFieldItemListInterface<\Drupal\paragraphs\ParagraphInterface> $rac_element_paragraphs */
     $rac_element_paragraphs = $node->get('field_rules');
-    /** @var ParagraphInterface[] $rules_paragraphs */
+    /** @var \Drupal\paragraphs\ParagraphInterface[] $rules_paragraphs */
     $rules_paragraphs = $rac_element_paragraphs->referencedEntities();
 
     // Extract the rules.
@@ -267,7 +265,7 @@ class RacContentHelper implements RacContentHelperInterface {
         continue;
         // @codeCoverageIgnoreEnd
       }
-      /** @var NodeInterface[] $redirect_nodes */
+      /** @var \Drupal\node\NodeInterface[] $redirect_nodes */
       $redirect_nodes = $redirect_to->referencedEntities();
       $redirect_node = reset($redirect_nodes);
       if (!$redirect_node instanceof NodeInterface) {
@@ -280,7 +278,7 @@ class RacContentHelper implements RacContentHelperInterface {
         'redirect' => $redirect_node->toUrl()->toString(),
       ];
 
-      /** @var ParagraphInterface $rac_element */
+      /** @var \Drupal\paragraphs\ParagraphInterface $rac_element */
       foreach ($rac_elements->referencedEntities() as $rac_element) {
         if (!$rac_element->hasField('field_variable')
           || !$rac_element->hasField('field_value')
@@ -331,7 +329,7 @@ class RacContentHelper implements RacContentHelperInterface {
    * @param string $rac_rule_value
    *   The RAC rule value.
    * @param string $operator
-   *    The operator.
+   *   The operator.
    *
    * @return bool
    *   compare values and return TRUE or FALSE.
@@ -347,21 +345,20 @@ class RacContentHelper implements RacContentHelperInterface {
       '<'   => $value < $rac_rule_value,
       '>='  => $value >= $rac_rule_value,
       '<='  => $value <= $rac_rule_value,
-      default => throw new InvalidArgumentException("Unsupported operator: {$operator_value}")
+      default => throw new \InvalidArgumentException("Unsupported operator: {$operator_value}")
     };
   }
-
 
   /**
    * Return operator based on value.
    *
-   * @param $operator
+   * @param string $operator
    *   Operator string.
    *
    * @return string
    *   Returns operator.
    */
-  protected function returnOperator($operator): string {
+  protected function returnOperator(string $operator): string {
     $operators = [
       'equal' => '==',
       'notequal' => '!=',
@@ -405,7 +402,8 @@ class RacContentHelper implements RacContentHelperInterface {
         continue;
       }
 
-      $block_rules_operator = $rules['rules']['parent_operator'] ?? 'AND'; // Outer operator (AND, OR, XOR)
+      // Outer operator (AND, OR, XOR).
+      $block_rules_operator = $rules['rules']['parent_operator'] ?? 'AND';
       $rules_match_count = 0;
       $total_outer_rules = count($rules);
 
@@ -423,7 +421,7 @@ class RacContentHelper implements RacContentHelperInterface {
         }
 
         foreach ($block_rules as $rule) {
-          $variable = $rule['variable'] ?? null;
+          $variable = $rule['variable'] ?? NULL;
 
           if (empty($matching_values[$variable])) {
             // Missing value fails AND immediately.
@@ -443,7 +441,7 @@ class RacContentHelper implements RacContentHelperInterface {
           if ($is_matched) {
             $result_count++;
 
-            // Short-circuit OR
+            // Short-circuit OR.
             if ($block_rule_operator === 'OR') {
               break;
             }
@@ -452,7 +450,8 @@ class RacContentHelper implements RacContentHelperInterface {
             if ($block_rule_operator === 'XOR' && $result_count > 1) {
               break;
             }
-          } else {
+          }
+          else {
             // Short-circuit AND.
             if ($block_rule_operator === 'AND') {
               $result_count = -1;
@@ -466,7 +465,7 @@ class RacContentHelper implements RacContentHelperInterface {
           'AND' => $result_count === $total_inner_rules,
           'OR' => $result_count > 0,
           'XOR' => $result_count === 1,
-          default => false,
+          default => FALSE,
         };
 
         if ($rules_match) {
@@ -482,7 +481,8 @@ class RacContentHelper implements RacContentHelperInterface {
           if ($block_rules_operator === 'XOR' && $rules_match_count > 1) {
             break;
           }
-        } else {
+        }
+        else {
           // Short-circuit AND at outer level.
           if ($block_rules_operator === 'AND') {
             break;
@@ -495,7 +495,7 @@ class RacContentHelper implements RacContentHelperInterface {
         'AND' => $rules_match_count === $total_outer_rules,
         'OR' => $rules_match_count > 0,
         'XOR' => $rules_match_count === 1,
-        default => false,
+        default => FALSE,
       };
 
       // Optional: keep visible blocks only if final result is TRUE.

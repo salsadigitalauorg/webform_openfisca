@@ -2,7 +2,6 @@
 
 namespace Drupal\webform_openfisca\Plugin\WebformHandler;
 
-use Drupal\Component\Utility\UrlHelper;
 use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\webform\Plugin\WebformHandlerBase;
