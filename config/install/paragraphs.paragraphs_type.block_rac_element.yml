@@ -1,0 +1,10 @@
+uuid: f52d6f78-bcf3-4212-8844-634b5f66167c
+langcode: en
+status: true
+dependencies: {  }
+id: block_rac_element
+label: 'Block Rule'
+icon_uuid: null
+icon_default: null
+description: ''
+behavior_plugins: {  }

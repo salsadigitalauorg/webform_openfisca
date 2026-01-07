@@ -323,29 +323,21 @@ class OpenFiscaJourneyHandler extends WebformHandlerBase {
    * @throws \Drupal\Core\Entity\EntityMalformedException
    */
   protected function overrideConfirmationUrl(ResponsePayload $response_payload) : ?string {
-    $query_append = $response_payload->getDebugData('query_append') ?: [];
-    $fisca_fields = $response_payload->getDebugData('fisca_fields') ?: [];
-    $query_params = array_merge($fisca_fields, $query_append);
-
     $existing_confirmation_url = $this->getWebform()->getSetting('confirmation_url');
     if (!empty($existing_confirmation_url)) {
       $response_payload->setDebugData('webform_confirmation_url', $existing_confirmation_url);
-
-      $parsed_url = UrlHelper::parse($existing_confirmation_url);
-      if (isset($parsed_url['query'])  && is_array($parsed_url['query'])) {
-        $query_params = array_merge($query_params, $parsed_url['query']);
-      }
     }
-
-    $query = http_build_query($query_params);
-    $query = urldecode($query);
-    $response_payload->setDebugData('query', $query);
 
     $result_values = $response_payload->getDebugData('result_values') ?: [];
     $confirmation_url = $this->racContentHelper->findRacRedirectForWebform((string) $this->getWebform()->id(), $result_values);
+
+    $blocks = $this->racContentHelper->findVisibleBlocksForWebform((string) $this->getWebform()->id(), $result_values);
+    $response_payload->setDebugData('blocks', $blocks);
+    $block_ids = implode(',', $blocks);
+
     // Override webform confirmation URL.
     if (!empty($confirmation_url)) {
-      $overridden_confirmation_url = $confirmation_url . '?' . $query;
+      $overridden_confirmation_url = $confirmation_url . '?' . $block_ids;
       $this->getWebform()->setSettingOverride('confirmation_url', $overridden_confirmation_url);
 
       $response_payload->setDebugData('rac_redirect', $confirmation_url);
@@ -435,6 +427,13 @@ class OpenFiscaJourneyHandler extends WebformHandlerBase {
       'query' => [
         '#markup' => $this->t('<strong>Query:</strong> <pre>@query</pre>', [
           '@query' => ($response_payload?->getDebugData('query') ?? 'NULL'),
+        ]),
+        '#prefix' => '<p>',
+        '#suffix' => '</p>',
+      ],
+      'blocks' => [
+        '#markup' => $this->t('<strong>Visible blocks:</strong> <pre>@url</pre>', [
+          '@url' => print_r($response_payload?->getDebugData('blocks') ?? 'NULL', 1),
         ]),
         '#prefix' => '<p>',
         '#suffix' => '</p>',

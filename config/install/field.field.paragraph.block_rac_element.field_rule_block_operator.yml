@@ -1,0 +1,23 @@
+uuid: 2d3aa892-b284-4cd2-93b6-6286c7edfce6
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_rule_block_operator
+    - paragraphs.paragraphs_type.block_rac_element
+  module:
+    - options
+id: paragraph.block_rac_element.field_rule_block_operator
+field_name: field_rule_block_operator
+entity_type: paragraph
+bundle: block_rac_element
+label: Operator
+description: ''
+required: true
+translatable: false
+default_value:
+  -
+    value: equal
+default_value_callback: ''
+settings: {  }
+field_type: list_string

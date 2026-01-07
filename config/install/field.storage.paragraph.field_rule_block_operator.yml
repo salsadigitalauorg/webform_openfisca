@@ -1,0 +1,45 @@
+uuid: 59ca5dcd-9a8c-471f-95dc-110ba208a4fb
+langcode: en
+status: true
+dependencies:
+  module:
+    - options
+    - paragraphs
+id: paragraph.field_rule_block_operator
+field_name: field_rule_block_operator
+entity_type: paragraph
+type: list_string
+settings:
+  allowed_values:
+    -
+      value: equal
+      label: '='
+    -
+      value: notequal
+      label: '!='
+    -
+      value: lessthan
+      label: '>'
+    -
+      value: greaterthan
+      label: '<'
+    -
+      value: greaterthanequalto
+      label: '<='
+    -
+      value: lessthanequalto
+      label: '>='
+    -
+      value: between
+      label: between
+    -
+      value: not_between
+      label: 'not between'
+  allowed_values_function: ''
+module: options
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

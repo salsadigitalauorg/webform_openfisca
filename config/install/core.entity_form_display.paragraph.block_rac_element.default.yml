@@ -1,0 +1,39 @@
+uuid: b7324326-50ea-47e4-9ade-e678c4801f50
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.paragraph.block_rac_element.field_block_value
+    - field.field.paragraph.block_rac_element.field_block_variable
+    - field.field.paragraph.block_rac_element.field_rule_block_operator
+    - paragraphs.paragraphs_type.block_rac_element
+id: paragraph.block_rac_element.default
+targetEntityType: paragraph
+bundle: block_rac_element
+mode: default
+content:
+  field_block_value:
+    type: string_textfield
+    weight: 1
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_block_variable:
+    type: string_textfield
+    weight: 2
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_rule_block_operator:
+    type: options_select
+    weight: 0
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+hidden:
+  created: true
+  status: true
