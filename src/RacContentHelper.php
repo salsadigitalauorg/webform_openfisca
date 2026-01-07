@@ -156,7 +156,7 @@ class RacContentHelper implements RacContentHelperInterface {
       // Extract the rules.
       $rules = [];
       foreach ($rac_element_paragraphs as $rules_index => $rac_element_paragraph) {
-        /** @var \Drupal\Core\Field\Plugin\Field\FieldType\EntityReferenceItem $rac_element_paragraph */
+        /** @var \Drupal\Core\Field\Plugin\Field\FieldType\EntityReferenceItem<\Drupal\paragraphs\ParagraphInterface> $rac_element_paragraph */
         $paragraph_entity = $rac_element_paragraph->entity;
         if (!$paragraph_entity instanceof ParagraphInterface) {
           continue;
