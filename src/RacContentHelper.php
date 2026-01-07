@@ -169,6 +169,11 @@ class RacContentHelper implements RacContentHelperInterface {
         /** @var \Drupal\paragraphs\ParagraphInterface[] $block_rules_paragraphs */
         $block_rules_paragraphs = $block_rac_elements_field->referencedEntities();
 
+        // Initialize redirect_rule for this rules_index.
+        $redirect_rule = [
+          'rules' => [],
+        ];
+
         foreach ($block_rules_paragraphs as $paragraph) {
           if (!$paragraph instanceof ParagraphInterface
             || !$paragraph->hasField('field_block_rac_element')
