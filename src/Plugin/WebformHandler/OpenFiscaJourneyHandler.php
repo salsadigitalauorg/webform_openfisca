@@ -432,7 +432,7 @@ class OpenFiscaJourneyHandler extends WebformHandlerBase {
       ],
       'blocks' => [
         '#markup' => $this->t('<strong>Visible blocks:</strong> <pre>@url</pre>', [
-          '@url' => print_r($response_payload?->getDebugData('blocks') ?? 'NULL', 1),
+          '@url' => ($response_payload?->getDebugData('blocks') ?? 'NULL'),
         ]),
         '#prefix' => '<p>',
         '#suffix' => '</p>',

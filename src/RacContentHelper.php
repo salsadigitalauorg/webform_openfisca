@@ -149,15 +149,25 @@ class RacContentHelper implements RacContentHelperInterface {
         return NULL;
       }
 
-      /** @var \Drupal\Core\Field\EntityReferenceFieldItemListInterface $rac_element_paragraphs */
+      /** @var \Drupal\Core\Field\EntityReferenceFieldItemListInterface<\Drupal\paragraphs\ParagraphInterface> $rac_element_paragraphs */
       $rac_element_paragraphs = $block->get('field_block_rules');
       $operator = $block->get('field_operator');
 
       // Extract the rules.
       $rules = [];
       foreach ($rac_element_paragraphs as $rules_index => $rac_element_paragraph) {
+        /** @var \Drupal\Core\Field\Plugin\Field\FieldType\EntityReferenceItem $rac_element_paragraph */
+        $paragraph_entity = $rac_element_paragraph->entity;
+        if (!$paragraph_entity instanceof ParagraphInterface) {
+          continue;
+        }
+        // Get the field that contains multiple paragraph references.
+        $block_rac_elements_field = $paragraph_entity->get('field_block_rac_element');
+        if (!$block_rac_elements_field instanceof EntityReferenceFieldItemListInterface || $block_rac_elements_field->isEmpty()) {
+          continue;
+        }
         /** @var \Drupal\paragraphs\ParagraphInterface[] $block_rules_paragraphs */
-        $block_rules_paragraphs = $rac_element_paragraph->referencedEntities();
+        $block_rules_paragraphs = $block_rac_elements_field->referencedEntities();
 
         foreach ($block_rules_paragraphs as $paragraph) {
           if (!$paragraph instanceof ParagraphInterface
@@ -177,9 +187,10 @@ class RacContentHelper implements RacContentHelperInterface {
             // @codeCoverageIgnoreEnd
           }
 
-          /** @var \Drupal\paragraphs\ParagraphInterface $rac_element */
+          /** @var \Drupal\paragraphs\ParagraphInterface $block_rac_element */
           foreach ($block_rac_elements->referencedEntities() as $block_rac_element) {
-            if (!$block_rac_element->hasField('field_block_variable')
+            if (!$block_rac_element instanceof ParagraphInterface
+              || !$block_rac_element->hasField('field_block_variable')
               || !$block_rac_element->hasField('field_block_value')
               || $block_rac_element->get('field_block_variable')->isEmpty()
               || $block_rac_element->get('field_block_value')->isEmpty()
