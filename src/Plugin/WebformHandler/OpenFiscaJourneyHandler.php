@@ -328,15 +328,21 @@ class OpenFiscaJourneyHandler extends WebformHandlerBase {
     }
 
     $result_values = $response_payload->getDebugData('result_values') ?: [];
+    $fisca_fields = $response_payload->getDebugData('fisca_fields') ?: [];
     $confirmation_url = $this->racContentHelper->findRacRedirectForWebform((string) $this->getWebform()->id(), $result_values);
 
     $blocks = $this->racContentHelper->findVisibleBlocksForWebform((string) $this->getWebform()->id(), $result_values);
-    $response_payload->setDebugData('blocks', $blocks);
     $block_ids = implode(',', $blocks);
+    $response_payload->setDebugData('blocks', $block_ids);
+    $query_params['blocks'] = $block_ids;
+
+    $query = http_build_query($query_params);
+    $query = urldecode($query);
+    $response_payload->setDebugData('query', $query);
 
     // Override webform confirmation URL.
     if (!empty($confirmation_url)) {
-      $overridden_confirmation_url = $confirmation_url . '?' . $block_ids;
+      $overridden_confirmation_url = $confirmation_url . '?' . $query;
       $this->getWebform()->setSettingOverride('confirmation_url', $overridden_confirmation_url);
 
       $response_payload->setDebugData('rac_redirect', $confirmation_url);

@@ -37,15 +37,15 @@ class RacContentHelper implements RacContentHelperInterface {
       return NULL;
     }
 
-    foreach ($rules as $redirect_rule) {
-      foreach ($redirect_rule['rules'] as $rule) {
+    foreach ($rules as $visibility_rule) {
+      foreach ($visibility_rule['rules'] as $rule) {
         // All rules of a redirect rule are evaluated with the AND logic.
         if (!isset($matching_values[$rule['variable']]) || !$this->compareWithRacRuleValue($matching_values[$rule['variable']], $rule['value'])) {
           // One mismatch, skip the entire redirect rule.
           continue 2;
         }
       }
-      return $redirect_rule['redirect'];
+      return $visibility_rule['redirect'];
     }
     return NULL;
   }
@@ -151,11 +151,17 @@ class RacContentHelper implements RacContentHelperInterface {
 
       /** @var \Drupal\Core\Field\EntityReferenceFieldItemListInterface<\Drupal\paragraphs\ParagraphInterface> $rac_element_paragraphs */
       $rac_element_paragraphs = $block->get('field_block_rules');
-      $operator = $block->get('field_operator');
+      $operator = $block->get('field_operator')->getValue();
 
       // Extract the rules.
       $rules = [];
+      // Initialize redirect_rule for this rules_index.
+      $visibility_rule = [
+        'rules' => [],
+      ];
+
       foreach ($rac_element_paragraphs as $rules_index => $rac_element_paragraph) {
+
         /** @var \Drupal\Core\Field\Plugin\Field\FieldType\EntityReferenceItem<\Drupal\paragraphs\ParagraphInterface> $rac_element_paragraph */
         $paragraph_entity = $rac_element_paragraph->entity;
         if (!$paragraph_entity instanceof ParagraphInterface) {
@@ -163,37 +169,19 @@ class RacContentHelper implements RacContentHelperInterface {
         }
         // Get the field that contains multiple paragraph references.
         $block_rac_elements_field = $paragraph_entity->get('field_block_rac_element');
+        $rule_operator = $paragraph_entity->get('field_rules_operator')->value;
+
         if (!$block_rac_elements_field instanceof EntityReferenceFieldItemListInterface || $block_rac_elements_field->isEmpty()) {
           continue;
         }
         /** @var \Drupal\paragraphs\ParagraphInterface[] $block_rules_paragraphs */
         $block_rules_paragraphs = $block_rac_elements_field->referencedEntities();
 
-        // Initialize redirect_rule for this rules_index.
-        $redirect_rule = [
-          'rules' => [],
-        ];
 
-        foreach ($block_rules_paragraphs as $paragraph) {
-          if (!$paragraph instanceof ParagraphInterface
-            || !$paragraph->hasField('field_block_rac_element')
-            || $paragraph->get('field_block_rac_element')->isEmpty()
-          ) {
-            continue;
-          }
+        $visibility_rule_single = [];
 
-          $block_rac_elements = $paragraph->get('field_block_rac_element');
-          $rule_operator = $paragraph->get('field_rules_operator');
-          if (!$block_rac_elements instanceof EntityReferenceFieldItemListInterface
-            || $block_rac_elements->isEmpty()
-          ) {
-            // @codeCoverageIgnoreStart
-            continue;
-            // @codeCoverageIgnoreEnd
-          }
+        foreach ($block_rules_paragraphs as $rule_index => $block_rac_element) {
 
-          /** @var \Drupal\paragraphs\ParagraphInterface $block_rac_element */
-          foreach ($block_rac_elements->referencedEntities() as $block_rac_element) {
             if (!$block_rac_element instanceof ParagraphInterface
               || !$block_rac_element->hasField('field_block_variable')
               || !$block_rac_element->hasField('field_block_value')
@@ -205,21 +193,22 @@ class RacContentHelper implements RacContentHelperInterface {
             $field_block_variable = $block_rac_element->get('field_block_variable')->getString();
             $field_block_value = $block_rac_element->get('field_block_value')->getString();
             $field_rule_block_operator = $block_rac_element->get('field_rule_block_operator')->getString();
-            $redirect_rule['rules'][$rules_index][] = [
+            //$visibility_rule['rules'][$rule_index][] = [
+          $visibility_rule_single[] = [
               'variable' => $field_block_variable,
               'value' => $field_block_value,
               'rule_block_operator' => $field_rule_block_operator,
             ];
-            $redirect_rule['rules'][$rules_index]['operator'] = $rule_operator;
-            $redirect_rule['rules']['parent_operator'] = $operator;
           }
-          if (!empty($redirect_rule['rules'][$rules_index])) {
-            $rules[$rules_index] = $redirect_rule;
-          }
-        }
-      }
 
-      return $rules;
+        if (!empty($visibility_rule_single)) {
+          $visibility_rule_single['operator'] = $rule_operator;
+          $visibility_rule['rules'][] = $visibility_rule_single;
+          }
+
+      }
+      $visibility_rule['parent_operator'] = $operator;
+      return $visibility_rule;
     }
     // @codeCoverageIgnoreStart
     catch (InvalidPluginDefinitionException | PluginNotFoundException) {
@@ -251,7 +240,6 @@ class RacContentHelper implements RacContentHelperInterface {
     $rules_paragraphs = $rac_element_paragraphs->referencedEntities();
 
     // Extract the rules.
-    $rules = [];
     foreach ($rules_paragraphs as $paragraph) {
       // Ignore the invalid paragraphs.
       if (
@@ -289,7 +277,7 @@ class RacContentHelper implements RacContentHelperInterface {
         continue;
       }
 
-      $redirect_rule = [
+      $visibility_rule = [
         'rules' => [],
         'redirect' => $redirect_node->toUrl()->toString(),
       ];
@@ -305,13 +293,13 @@ class RacContentHelper implements RacContentHelperInterface {
         }
         $field_variable = $rac_element->get('field_variable')->getString();
         $field_value = $rac_element->get('field_value')->getString();
-        $redirect_rule['rules'][] = [
+        $visibility_rule['rules'][] = [
           'variable' => $field_variable,
           'value' => $field_value,
         ];
       }
-      if (!empty($redirect_rule['rules'])) {
-        $rules[] = $redirect_rule;
+      if (!empty($visibility_rule['rules'])) {
+        $rules[] = $visibility_rule;
       }
     }
 
@@ -406,7 +394,6 @@ class RacContentHelper implements RacContentHelperInterface {
     if (empty($block_ids)) {
       return [];
     }
-
     $visible_blocks = [];
 
     foreach ($block_ids as $block_id) {
