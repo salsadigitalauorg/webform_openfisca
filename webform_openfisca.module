@@ -49,3 +49,36 @@ function webform_openfisca_help(string $route_name, RouteMatchInterface $route_m
   return '';
   // @codeCoverageIgnoreEnd
 }
+
+/**
+ * Implements hook_preprocess_block();
+ */
+function webform_openfisca_preprocess_block(array &$variables): void {
+  // Get the block ID.
+  $block_id = $variables['elements']['#id'] ?? NULL;
+  /** @var \Drupal\Core\Entity\Block $block */
+  $block = \Drupal::entityTypeManager()->getStorage('block')->load($block_id);
+  if ($block instanceof \Drupal\block\BlockInterface && str_starts_with($block->getPluginId(), 'block_content')) {
+    $uuid = explode(':', $block->getPluginId());
+    $block_content = \Drupal::entityTypeManager()->getStorage('block_content')->loadByProperties(['uuid' => $uuid[1]]);
+    $block_content = reset($block_content);
+
+    // Get current path or query parameters
+    $query = \Drupal::request()->query->all();
+
+    // Example: check if 'blocks' is in query parameters
+    $current_block_id = $query['blocks'] ?? NULL;
+    $current_block_ids = explode(',', $current_block_id);
+
+    if ($block_content->bundle() == 'civictheme_component_block') {
+      if (!$block_content->id()) {
+        return;
+      }
+
+      // Only render block if its ID matches the current URL
+      if (!in_array($block_content->id(), $current_block_ids)) {
+        $variables['content'] = [];
+      }
+    }
+  }
+}

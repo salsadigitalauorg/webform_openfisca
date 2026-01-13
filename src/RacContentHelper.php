@@ -88,7 +88,7 @@ class RacContentHelper implements RacContentHelperInterface {
         return $node;
       }
     }
-    // @codeCoverageIgnoreStart
+      // @codeCoverageIgnoreStart
     catch (InvalidPluginDefinitionException | PluginNotFoundException) {
       return NULL;
     }
@@ -117,7 +117,7 @@ class RacContentHelper implements RacContentHelperInterface {
 
       return array_values($blocks);
     }
-    // @codeCoverageIgnoreStart
+      // @codeCoverageIgnoreStart
     catch (InvalidPluginDefinitionException | PluginNotFoundException) {
       return [];
     }
@@ -182,35 +182,35 @@ class RacContentHelper implements RacContentHelperInterface {
 
         foreach ($block_rules_paragraphs as $rule_index => $block_rac_element) {
 
-            if (!$block_rac_element instanceof ParagraphInterface
-              || !$block_rac_element->hasField('field_block_variable')
-              || !$block_rac_element->hasField('field_block_value')
-              || $block_rac_element->get('field_block_variable')->isEmpty()
-              || $block_rac_element->get('field_block_value')->isEmpty()
-            ) {
-              continue;
-            }
-            $field_block_variable = $block_rac_element->get('field_block_variable')->getString();
-            $field_block_value = $block_rac_element->get('field_block_value')->getString();
-            $field_rule_block_operator = $block_rac_element->get('field_rule_block_operator')->getString();
-            //$visibility_rule['rules'][$rule_index][] = [
-          $visibility_rule_single[] = [
-              'variable' => $field_block_variable,
-              'value' => $field_block_value,
-              'rule_block_operator' => $field_rule_block_operator,
-            ];
+          if (!$block_rac_element instanceof ParagraphInterface
+            || !$block_rac_element->hasField('field_block_variable')
+            || !$block_rac_element->hasField('field_block_value')
+            || $block_rac_element->get('field_block_variable')->isEmpty()
+            || $block_rac_element->get('field_block_value')->isEmpty()
+          ) {
+            continue;
           }
+          $field_block_variable = $block_rac_element->get('field_block_variable')->getString();
+          $field_block_value = $block_rac_element->get('field_block_value')->getString();
+          $field_rule_block_operator = $block_rac_element->get('field_rule_block_operator')->getString();
+          //$visibility_rule['rules'][$rule_index][] = [
+          $visibility_rule_single[] = [
+            'variable' => $field_block_variable,
+            'value' => $field_block_value,
+            'rule_block_operator' => $field_rule_block_operator,
+          ];
+        }
 
         if (!empty($visibility_rule_single)) {
           $visibility_rule_single['operator'] = $rule_operator;
           $visibility_rule['rules'][] = $visibility_rule_single;
-          }
+        }
 
       }
       $visibility_rule['parent_operator'] = $operator;
       return $visibility_rule;
     }
-    // @codeCoverageIgnoreStart
+      // @codeCoverageIgnoreStart
     catch (InvalidPluginDefinitionException | PluginNotFoundException) {
       return NULL;
     }
@@ -391,6 +391,7 @@ class RacContentHelper implements RacContentHelperInterface {
   public function findVisibleBlocksForWebform(string $webform_id, array $matching_values): array {
     // Find all the blocks associated with this webform.
     $block_ids = $this->findRacBlockContentForWebform($webform_id);
+
     if (empty($block_ids)) {
       return [];
     }
@@ -405,109 +406,98 @@ class RacContentHelper implements RacContentHelperInterface {
         continue;
       }
 
-      // Outer operator (AND, OR, XOR).
-      $block_rules_operator = $rules['rules']['parent_operator'] ?? 'AND';
-      $rules_match_count = 0;
-      $total_outer_rules = count($rules);
-
-      foreach ($rules as $rules_id => $rules_data) {
-        // Get rules for this block.
-        $block_rules = $rules_data['rules'][$rules_id] ?? [];
-        $block_rule_operator = $rules_data['rules'][$rules_id]['operator'] ?? 'AND';
-
-        $result_count = 0;
-        $total_inner_rules = count($block_rules);
-
-        // Skip empty rule blocks early.
-        if ($total_inner_rules === 0) {
-          continue;
-        }
-
-        foreach ($block_rules as $rule) {
-          $variable = $rule['variable'] ?? NULL;
-
-          if (empty($matching_values[$variable])) {
-            // Missing value fails AND immediately.
-            if ($block_rule_operator === 'AND') {
-              $result_count = -1;
-              break;
-            }
-            continue;
-          }
-
-          $is_matched = $this->compareUsingOperatorWithRacRuleValue(
-            $matching_values[$variable],
-            $rule['value'],
-            $rule['operator'] ?? 'AND'
-          );
-
-          if ($is_matched) {
-            $result_count++;
-
-            // Short-circuit OR.
-            if ($block_rule_operator === 'OR') {
-              break;
-            }
-
-            // XOR short-circuits if more than 1 match.
-            if ($block_rule_operator === 'XOR' && $result_count > 1) {
-              break;
-            }
-          }
-          else {
-            // Short-circuit AND.
-            if ($block_rule_operator === 'AND') {
-              $result_count = -1;
-              break;
-            }
-          }
-        }
-
-        // Determine if this block matches.
-        $rules_match = match ($block_rule_operator) {
-          'AND' => $result_count === $total_inner_rules,
-          'OR' => $result_count > 0,
-          'XOR' => $result_count === 1,
-          default => FALSE,
-        };
-
-        if ($rules_match) {
-          $visible_blocks[] = $block_id;
-          $rules_match_count++;
-
-          // Short-circuit OR at outer level.
-          if ($block_rules_operator === 'OR') {
-            break;
-          }
-
-          // Short-circuit XOR at outer level if more than 1 match.
-          if ($block_rules_operator === 'XOR' && $rules_match_count > 1) {
-            break;
-          }
-        }
-        else {
-          // Short-circuit AND at outer level.
-          if ($block_rules_operator === 'AND') {
-            break;
-          }
-        }
-      }
-
-      // Final TRUE/FALSE for all blocks based on parent operator.
-      $finalResult = match ($block_rules_operator) {
-        'AND' => $rules_match_count === $total_outer_rules,
-        'OR' => $rules_match_count > 0,
-        'XOR' => $rules_match_count === 1,
-        default => FALSE,
-      };
-
-      // Optional: keep visible blocks only if final result is TRUE.
-      if (!$finalResult) {
-        $visible_blocks = [];
-      }
+      $this->processRules($block_id, $rules, $visible_blocks, $matching_values);
     }
 
     return $visible_blocks;
+  }
+
+
+  /**
+   * @param $block_id
+   * @param $rules
+   * @param $visible_blocks
+   * @param $matching_values
+   * @return void
+   */
+  function processRules($block_id, $rules, &$visible_blocks, $matching_values): void {
+    // Outer operator (AND, OR, XOR).
+    $block_rules_operator = $rules['parent_operator'][0]['value'] ?? 'AND';
+    $parent_is_matched = [];
+
+    foreach ($rules['rules'] as $rules_data) {
+      // Get rules for this block.
+      $block_rules = $rules_data ?? [];
+      unset($block_rules['operator']);
+      $block_rule_operator = $rules_data['operator'] ?? 'AND';
+      $total_inner_rules = count($block_rules);
+
+      // Skip empty rule blocks early.
+      if ($total_inner_rules === 0) {
+        continue;
+      }
+
+      $is_matched = NULL;
+
+      foreach ($block_rules as $rule) {
+        $variable = $rule['variable'] ?? NULL;
+
+        if (!isset($matching_values[$variable])) {
+          $is_matched[] = 0;
+          continue;
+        }
+
+        $result = $this->compareUsingOperatorWithRacRuleValue(
+          (empty($matching_values[$variable]) ? 0 : $matching_values[$variable]),
+          $rule['value'],
+          $rule['rule_block_operator'] ?? 'AND'
+        );
+
+        $is_matched[] = !empty($result) ? 1 : 0;
+      }
+
+      if ($is_matched) {
+        // At inner level.
+        $parent_result = $this->evaluateCondition($is_matched, $block_rule_operator);
+        $parent_is_matched[] = !empty($parent_result) ? 1 : 0;
+      }
+    }
+
+    // At outer level.
+    $finalResult = $this->evaluateCondition($parent_is_matched, $block_rules_operator);
+
+    // Optional: keep visible blocks only if final result is TRUE.
+    if ($finalResult) {
+      $visible_blocks[] = $block_id;
+    }
+  }
+
+  /**
+   * @param $is_matched
+   * @param $operator
+   * @return bool
+   */
+  function evaluateCondition($is_matched, $operator): bool {
+    if ($is_matched) {
+      switch (strtolower($operator)) {
+        case 'or':
+          return in_array(1, $is_matched);
+        case 'xor':
+          // True if **exactly one** condition is matched
+          $truthy_count = count(array_filter($is_matched, function($v) {
+            return $v !== 0 && $v !== '' && $v !== null;
+          }));
+          return ($truthy_count === 1);
+        case 'and':
+        default:
+          // True if **all** conditions are matched (no 0, '', null, false)
+          return count(array_filter($is_matched, function($v) {
+              return $v !== 0 && $v !== '' && $v !== null;
+            })) === count($is_matched);
+      }
+    }
+
+    return FALSE;
   }
 
 }
