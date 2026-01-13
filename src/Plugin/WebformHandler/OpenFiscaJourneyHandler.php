@@ -328,7 +328,6 @@ class OpenFiscaJourneyHandler extends WebformHandlerBase {
     }
 
     $result_values = $response_payload->getDebugData('result_values') ?: [];
-    $fisca_fields = $response_payload->getDebugData('fisca_fields') ?: [];
     $confirmation_url = $this->racContentHelper->findRacRedirectForWebform((string) $this->getWebform()->id(), $result_values);
 
     $blocks = $this->racContentHelper->findVisibleBlocksForWebform((string) $this->getWebform()->id(), $result_values);

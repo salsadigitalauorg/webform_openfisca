@@ -414,13 +414,21 @@ class RacContentHelper implements RacContentHelperInterface {
 
 
   /**
-   * @param $block_id
-   * @param $rules
-   * @param $visible_blocks
-   * @param $matching_values
+   * Process rules for a block to determine visibility.
+   *
+   * @param string|int $block_id
+   *   The block ID.
+   * @param array $rules
+   *   The rules array.
+   * @param array &$visible_blocks
+   *   Array of visible block IDs (passed by reference).
+   * @param array $matching_values
+   *   The matching values to evaluate against rules.
+   *
    * @return void
+   *   No return value.
    */
-  function processRules($block_id, $rules, &$visible_blocks, $matching_values): void {
+  protected function processRules(string|int $block_id, array $rules, array &$visible_blocks, array $matching_values): void {
     // Outer operator (AND, OR, XOR).
     $block_rules_operator = $rules['parent_operator'][0]['value'] ?? 'AND';
     $parent_is_matched = [];
@@ -473,27 +481,35 @@ class RacContentHelper implements RacContentHelperInterface {
   }
 
   /**
-   * @param $is_matched
-   * @param $operator
+   * Evaluate condition based on operator and matched values.
+   *
+   * @param array|null $is_matched
+   *   Array of matched values (1 for match, 0 for no match).
+   * @param string $operator
+   *   The operator (AND, OR, XOR).
+   *
    * @return bool
+   *   TRUE if condition is met, FALSE otherwise.
    */
-  function evaluateCondition($is_matched, $operator): bool {
+  protected function evaluateCondition(?array $is_matched, string $operator): bool {
     if ($is_matched) {
       switch (strtolower($operator)) {
         case 'or':
           return in_array(1, $is_matched);
+
         case 'xor':
-          // True if **exactly one** condition is matched
-          $truthy_count = count(array_filter($is_matched, function($v) {
-            return $v !== 0 && $v !== '' && $v !== null;
+          // True if **exactly one** condition is matched.
+          $truthy_count = count(array_filter($is_matched, function ($v) {
+            return $v !== 0 && $v !== '' && $v !== NULL;
           }));
           return ($truthy_count === 1);
+
         case 'and':
         default:
-          // True if **all** conditions are matched (no 0, '', null, false)
-          return count(array_filter($is_matched, function($v) {
-              return $v !== 0 && $v !== '' && $v !== null;
-            })) === count($is_matched);
+          // True if **all** conditions are matched (no 0, '', null, false).
+          return count(array_filter($is_matched, function ($v) {
+            return $v !== 0 && $v !== '' && $v !== NULL;
+          })) === count($is_matched);
       }
     }
 
