@@ -234,6 +234,7 @@ class RacContentHelper implements RacContentHelperInterface {
     $rules_paragraphs = $rac_element_paragraphs->referencedEntities();
 
     // Extract the rules.
+    $rules = [];
     foreach ($rules_paragraphs as $paragraph) {
       // Ignore the invalid paragraphs.
       if (

@@ -58,7 +58,7 @@ use Drupal\block\BlockInterface;
 function webform_openfisca_preprocess_block(array &$variables): void {
   // Get the block ID.
   $block_id = $variables['elements']['#id'] ?? NULL;
-  /** @var \Drupal\Core\Entity\Block $block */
+  /** @var \Drupal\block\Entity\Block|null $block */
   $block = \Drupal::entityTypeManager()->getStorage('block')->load($block_id);
   if ($block instanceof BlockInterface && str_starts_with($block->getPluginId(), 'block_content')) {
     $uuid = explode(':', $block->getPluginId());
@@ -72,7 +72,7 @@ function webform_openfisca_preprocess_block(array &$variables): void {
     $current_block_id = $query['blocks'] ?? NULL;
     $current_block_ids = explode(',', $current_block_id);
 
-    if ($block_content->bundle() == 'civictheme_component_block') {
+    if ($block_content && $block_content->bundle() == 'civictheme_component_block') {
       if (!$block_content->id()) {
         return;
       }
