@@ -88,7 +88,7 @@ class RacContentHelper implements RacContentHelperInterface {
         return $node;
       }
     }
-      // @codeCoverageIgnoreStart
+    // @codeCoverageIgnoreStart
     catch (InvalidPluginDefinitionException | PluginNotFoundException) {
       return NULL;
     }
@@ -117,7 +117,7 @@ class RacContentHelper implements RacContentHelperInterface {
 
       return array_values($blocks);
     }
-      // @codeCoverageIgnoreStart
+    // @codeCoverageIgnoreStart
     catch (InvalidPluginDefinitionException | PluginNotFoundException) {
       return [];
     }
@@ -154,14 +154,12 @@ class RacContentHelper implements RacContentHelperInterface {
       $operator = $block->get('field_operator')->getValue();
 
       // Extract the rules.
-      $rules = [];
       // Initialize redirect_rule for this rules_index.
       $visibility_rule = [
         'rules' => [],
       ];
 
-      foreach ($rac_element_paragraphs as $rules_index => $rac_element_paragraph) {
-
+      foreach ($rac_element_paragraphs as $rac_element_paragraph) {
         /** @var \Drupal\Core\Field\Plugin\Field\FieldType\EntityReferenceItem<\Drupal\paragraphs\ParagraphInterface> $rac_element_paragraph */
         $paragraph_entity = $rac_element_paragraph->entity;
         if (!$paragraph_entity instanceof ParagraphInterface) {
@@ -177,11 +175,9 @@ class RacContentHelper implements RacContentHelperInterface {
         /** @var \Drupal\paragraphs\ParagraphInterface[] $block_rules_paragraphs */
         $block_rules_paragraphs = $block_rac_elements_field->referencedEntities();
 
-
         $visibility_rule_single = [];
 
-        foreach ($block_rules_paragraphs as $rule_index => $block_rac_element) {
-
+        foreach ($block_rules_paragraphs as $block_rac_element) {
           if (!$block_rac_element instanceof ParagraphInterface
             || !$block_rac_element->hasField('field_block_variable')
             || !$block_rac_element->hasField('field_block_value')
@@ -193,7 +189,6 @@ class RacContentHelper implements RacContentHelperInterface {
           $field_block_variable = $block_rac_element->get('field_block_variable')->getString();
           $field_block_value = $block_rac_element->get('field_block_value')->getString();
           $field_rule_block_operator = $block_rac_element->get('field_rule_block_operator')->getString();
-          //$visibility_rule['rules'][$rule_index][] = [
           $visibility_rule_single[] = [
             'variable' => $field_block_variable,
             'value' => $field_block_value,
@@ -205,12 +200,11 @@ class RacContentHelper implements RacContentHelperInterface {
           $visibility_rule_single['operator'] = $rule_operator;
           $visibility_rule['rules'][] = $visibility_rule_single;
         }
-
       }
       $visibility_rule['parent_operator'] = $operator;
       return $visibility_rule;
     }
-      // @codeCoverageIgnoreStart
+    // @codeCoverageIgnoreStart
     catch (InvalidPluginDefinitionException | PluginNotFoundException) {
       return NULL;
     }
@@ -411,7 +405,6 @@ class RacContentHelper implements RacContentHelperInterface {
 
     return $visible_blocks;
   }
-
 
   /**
    * Process rules for a block to determine visibility.
