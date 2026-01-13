@@ -333,6 +333,7 @@ class OpenFiscaJourneyHandler extends WebformHandlerBase {
     $blocks = $this->racContentHelper->findVisibleBlocksForWebform((string) $this->getWebform()->id(), $result_values);
     $block_ids = implode(',', $blocks);
     $response_payload->setDebugData('blocks', $block_ids);
+    $query_params = [];
     $query_params['blocks'] = $block_ids;
 
     $query = http_build_query($query_params);
