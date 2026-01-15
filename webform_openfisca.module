@@ -132,6 +132,6 @@ function webform_openfisca_block_access(BlockInterface $block, $operation, Accou
       ->addCacheContexts(['url.query_args:blocks']);
   }
 
-  return AccessResult::allowed()
+  return AccessResult::neutral();
     ->addCacheContexts(['url.query_args:blocks']);
 }
