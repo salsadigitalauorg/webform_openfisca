@@ -164,7 +164,7 @@ class RacContentHelper implements RacContentHelperInterface {
       $rac_element_paragraphs = [];
       if ($paragraph && $paragraph->hasField('field_block_rules')) {
         $rac_element_paragraphs = $paragraph->get('field_block_rules');
-        $operator = $block->get('field_operator')->getValue();
+        $operator = $paragraph->get('field_operator')->getValue();
       }
 
       // Extract the rules.
