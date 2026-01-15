@@ -6,6 +6,7 @@ namespace Drupal\webform_openfisca;
 
 use Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException;
 use Drupal\Component\Plugin\Exception\PluginNotFoundException;
+use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\block_content\BlockContentInterface;
 use Drupal\Core\Field\EntityReferenceFieldItemListInterface;
@@ -22,9 +23,12 @@ class RacContentHelper implements RacContentHelperInterface {
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
    *   Entity Type Manager service.
+   * @param \Drupal\Core\Entity\EntityFieldManagerInterface $entityFieldManager
+   *   The entity field manager service.
    */
   public function __construct(
     protected EntityTypeManagerInterface $entityTypeManager,
+    protected EntityFieldManagerInterface $entityFieldManager,
   ) {}
 
   /**
@@ -88,7 +92,7 @@ class RacContentHelper implements RacContentHelperInterface {
         return $node;
       }
     }
-    // @codeCoverageIgnoreStart
+      // @codeCoverageIgnoreStart
     catch (InvalidPluginDefinitionException | PluginNotFoundException) {
       return NULL;
     }
@@ -108,30 +112,65 @@ class RacContentHelper implements RacContentHelperInterface {
    */
   protected function findRacBlockContentForWebform(string $webform_id): array {
     try {
-      $paragraph_storage = $this->entityTypeManager->getStorage('paragraph');
-      $paragraph_ids = $paragraph_storage->getQuery()
+      $paragraphs = $this->entityTypeManager->getStorage('paragraph')->getQuery()
+        ->condition('type', 'block_rac_elements')
+        ->condition('status', 1)
         ->condition('field_block_webform', $webform_id)
         ->accessCheck(FALSE)
         ->execute();
 
-      if (empty($paragraph_ids)) {
-        return [];
-      }
+      $blocks = [];
 
-      /** @var \Drupal\Core\Entity\ContentEntityStorageInterface $block_content_storage */
-      $block_content_storage = $this->entityTypeManager->getStorage('block_content');
-      $blocks = $block_content_storage->getQuery()
-        ->condition('field_block_rac_element.target_id', $paragraph_ids, 'IN')
-        ->accessCheck(FALSE)
-        ->execute();
+      if ($paragraphs) {
+        $paragraph_entities = $this->entityTypeManager->getStorage('paragraph')->loadMultiple($paragraphs);
+        foreach ($paragraph_entities as $paragraph) {
+          $blocks[] = $paragraph->getParentEntity()->id();
+        }
+      }
 
       return array_values($blocks);
     }
-    // @codeCoverageIgnoreStart
+      // @codeCoverageIgnoreStart
     catch (InvalidPluginDefinitionException | PluginNotFoundException) {
       return [];
     }
     // @codeCoverageIgnoreEnd
+  }
+
+  /**
+   * Find the block field name.
+   *
+   * @param \Drupal\block_content\BlockContentInterface $block
+   *   Block object.
+   *
+   * @return int|string|null
+   *   Return block field name.
+   */
+  protected function findBlockFieldName(BlockContentInterface $block): int|string|null {
+    $block_type = $block->bundle();
+
+    $fields = $this->entityFieldManager->getFieldDefinitions('block_content', $block_type);
+
+    $field_found = NULL;
+
+    foreach ($fields as $field_name => $field_definition) {
+      // Only check paragraph reference fields.
+      if ($field_definition->getType() === 'entity_reference_revisions') {
+        $settings = $field_definition->getSettings();
+        if (isset($settings['target_type']) && $settings['target_type'] === 'paragraph') {
+          // Check the referenced paragraphs.
+          $paragraphs = $block->get($field_name)->referencedEntities();
+          foreach ($paragraphs as $paragraph) {
+            if ($paragraph->bundle() === 'block_rac_elements') {
+              $field_found = $field_name;
+              break 2;
+            }
+          }
+        }
+      }
+    }
+
+    return $field_found;
   }
 
   /**
@@ -151,74 +190,79 @@ class RacContentHelper implements RacContentHelperInterface {
       /** @var \Drupal\block_content\BlockContentInterface|null $block */
       $block = $block_content_storage->load($block_id);
 
-      if (!$block instanceof BlockContentInterface
-        || !$block->hasField('field_block_rac_element')
-        || !($block->get('field_block_rac_element') instanceof EntityReferenceFieldItemListInterface)
-        || $block->get('field_block_rac_element')->isEmpty()
-      ) {
-        return NULL;
-      }
+      // Find the block field name with paragraph type block_rac_elements.
+      $field_name = $this->findBlockFieldName($block);
 
-      $paragraph = $block->get('field_block_rac_element')->entity;
-
-      $rac_element_paragraphs = [];
-      if ($paragraph && $paragraph->hasField('field_block_rules')) {
-        $rac_element_paragraphs = $paragraph->get('field_block_rules');
-        $operator = $paragraph->get('field_operator')->getValue();
-      }
-
-      // Extract the rules.
-      // Initialize redirect_rule for this rules_index.
-      $visibility_rule = [
-        'rules' => [],
-      ];
-
-      foreach ($rac_element_paragraphs as $rac_element_paragraph) {
-        /** @var \Drupal\Core\Field\Plugin\Field\FieldType\EntityReferenceItem<\Drupal\paragraphs\ParagraphInterface> $rac_element_paragraph */
-        $paragraph_entity = $rac_element_paragraph->entity;
-        if (!$paragraph_entity instanceof ParagraphInterface) {
-          continue;
+      if (!empty($field_name)) {
+        if (!$block instanceof BlockContentInterface
+          || !$block->hasField($field_name)
+          || !($block->get($field_name) instanceof EntityReferenceFieldItemListInterface)
+          || $block->get($field_name)->isEmpty()
+        ) {
+          return NULL;
         }
-        // Get the field that contains multiple paragraph references.
-        $block_rac_elements_field = $paragraph_entity->get('field_block_rac_element');
-        $rule_operator = $paragraph_entity->get('field_rules_operator')->value;
 
-        if (!$block_rac_elements_field instanceof EntityReferenceFieldItemListInterface || $block_rac_elements_field->isEmpty()) {
-          continue;
+        $paragraph = $block->get($field_name)->entity;
+
+        $rac_element_paragraphs = [];
+        if ($paragraph && $paragraph->hasField('field_block_rules')) {
+          $rac_element_paragraphs = $paragraph->get('field_block_rules');
+          $operator = $paragraph->get('field_operator')->getValue();
         }
-        /** @var \Drupal\paragraphs\ParagraphInterface[] $block_rules_paragraphs */
-        $block_rules_paragraphs = $block_rac_elements_field->referencedEntities();
 
-        $visibility_rule_single = [];
+        // Extract the rules.
+        // Initialize redirect_rule for this rules_index.
+        $visibility_rule = [
+          'rules' => [],
+        ];
 
-        foreach ($block_rules_paragraphs as $block_rac_element) {
-          if (!$block_rac_element instanceof ParagraphInterface
-            || !$block_rac_element->hasField('field_block_variable')
-            || !$block_rac_element->hasField('field_block_value')
-            || $block_rac_element->get('field_block_variable')->isEmpty()
-            || $block_rac_element->get('field_block_value')->isEmpty()
-          ) {
+        foreach ($rac_element_paragraphs as $rac_element_paragraph) {
+          /** @var \Drupal\Core\Field\Plugin\Field\FieldType\EntityReferenceItem<\Drupal\paragraphs\ParagraphInterface> $rac_element_paragraph */
+          $paragraph_entity = $rac_element_paragraph->entity;
+          if (!$paragraph_entity instanceof ParagraphInterface) {
             continue;
           }
-          $field_block_variable = $block_rac_element->get('field_block_variable')->getString();
-          $field_block_value = $block_rac_element->get('field_block_value')->getString();
-          $field_rule_block_operator = $block_rac_element->get('field_rule_block_operator')->getString();
-          $visibility_rule_single[] = [
-            'variable' => $field_block_variable,
-            'value' => $field_block_value,
-            'rule_block_operator' => $field_rule_block_operator,
-          ];
-        }
+          // Get the field that contains multiple paragraph references.
+          $block_rac_elements_field = $paragraph_entity->get($field_name);
+          $rule_operator = $paragraph_entity->get('field_rules_operator')->value;
 
-        if (!empty($visibility_rule_single)) {
-          $visibility_rule_single['operator'] = $rule_operator;
-          $visibility_rule['rules'][] = $visibility_rule_single;
+          if (!$block_rac_elements_field instanceof EntityReferenceFieldItemListInterface || $block_rac_elements_field->isEmpty()) {
+            continue;
+          }
+          /** @var \Drupal\paragraphs\ParagraphInterface[] $block_rules_paragraphs */
+          $block_rules_paragraphs = $block_rac_elements_field->referencedEntities();
+
+          $visibility_rule_single = [];
+
+          foreach ($block_rules_paragraphs as $block_rac_element) {
+            if (!$block_rac_element instanceof ParagraphInterface
+              || !$block_rac_element->hasField('field_block_variable')
+              || !$block_rac_element->hasField('field_block_value')
+              || $block_rac_element->get('field_block_variable')->isEmpty()
+              || $block_rac_element->get('field_block_value')->isEmpty()
+            ) {
+              continue;
+            }
+            $field_block_variable = $block_rac_element->get('field_block_variable')->getString();
+            $field_block_value = $block_rac_element->get('field_block_value')->getString();
+            $field_rule_block_operator = $block_rac_element->get('field_rule_block_operator')->getString();
+            $visibility_rule_single[] = [
+              'variable' => $field_block_variable,
+              'value' => $field_block_value,
+              'rule_block_operator' => $field_rule_block_operator,
+            ];
+          }
+
+          if (!empty($visibility_rule_single)) {
+            $visibility_rule_single['operator'] = $rule_operator;
+            $visibility_rule['rules'][] = $visibility_rule_single;
+          }
         }
+        $visibility_rule['parent_operator'] = $operator ?? 'AND';
+        return $visibility_rule;
       }
-      $visibility_rule['parent_operator'] = $operator ?? 'AND';
-      return $visibility_rule;
     }
-    // @codeCoverageIgnoreStart
+      // @codeCoverageIgnoreStart
     catch (InvalidPluginDefinitionException | PluginNotFoundException) {
       return NULL;
     }
