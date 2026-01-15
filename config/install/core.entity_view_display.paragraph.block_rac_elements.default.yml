@@ -1,0 +1,18 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.paragraph.block_rac_elements.field_block_rules
+    - field.field.paragraph.block_rac_elements.field_block_webform
+    - field.field.paragraph.block_rac_elements.field_operator
+    - paragraphs.paragraphs_type.block_rac_elements
+id: paragraph.block_rac_elements.default
+targetEntityType: paragraph
+bundle: block_rac_elements
+mode: default
+content: {  }
+hidden:
+  field_block_rules: true
+  field_block_webform: true
+  field_operator: true
+  search_api_excerpt: true

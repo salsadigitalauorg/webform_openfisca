@@ -1,0 +1,22 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_operator
+    - paragraphs.paragraphs_type.block_rac_elements
+  module:
+    - options
+id: paragraph.block_rac_elements.field_operator
+field_name: field_operator
+entity_type: paragraph
+bundle: block_rac_elements
+label: 'Rules Operator'
+description: ''
+required: true
+translatable: false
+default_value:
+  -
+    value: and
+default_value_callback: ''
+settings: {  }
+field_type: list_string

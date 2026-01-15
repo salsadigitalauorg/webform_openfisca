@@ -88,7 +88,7 @@ class RacContentHelper implements RacContentHelperInterface {
         return $node;
       }
     }
-    // @codeCoverageIgnoreStart
+      // @codeCoverageIgnoreStart
     catch (InvalidPluginDefinitionException | PluginNotFoundException) {
       return NULL;
     }
@@ -108,16 +108,26 @@ class RacContentHelper implements RacContentHelperInterface {
    */
   protected function findRacBlockContentForWebform(string $webform_id): array {
     try {
+      $paragraph_storage = $this->entityTypeManager->getStorage('paragraph');
+      $paragraph_ids = $paragraph_storage->getQuery()
+        ->condition('field_block_webform', $webform_id)
+        ->accessCheck(FALSE)
+        ->execute();
+
+      if (empty($paragraph_ids)) {
+        return [];
+      }
+
       /** @var \Drupal\Core\Entity\ContentEntityStorageInterface $block_content_storage */
       $block_content_storage = $this->entityTypeManager->getStorage('block_content');
       $blocks = $block_content_storage->getQuery()
-        ->condition('field_block_webform', $webform_id)
+        ->condition('field_block_rac_element.target_id', $paragraph_ids, 'IN')
         ->accessCheck(FALSE)
         ->execute();
 
       return array_values($blocks);
     }
-    // @codeCoverageIgnoreStart
+      // @codeCoverageIgnoreStart
     catch (InvalidPluginDefinitionException | PluginNotFoundException) {
       return [];
     }
@@ -142,16 +152,20 @@ class RacContentHelper implements RacContentHelperInterface {
       $block = $block_content_storage->load($block_id);
 
       if (!$block instanceof BlockContentInterface
-        || !$block->hasField('field_block_rules')
-        || !($block->get('field_block_rules') instanceof EntityReferenceFieldItemListInterface)
-        || $block->get('field_block_rules')->isEmpty()
+        || !$block->hasField('field_block_rac_element')
+        || !($block->get('field_block_rac_element') instanceof EntityReferenceFieldItemListInterface)
+        || $block->get('field_block_rac_element')->isEmpty()
       ) {
         return NULL;
       }
 
-      /** @var \Drupal\Core\Field\EntityReferenceFieldItemListInterface<\Drupal\paragraphs\ParagraphInterface> $rac_element_paragraphs */
-      $rac_element_paragraphs = $block->get('field_block_rules');
-      $operator = $block->get('field_operator')->getValue();
+      $paragraph = $block->get('field_block_rac_element')->entity;
+
+      $rac_element_paragraphs = [];
+      if ($paragraph && $paragraph->hasField('field_block_rules')) {
+        $rac_element_paragraphs = $paragraph->get('field_block_rules');
+        $operator = $block->get('field_operator')->getValue();
+      }
 
       // Extract the rules.
       // Initialize redirect_rule for this rules_index.
@@ -201,10 +215,10 @@ class RacContentHelper implements RacContentHelperInterface {
           $visibility_rule['rules'][] = $visibility_rule_single;
         }
       }
-      $visibility_rule['parent_operator'] = $operator;
+      $visibility_rule['parent_operator'] = $operator ?? 'AND';
       return $visibility_rule;
     }
-    // @codeCoverageIgnoreStart
+      // @codeCoverageIgnoreStart
     catch (InvalidPluginDefinitionException | PluginNotFoundException) {
       return NULL;
     }
@@ -502,8 +516,8 @@ class RacContentHelper implements RacContentHelperInterface {
         default:
           // True if **all** conditions are matched (no 0, '', null, false).
           return count(array_filter($is_matched, function ($v) {
-            return $v !== 0 && $v !== '' && $v !== NULL;
-          })) === count($is_matched);
+              return $v !== 0 && $v !== '' && $v !== NULL;
+            })) === count($is_matched);
       }
     }
 
