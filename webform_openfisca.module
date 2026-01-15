@@ -82,10 +82,7 @@ function webform_openfisca_block_access(BlockInterface $block, $operation, Accou
     return AccessResult::neutral();
   }
 
-  /**
-   * NEW CONDITION:
-   * Block must reference a Paragraph of bundle "block_rac_elements".
-   */
+  // Block must reference a Paragraph of bundle "block_rac_elements".
   $has_rac_paragraph = FALSE;
 
   foreach ($block_content->getFieldDefinitions() as $field_name => $definition) {
