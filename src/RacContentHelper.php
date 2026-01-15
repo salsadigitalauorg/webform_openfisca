@@ -92,7 +92,7 @@ class RacContentHelper implements RacContentHelperInterface {
         return $node;
       }
     }
-      // @codeCoverageIgnoreStart
+    // @codeCoverageIgnoreStart
     catch (InvalidPluginDefinitionException | PluginNotFoundException) {
       return NULL;
     }
@@ -130,7 +130,7 @@ class RacContentHelper implements RacContentHelperInterface {
 
       return array_values($blocks);
     }
-      // @codeCoverageIgnoreStart
+    // @codeCoverageIgnoreStart
     catch (InvalidPluginDefinitionException | PluginNotFoundException) {
       return [];
     }
@@ -262,7 +262,7 @@ class RacContentHelper implements RacContentHelperInterface {
         return $visibility_rule;
       }
     }
-      // @codeCoverageIgnoreStart
+    // @codeCoverageIgnoreStart
     catch (InvalidPluginDefinitionException | PluginNotFoundException) {
       return NULL;
     }
