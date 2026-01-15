@@ -88,7 +88,7 @@ class RacContentHelper implements RacContentHelperInterface {
         return $node;
       }
     }
-      // @codeCoverageIgnoreStart
+    // @codeCoverageIgnoreStart
     catch (InvalidPluginDefinitionException | PluginNotFoundException) {
       return NULL;
     }
@@ -127,7 +127,7 @@ class RacContentHelper implements RacContentHelperInterface {
 
       return array_values($blocks);
     }
-      // @codeCoverageIgnoreStart
+    // @codeCoverageIgnoreStart
     catch (InvalidPluginDefinitionException | PluginNotFoundException) {
       return [];
     }
@@ -218,7 +218,7 @@ class RacContentHelper implements RacContentHelperInterface {
       $visibility_rule['parent_operator'] = $operator ?? 'AND';
       return $visibility_rule;
     }
-      // @codeCoverageIgnoreStart
+    // @codeCoverageIgnoreStart
     catch (InvalidPluginDefinitionException | PluginNotFoundException) {
       return NULL;
     }
@@ -516,8 +516,8 @@ class RacContentHelper implements RacContentHelperInterface {
         default:
           // True if **all** conditions are matched (no 0, '', null, false).
           return count(array_filter($is_matched, function ($v) {
-              return $v !== 0 && $v !== '' && $v !== NULL;
-            })) === count($is_matched);
+            return $v !== 0 && $v !== '' && $v !== NULL;
+          })) === count($is_matched);
       }
     }
 
