@@ -25,7 +25,6 @@ class WebformUiElementDeleteForm extends WebformUiElementDeleteFormBase {
       $this->webform->setThirdPartySetting('webform_openfisca', 'fisca_field_mappings', $updated_settings->getJsonFieldMappings());
       $this->webform->setThirdPartySetting('webform_openfisca', 'fisca_variables', $updated_settings->getJsonVariables());
       $this->webform->setThirdPartySetting('webform_openfisca', 'fisca_entity_roles', $updated_settings->getJsonEntityRoles());
-      $this->webform->setThirdPartySetting('webform_openfisca', 'fisca_immediate_response_mapping', $updated_settings->getJsonImmediateResponseMapping());
 
       $this->webform->save();
     }

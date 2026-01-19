@@ -2,13 +2,9 @@
 
 namespace Drupal\webform_openfisca\Plugin\WebformHandler;
 
-use Drupal\Component\Utility\Html;
 use Drupal\Component\Utility\UrlHelper;
-use Drupal\Core\Ajax\AjaxResponse;
-use Drupal\Core\Ajax\InvokeCommand;
 use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\webform\Entity\WebformSubmission;
 use Drupal\webform\Plugin\WebformHandlerBase;
 use Drupal\webform\WebformSubmissionForm;
 use Drupal\webform\WebformSubmissionInterface;
@@ -108,88 +104,6 @@ class OpenFiscaJourneyHandler extends WebformHandlerBase {
     if (!isset($element['#webform_key'])) {
       return;
     }
-
-    $element_key = $element['#webform_key'];
-    // Add the immediate response handling to webform element.
-    $fisca_immediate_response_ajax_indicator = $openfisca_settings->hasImmediateResponseAjaxIndicator();
-    if ($openfisca_settings->fieldHasImmediateResponse($element_key)) {
-      $element['#attributes']['data-openfisca-immediate-response'] = 'true';
-      $element['#attributes']['data-openfisca-webform-id'] = $webform->id();
-      $element['#attached']['library'][] = 'webform_openfisca/immediate_response';
-      $element['#ajax'] = [
-        'callback' => [$this, 'requestOpenFiscaImmediateResponse'],
-        'disable-refocus' => TRUE,
-        'event' => 'fiscaImmediateResponse:request',
-        'progress' => [
-          'type' => $fisca_immediate_response_ajax_indicator ? 'throbber' : 'none',
-        ],
-      ];
-    }
-  }
-
-  /**
-   * Ajax callback to request immediate response from Openfisca.
-   *
-   * @param array $form
-   *   Form.
-   * @param \Drupal\Core\Form\FormStateInterface $form_state
-   *   Form state.
-   *
-   * @return \Drupal\Core\Ajax\AjaxResponse
-   *   The Ajax response.
-   *
-   * @throws \Drupal\Core\Entity\EntityMalformedException
-   */
-  public function requestOpenFiscaImmediateResponse(array $form, FormStateInterface $form_state) : AjaxResponse {
-    $webform = $this->getWebform();
-    $values = $form_state->getValues() ?: [];
-    // Create a faux webform submission from current form values.
-    $webform_submission = WebformSubmission::create([
-      'data' => $values,
-      'webform_id' => $this->getWebform()->id(),
-    ]);
-
-    $payload = $this->prepareOpenfiscaPayload($webform_submission);
-    $openfisca_response = NULL;
-    $total_benefits = $this->determineBenefits($payload, $openfisca_response);
-    $query_append = $openfisca_response?->getDebugData('query_append') ?: [];
-
-    $immediate_response = [];
-    // Override the confirmation URL if there is a benefit or an immediate exit.
-    if (($total_benefits !== 0 || !empty($query_append['immediate_exit']))
-      && $openfisca_response instanceof ResponsePayload
-    ) {
-      $confirmation_url = $this->overrideConfirmationUrl($openfisca_response);
-      $immediate_response = [
-        'confirmation_url' => $confirmation_url,
-        'query' => $openfisca_response->getDebugData('query') ?: '',
-      ];
-    }
-
-    $response = new AjaxResponse();
-    if (!empty($immediate_response)) {
-      $response->addCommand(new InvokeCommand('', 'webformOpenfiscaImmediateResponseRedirect', [$immediate_response]));
-    }
-    else {
-      $triggering_element = $form_state->getTriggeringElement();
-      if (isset($triggering_element['#name'], $values[$triggering_element['#name']])) {
-        $data = [
-          'name' => $triggering_element['#name'],
-          'webform' => $triggering_element['#webform'] ?? $webform->id(),
-          'selector' => $triggering_element['#attributes']['data-drupal-selector'] ?? '',
-          'original_selector' => '',
-        ];
-        if (!empty($triggering_element['#id'])) {
-          $original_id = preg_replace('/--([a-zA-Z0-9]{11})$/', '', $triggering_element['#id'], 1);
-          $data['original_selector'] = Html::getId($original_id);
-        }
-        $response->addCommand(new InvokeCommand('', 'webformOpenfiscaImmediateResponseContinue', [$data]));
-      }
-    }
-
-    $this->logDebug($payload, $openfisca_response);
-
-    return $response;
   }
 
   /**
@@ -299,18 +213,6 @@ class OpenFiscaJourneyHandler extends WebformHandlerBase {
       }
     }
 
-    // Add immediate exit mapping to the payload.
-    $immediate_exit_mapping = $openfisca_settings->getImmediateExitKeys();
-    foreach ($immediate_exit_mapping as $immediate_exit_key) {
-      $path = [];
-      $parents = [];
-      $variable = OpenFiscaHelper::parseOpenFiscaFieldMapping($immediate_exit_key, path: $path, parents: $parents);
-      if (!empty($variable) && $openfisca_payload->keyPathExists($parents) && !$openfisca_payload->keyPathExists($path)) {
-        $formatted_period = $openfisca_settings->formatVariablePeriod($variable, $period);
-        $openfisca_payload->setValue($path, [$formatted_period => NULL]);
-      }
-    }
-
     $openfisca_payload->setDebugData('query_append', $query_append);
 
     return $openfisca_payload;
@@ -326,7 +228,7 @@ class OpenFiscaJourneyHandler extends WebformHandlerBase {
    *   benefits will be stored in debug data of the payload.
    *
    * @return int
-   *   Number of benefits. -1 for immediate exit.
+   *   Number of benefits.
    */
   protected function determineBenefits(RequestPayload $request_payload, ?ResponsePayload &$response_payload = NULL) : int {
     $openfisca_settings = WebformOpenFiscaSettings::load($this->getWebform());
@@ -399,21 +301,6 @@ class OpenFiscaJourneyHandler extends WebformHandlerBase {
       }
     }
     $query_append['total_benefit'] = $total_benefits;
-
-    // Attempt to determine the special immediate exit.
-    $immediate_exit_mapping = $openfisca_settings->getImmediateExitKeys();
-    foreach ($immediate_exit_mapping as $immediate_exit_key) {
-      $path = [];
-      OpenFiscaHelper::parseOpenFiscaFieldMapping($immediate_exit_key, path: $path);
-      if ($response_payload->keyPathExists($path)) {
-        $immediate_exit = $response_payload->getValue($path);
-        if (is_array($immediate_exit) && !empty(array_filter($immediate_exit))) {
-          $query_append['immediate_exit'] = TRUE;
-          $total_benefits = -1;
-          break;
-        }
-      }
-    }
 
     // Set debug data to the response payload.
     $response_payload->setDebugData('query_append', $query_append);

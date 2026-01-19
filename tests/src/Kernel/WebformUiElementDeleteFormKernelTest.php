@@ -40,7 +40,6 @@ class WebformUiElementDeleteFormKernelTest extends BaseKernelTestCase {
     $openfisca_settings = WebformOpenFiscaSettings::load($webform);
     $this->assertNotFalse($openfisca_settings->getFieldMapping('has_disability'));
     $this->assertNotFalse($openfisca_settings->getVariable('has_disability'));
-    $this->assertTrue($openfisca_settings->fieldHasImmediateResponse('has_disability'));
 
     // Build and submit the form.
     /** @var \Drupal\Core\Form\FormBuilderInterface $form_builder */
@@ -55,7 +54,6 @@ class WebformUiElementDeleteFormKernelTest extends BaseKernelTestCase {
     $openfisca_settings = WebformOpenFiscaSettings::load($webform);
     $this->assertFalse($openfisca_settings->getFieldMapping('has_disability'));
     $this->assertFalse($openfisca_settings->getVariable('has_disability'));
-    $this->assertFalse($openfisca_settings->fieldHasImmediateResponse('has_disability'));
   }
 
 }

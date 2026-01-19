@@ -114,30 +114,6 @@ class WebformOpenFiscaSettings {
   protected array $entityRoles = [];
 
   /**
-   * JSON-encoded immediate response field mapping.
-   *
-   * @var string
-   */
-  protected string $jsonImmediateResponseMapping = '[]';
-
-  /**
-   * Immediate response field mapping.
-   *
-   * @var array<string, bool>
-   */
-  protected array $immediateResponseMapping = [];
-
-  /**
-   * Whether to display the Ajax indicator for immediate response.
-   */
-  protected bool $immediateResponseAjaxIndicator = FALSE;
-
-  /**
-   * Immediate exit keys.
-   */
-  protected string $immediateExitKeys = '';
-
-  /**
    * Constructs a new \Drupal\webform_openfisca\WebformOpenFiscaSettings object.
    *
    * @param \Drupal\webform\WebformInterface $webform
@@ -169,13 +145,6 @@ class WebformOpenFiscaSettings {
     $this->jsonEntityRoles = $webform->getThirdPartySetting('webform_openfisca', 'fisca_entity_roles', '[]');
     $entity_roles = Json::decode($this->jsonEntityRoles);
     $this->entityRoles = is_array($entity_roles) ? $entity_roles : [];
-
-    $this->jsonImmediateResponseMapping = $webform->getThirdPartySetting('webform_openfisca', 'fisca_immediate_response_mapping', '[]');
-    $immediate_response_mapping = Json::decode($this->jsonImmediateResponseMapping);
-    $this->immediateResponseMapping = is_array($immediate_response_mapping) ? $immediate_response_mapping : [];
-
-    $this->immediateResponseAjaxIndicator = (bool) $webform->getThirdPartySetting('webform_openfisca', 'fisca_immediate_response_ajax_indicator', FALSE);
-    $this->immediateExitKeys = (string) $webform->getThirdPartySetting('webform_openfisca', 'fisca_immediate_exit_mapping', '');
   }
 
   /**
@@ -447,69 +416,6 @@ class WebformOpenFiscaSettings {
   }
 
   /**
-   * Get the JSON-encoded immediate response mapping.
-   *
-   * @return string
-   *   The JSON string.
-   */
-  public function getJsonImmediateResponseMapping() : string {
-    return $this->jsonImmediateResponseMapping;
-  }
-
-  /**
-   * Get the immediate response mapping.
-   *
-   * @return array<string, bool>
-   *   The mapping.
-   */
-  public function getImmediateResponseMapping() : array {
-    return $this->immediateResponseMapping;
-  }
-
-  /**
-   * Check if a webform field has immediate response enabled.
-   *
-   * @param string $field_name
-   *   The webform field name.
-   *
-   * @return bool
-   *   TRUE if enabled.
-   */
-  public function fieldHasImmediateResponse(string $field_name) : bool {
-    return !empty($this->immediateResponseMapping[$field_name]);
-  }
-
-  /**
-   * Check if the Ajax indicator for immediate response should be displayed.
-   *
-   * @return bool
-   *   TRUE if enabled.
-   */
-  public function hasImmediateResponseAjaxIndicator() : bool {
-    return $this->immediateResponseAjaxIndicator;
-  }
-
-  /**
-   * Get the immediate exit keys.
-   *
-   * @return string
-   *   The keys (comma-separated).
-   */
-  public function getPlainImmediateExitKeys() : string {
-    return $this->immediateExitKeys;
-  }
-
-  /**
-   * Get the immediate exit keys as an array.
-   *
-   * @return string[]
-   *   The keys.
-   */
-  public function getImmediateExitKeys() : array {
-    return OpenFiscaHelper::expandCsvString($this->immediateExitKeys);
-  }
-
-  /**
    * Remove all mappings of a webform element from OpenFisca settings.
    *
    * @param string $element_key
@@ -537,10 +443,6 @@ class WebformOpenFiscaSettings {
     // Remove the entity role.
     unset($updated_settings->entityRoles[$element_key]);
     $updated_settings->jsonEntityRoles = OpenFiscaHelper::jsonEncodePretty($updated_settings->entityRoles);
-
-    // Remove the immediate response mapping.
-    unset($updated_settings->immediateResponseMapping[$element_key]);
-    $updated_settings->jsonImmediateResponseMapping = OpenFiscaHelper::jsonEncodePretty($updated_settings->immediateResponseMapping);
 
     return $updated_settings;
   }

@@ -80,28 +80,12 @@ class WebformOpenFiscaSettingsUnitTest extends OpenFiscaHelperUnitTest {
     $this->assertEmpty($openfisca_settings->getEntityRoles());
     $this->assertFalse($openfisca_settings->getEntityRole('non-existent-role'));
 
-    $json = Json::decode($openfisca_settings->getJsonImmediateResponseMapping());
-    $this->assertArrayHasKey('has_disability', $json);
-    $this->assertArrayHasKey('aus_citizen_or_permanent_resident', $json);
-    $field_mappings = $openfisca_settings->getImmediateResponseMapping();
-    $this->assertArrayHasKey('has_disability', $field_mappings);
-    $this->assertArrayHasKey('aus_citizen_or_permanent_resident', $field_mappings);
-    $this->assertTrue($openfisca_settings->fieldHasImmediateResponse('has_disability'));
-    $this->assertTrue($openfisca_settings->fieldHasImmediateResponse('aus_citizen_or_permanent_resident'));
-    $this->assertFalse($openfisca_settings->fieldHasImmediateResponse('non-existent-mapping'));
-
-    $this->assertTrue($openfisca_settings->hasImmediateResponseAjaxIndicator());
-
-    $this->assertEquals('persons.personA.exit,persons.personA.exit2', $openfisca_settings->getPlainImmediateExitKeys());
-    $this->assertEquals(['persons.personA.exit', 'persons.personA.exit2'], $openfisca_settings->getImmediateExitKeys());
-
     $this->assertEquals('2024-12-31', $openfisca_settings->formatVariablePeriod('has_disability', '2024-12-31'));
     $this->assertEquals('', $openfisca_settings->formatVariablePeriod('non-existent-mapping', '2024-12-31'));
 
     $new_openfisca_settings = $openfisca_settings->removeWebformElementMappings('has_disability');
     $this->assertFalse($new_openfisca_settings->getFieldMapping('has_disability'));
     $this->assertFalse($new_openfisca_settings->getVariable('has_disability'));
-    $this->assertFalse($new_openfisca_settings->fieldHasImmediateResponse('has_disability'));
 
     // Test the getOpenFiscaClient() method.
     $factory = $this->mockClientFactory();

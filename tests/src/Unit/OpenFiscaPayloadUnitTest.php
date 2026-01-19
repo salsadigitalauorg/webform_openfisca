@@ -27,7 +27,7 @@ class OpenFiscaPayloadUnitTest extends BaseUnitTestCase {
     $payload = RequestPayload::fromJson($json);
 
     $output = <<<JSON
-{"persons":{"Person":{"australian_citizen_or_permanent_resident":{"2024-10-31":"No"},"benefit_youth_allowance_for_jobseekers_maybe_eligible":{"2024-10-31":null},"benefit_jobseekers_maybe_eligible":{"2024-10-31":null},"benefit_abstudy_maybe_eligible":{"2024-10-31":null},"benefit_youth_allowance_maybe_eligible":{"2024-10-31":null},"benefit_austudy_maybe_eligible":{"2024-10-31":null},"benefit_farm_household_allowance_maybe_eligible":{"2024-10-31":null},"benefit_parental_leave_pay_maybe_eligible":{"2024-10-31":null},"benefit_disability_support_payment_maybe_eligible":{"2024-10-31":null},"benefit_carer_payment_maybe_eligible":{"2024-10-31":null},"benefit_age_pension_maybe_eligible":{"2024-10-31":null},"benefit_child_care_subsidy_maybe_eligible":{"2024-10-31":null},"benefit_parenting_payment_maybe_eligible":{"2024-10-31":null},"benefit_family_tax_benefit_maybe_eligible":{"2024-10-31":null},"benefit_eligible":{"2024-10-31":null},"exit":{"2024-10-31":null}}}}
+{"persons":{"Person":{"australian_citizen_or_permanent_resident":{"2024-10-31":"No"},"benefit_youth_allowance_for_jobseekers_maybe_eligible":{"2024-10-31":null},"benefit_jobseekers_maybe_eligible":{"2024-10-31":null},"benefit_abstudy_maybe_eligible":{"2024-10-31":null},"benefit_youth_allowance_maybe_eligible":{"2024-10-31":null},"benefit_austudy_maybe_eligible":{"2024-10-31":null},"benefit_farm_household_allowance_maybe_eligible":{"2024-10-31":null},"benefit_parental_leave_pay_maybe_eligible":{"2024-10-31":null},"benefit_disability_support_payment_maybe_eligible":{"2024-10-31":null},"benefit_carer_payment_maybe_eligible":{"2024-10-31":null},"benefit_age_pension_maybe_eligible":{"2024-10-31":null},"benefit_child_care_subsidy_maybe_eligible":{"2024-10-31":null},"benefit_parenting_payment_maybe_eligible":{"2024-10-31":null},"benefit_family_tax_benefit_maybe_eligible":{"2024-10-31":null},"benefit_eligible":{"2024-10-31":null}}}}
 JSON;
     $this->assertEquals($output, $payload->toJson());
 
@@ -100,8 +100,6 @@ JSON;
     $this->assertEquals('No', $payload->getValue('persons.Person.australian_citizen_or_permanent_resident.2024-10-31'));
     $this->assertFalse($payload->getValue('persons.Person.benefit_youth_allowance_for_jobseekers_maybe_eligible.2024-10-31'));
     $this->assertEquals(0, $payload->getValue('persons.Person.benefit_family_tax_benefit_maybe_eligible.2024-10-31'));
-
-    $this->assertEquals(['persons', 'Person', 'exit'], $payload->findKey('exit'));
   }
 
 }

@@ -92,25 +92,6 @@ class WebformUiElementFormAlterKernelTest extends BaseKernelTestCase {
     $this->assertEquals('checkbox', $element_edit_form['fisca_immediate_response']['#type']);
 
     $this->simulateWebformStates($form_state);
-    // Disable Immediate response - use NULL instead of 0 for checkbox.
-    $form_state->setValue('fisca_immediate_response', NULL);
-    $form_builder->submitForm(WebformUiElementEditForm::class, $form_state);
-    $webform = Webform::load('test_dac');
-    $openfisca_settings = WebformOpenFiscaSettings::load($webform);
-    $this->assertFalse($openfisca_settings->fieldHasImmediateResponse('has_disability'));
-
-    // Re-enable the immediate response.
-    $form_state = new FormState();
-    $form_state->addBuildInfo('args', [$webform, 'has_disability']);
-    $form_builder->buildForm(WebformUiElementEditForm::class, $form_state);
-    $this->simulateWebformStates($form_state);
-    $form_state->setValue('fisca_immediate_response', '1');
-    $form_builder->submitForm(WebformUiElementEditForm::class, $form_state);
-    $webform = Webform::load('test_dac');
-    $openfisca_settings = WebformOpenFiscaSettings::load($webform);
-    $this->assertTrue($openfisca_settings->fieldHasImmediateResponse('has_disability'));
-    $this->assertEquals('persons.personA.has_disability', $openfisca_settings->getFieldMapping('has_disability'));
-    $this->assertFalse($openfisca_settings->getVariable('income_tax'));
 
     // Map the 'has_disability' field to the OpenFisca variable 'income_tax'.
     $form_state = new FormState();

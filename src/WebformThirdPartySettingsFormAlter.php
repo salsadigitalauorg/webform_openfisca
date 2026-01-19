@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Drupal\webform_openfisca;
 
-use Drupal\Component\Serialization\Json;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\webform\WebformInterface;
 use Drupal\webform_openfisca\OpenFisca\ClientInterface;
@@ -126,35 +125,6 @@ class WebformThirdPartySettingsFormAlter extends WebformFormAlterBase {
       '#default_value' => $openfisca_settings->getJsonEntityRoles(),
       '#weight' => -10,
     ];
-    $form['third_party_settings']['webform_openfisca']['fisca_immediate_response_mapping'] = [
-      '#type' => 'webform_codemirror',
-      '#mode' => 'javascript',
-      '#rows' => 3,
-      '#wrap' => FALSE,
-      '#attributes' => [
-        'style' => 'max-height: 300px;',
-      ],
-      '#title' => $this->t('OpenFisca immediate response mapping'),
-      '#description' => $this->t('Specify the field immediate response mapping'),
-      '#default_value' => $openfisca_settings->getJsonImmediateResponseMapping(),
-      '#weight' => 0,
-    ];
-    $form['third_party_settings']['webform_openfisca']['fisca_immediate_exit_mapping'] = [
-      '#type' => 'webform_codemirror',
-      '#mode' => 'text',
-      '#rows' => 3,
-      '#title' => $this->t('OpenFisca immediate exit mapping'),
-      '#description' => $this->t('Specify the return keys of OpenFisca response to map to immediate exit. Comma separated.'),
-      '#default_value' => $openfisca_settings->getPlainImmediateExitKeys(),
-      '#weight' => 10,
-    ];
-    $form['third_party_settings']['webform_openfisca']['fisca_immediate_response_ajax_indicator'] = [
-      '#type' => 'checkbox',
-      '#title' => $this->t('Display Ajax indicator'),
-      '#description' => $this->t('Whether to display an Ajax indicator when an immediate response is required.'),
-      '#default_value' => $openfisca_settings->hasImmediateResponseAjaxIndicator(),
-      '#weight' => 20,
-    ];
 
     $form['#validate'][] = [$this, 'validateForm'];
 
@@ -198,55 +168,8 @@ class WebformThirdPartySettingsFormAlter extends WebformFormAlterBase {
     }
     $openfisca_client = $openfisca_settings->getOpenFiscaClient($this->openFiscaClientFactory);
 
-    // Add the immediate exit key to OpenFisca variables.
-    $this->updateImmediateExitKeys($form, $form_state, $webform, $openfisca_settings, $openfisca_client);
-
     // Add the parameter tokens to OpenFisca parameters.
     $this->updateParameterTokens($form, $form_state, $webform, $openfisca_settings, $openfisca_client);
-  }
-
-  /**
-   * Add the immediate exit key to OpenFisca variables.
-   *
-   * @param array $form
-   *   The form.
-   * @param \Drupal\Core\Form\FormStateInterface $form_state
-   *   The form state.
-   * @param \Drupal\webform\WebformInterface $webform
-   *   The webform.
-   * @param \Drupal\webform_openfisca\WebformOpenFiscaSettings $openfisca_settings
-   *   The webform OpenFisca settings.
-   * @param \Drupal\webform_openfisca\OpenFisca\ClientInterface $openfisca_client
-   *   The OpenFisca client.
-   */
-  protected function updateImmediateExitKeys(array &$form, FormStateInterface $form_state, WebformInterface $webform, WebformOpenFiscaSettings $openfisca_settings, ClientInterface $openfisca_client): void {
-    $fisca_variables = $form_state->getValue(
-      ['third_party_settings', 'webform_openfisca', 'fisca_variables']
-    ) ?: '';
-    $fisca_variables = Json::decode($fisca_variables);
-
-    $fisca_immediate_exit_mapping = $form_state->getValue(
-      ['third_party_settings', 'webform_openfisca', 'fisca_immediate_exit_mapping']
-    ) ?: '';
-    $immediate_exit_keys = [];
-    foreach (OpenFiscaHelper::expandCsvString($fisca_immediate_exit_mapping) as $immediate_exit_key) {
-      $immediate_exit_key = OpenFiscaHelper::parseOpenFiscaFieldMapping($immediate_exit_key);
-      $immediate_exit_keys[$immediate_exit_key] = $immediate_exit_key;
-    }
-
-    foreach ($immediate_exit_keys as $key) {
-      if (!isset($fisca_variables[$key])) {
-        $fisca_variable = $openfisca_client->getVariable($key);
-        if ($fisca_variable !== NULL) {
-          $fisca_variables[$key] = $fisca_variable;
-        }
-      }
-    }
-    $fisca_variables = OpenFiscaHelper::jsonEncodePretty($fisca_variables);
-    $form_state->setValue(
-      ['third_party_settings', 'webform_openfisca', 'fisca_variables'],
-      $fisca_variables
-    );
   }
 
   /**
