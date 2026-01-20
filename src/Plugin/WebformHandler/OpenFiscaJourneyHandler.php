@@ -2,7 +2,6 @@
 
 namespace Drupal\webform_openfisca\Plugin\WebformHandler;
 
-use Drupal\Component\Utility\UrlHelper;
 use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\webform\Plugin\WebformHandlerBase;
@@ -34,23 +33,29 @@ class OpenFiscaJourneyHandler extends WebformHandlerBase {
 
   /**
    * Current request.
+   *
+   * @var Symfony\Component\HttpFoundation\Request
    */
   protected Request $request;
 
   /**
    * OpenFisca Client factory.
+   *
+   * @var \Drupal\webform_openfisca\OpenFisca\ClientFactoryInterface
    */
   protected OpenFiscaClientFactoryInterface $openfiscaClientFactory;
 
   /**
    * RAC content helper.
+   *
+   * @var Drupal\webform_openfisca\RacContentHelperInterface
    */
   protected RacContentHelperInterface $racContentHelper;
 
   /**
    * The debug data from the last API call to OpenFisca.
    *
-   * @var array<string, \Drupal\webform_openfisca\OpenFisca\Payload|null>
+   * @var arraystring\Drupal\webform_openfisca\OpenFisca\Payload|null
    */
   protected array $recentDebugData = [];
 
@@ -485,7 +490,7 @@ class OpenFiscaJourneyHandler extends WebformHandlerBase {
   /**
    * Return the debug data from the last API calculation to OpenFisca.
    *
-   * @return array<string, \Drupal\webform_openfisca\OpenFisca\Payload|null>
+   * @return array
    *   The data array with 2 keys if debug mode is enabled:
    *   - request
    *   - response
