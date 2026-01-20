@@ -140,6 +140,8 @@ class OpenFiscaJourneyHandler extends WebformHandlerBase {
       $period = (new DrupalDateTime())->format('Y-m-d');
     }
 
+    $paths = [];
+
     foreach ($fisca_field_mappings as $webform_key => $openfisca_key) {
       // Always ignore the period key.
       if ($webform_key === 'period') {
@@ -163,6 +165,7 @@ class OpenFiscaJourneyHandler extends WebformHandlerBase {
         $formatted_period = $openfisca_settings->formatVariablePeriod($variable, $period);
         if (!empty($formatted_period)) {
           $openfisca_payload->setValue($path, [$formatted_period => $val]);
+          $paths[] = $openfisca_key;
         }
       }
     }
@@ -170,6 +173,10 @@ class OpenFiscaJourneyHandler extends WebformHandlerBase {
     // Create result keys entities with null values to tell OpenFisca
     // to calculate these variables eg. { persons.personA.variable_name: null }.
     foreach ($result_keys as $result_key) {
+      if (in_array($result_key, $paths)) {
+        // This is one of the inputs. Do not NULL it.
+        continue;
+      }
       // The result_key will be in the format
       // variable_entity.entity_key.variable_name
       // eg. persons.personA.age
