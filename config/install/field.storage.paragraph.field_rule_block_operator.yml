@@ -18,16 +18,16 @@ settings:
       label: '!='
     -
       value: lessthan
-      label: '>'
+      label: '&lt;'
     -
       value: greaterthan
-      label: '<'
+      label: '&gt;'
     -
       value: greaterthanequalto
-      label: '<='
+      label: '&gt;='
     -
       value: lessthanequalto
-      label: '>='
+      label: '&lt;='
     -
       value: between
       label: between
