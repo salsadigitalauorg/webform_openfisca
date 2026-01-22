@@ -28,12 +28,6 @@ settings:
     -
       value: lessthanequalto
       label: '&lt;='
-    -
-      value: between
-      label: between
-    -
-      value: not_between
-      label: 'not between'
   allowed_values_function: ''
 module: options
 locked: false

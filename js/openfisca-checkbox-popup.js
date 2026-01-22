@@ -13,7 +13,7 @@
           checkbox.addEventListener('change', function () {
             if (checkbox.checked) {
               Drupal.dialog(
-                '<p>Please make sure that you have disabled saving of submissions for this form.</p>',
+                '<p>Please be aware that submission data is automatically saved in Drupal unless this feature is disabled. Based on your use case, you\'ll need to consider the privacy implications of your webform and may need to disable saving of submissions.</p>',
                 {
                   title: 'Important Notice',
                   width: 400

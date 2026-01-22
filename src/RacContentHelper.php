@@ -394,7 +394,6 @@ class RacContentHelper implements RacContentHelperInterface {
   protected function compareUsingOperatorWithRacRuleValue(mixed $value, string $rac_rule_value, string $operator): bool {
     $operator_value = $this->returnOperator($operator);
 
-    // @todo between and not between.
     return match ($operator_value) {
       '=='  => $value == $rac_rule_value,
       '!='  => $value != $rac_rule_value,
@@ -423,8 +422,6 @@ class RacContentHelper implements RacContentHelperInterface {
       'greaterthan' => '>',
       'lessthanequalto' => '<=',
       'greaterthanequalto' => '>=',
-      'between' => 'between',
-      'not_between' => 'not between',
     ];
 
     return $operators[$operator] ?? '==';
