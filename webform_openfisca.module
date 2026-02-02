@@ -5,8 +5,13 @@
  * Hook implementations for the Webform OpenFisca module.
  */
 
+use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\Core\Session\AccountInterface;
+use Drupal\block\BlockInterface;
+use Drupal\block_content\BlockContentInterface;
+use Drupal\paragraphs\ParagraphInterface;
 
 /**
  * Implements hook_webform_third_party_settings_form_alter().
@@ -48,4 +53,103 @@ function webform_openfisca_help(string $route_name, RouteMatchInterface $route_m
   // @codeCoverageIgnoreStart
   return '';
   // @codeCoverageIgnoreEnd
+}
+
+/**
+ * Implements hook_block_access().
+ */
+function webform_openfisca_block_access(BlockInterface $block, $operation, AccountInterface $account) {
+  // Only control visibility when viewing blocks.
+  if ($operation !== 'view') {
+    return AccessResult::neutral();
+  }
+
+  // Only care about custom block content blocks.
+  if (!str_starts_with($block->getPluginId(), 'block_content:')) {
+    return AccessResult::neutral();
+  }
+
+  [, $uuid] = explode(':', $block->getPluginId(), 2);
+
+  $blocks = \Drupal::entityTypeManager()
+    ->getStorage('block_content')
+    ->loadByProperties(['uuid' => $uuid]);
+
+  /** @var \Drupal\block_content\BlockContentInterface|null $block_content */
+  $block_content = reset($blocks);
+
+  if (!$block_content instanceof BlockContentInterface) {
+    return AccessResult::neutral();
+  }
+
+  $has_rac_paragraph = _webform_openfisca_find_block_with_rac_element($block_content);
+
+  // If no matching paragraph reference, do not apply restriction.
+  if (!$has_rac_paragraph) {
+    return AccessResult::neutral();
+  }
+
+  $query = \Drupal::request()->query->all();
+  $current_block_ids = !empty($query['blocks'])
+    ? explode(',', $query['blocks'])
+    : [];
+
+  if (!in_array((string) $block_content->id(), $current_block_ids, TRUE)) {
+    return AccessResult::forbidden()
+      ->addCacheContexts(['url.query_args:blocks']);
+  }
+
+  return AccessResult::allowed()
+    ->addCacheContexts(['url.query_args:blocks']);
+}
+
+/**
+ * Find block has RAC pargarph field or not.
+ *
+ * @param \Drupal\block_content\BlockContentInterface $block_content
+ *   Block content.
+ *
+ * @return bool
+ *   Returns boolean.
+ *
+ * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
+ * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
+ */
+function _webform_openfisca_find_block_with_rac_element(BlockContentInterface $block_content): bool {
+  // Block must reference a Paragraph of bundle "block_rac_elements".
+  $has_rac_paragraph = FALSE;
+
+  foreach ($block_content->getFieldDefinitions() as $field_name => $definition) {
+    // Only paragraph reference fields.
+    if (
+      !in_array($definition->getType(), ['entity_reference', 'entity_reference_revisions'], TRUE) ||
+      $definition->getSetting('target_type') !== 'paragraph'
+    ) {
+      continue;
+    }
+
+    $field = $block_content->get($field_name);
+    if ($field->isEmpty()) {
+      continue;
+    }
+
+    foreach ($field as $item) {
+      // Paragraphs use revision IDs.
+      if (empty($item->target_revision_id)) {
+        continue;
+      }
+
+      /** @var \Drupal\paragraphs\ParagraphInterface|null $paragraph */
+      $paragraph = \Drupal::entityTypeManager()
+        ->getStorage('paragraph')
+        ->loadRevision($item->target_revision_id);
+
+      if ($paragraph instanceof ParagraphInterface && $paragraph->bundle() === 'block_rac_elements') {
+        $has_rac_paragraph = TRUE;
+        break 2;
+      }
+    }
+  }
+
+  return $has_rac_paragraph;
 }

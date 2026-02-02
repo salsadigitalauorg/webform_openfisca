@@ -2,7 +2,6 @@
 
 namespace Drupal\webform_openfisca\Plugin\WebformHandler;
 
-use Drupal\Component\Utility\UrlHelper;
 use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\webform\Plugin\WebformHandlerBase;
@@ -34,23 +33,29 @@ class OpenFiscaJourneyHandler extends WebformHandlerBase {
 
   /**
    * Current request.
+   *
+   * @var Symfony\Component\HttpFoundation\Request
    */
   protected Request $request;
 
   /**
    * OpenFisca Client factory.
+   *
+   * @var \Drupal\webform_openfisca\OpenFisca\ClientFactoryInterface
    */
   protected OpenFiscaClientFactoryInterface $openfiscaClientFactory;
 
   /**
    * RAC content helper.
+   *
+   * @var Drupal\webform_openfisca\RacContentHelperInterface
    */
   protected RacContentHelperInterface $racContentHelper;
 
   /**
    * The debug data from the last API call to OpenFisca.
    *
-   * @var array<string, \Drupal\webform_openfisca\OpenFisca\Payload|null>
+   * @var arraystring\Drupal\webform_openfisca\OpenFisca\Payload|null
    */
   protected array $recentDebugData = [];
 
@@ -140,6 +145,8 @@ class OpenFiscaJourneyHandler extends WebformHandlerBase {
       $period = (new DrupalDateTime())->format('Y-m-d');
     }
 
+    $paths = [];
+
     foreach ($fisca_field_mappings as $webform_key => $openfisca_key) {
       // Always ignore the period key.
       if ($webform_key === 'period') {
@@ -163,6 +170,7 @@ class OpenFiscaJourneyHandler extends WebformHandlerBase {
         $formatted_period = $openfisca_settings->formatVariablePeriod($variable, $period);
         if (!empty($formatted_period)) {
           $openfisca_payload->setValue($path, [$formatted_period => $val]);
+          $paths[] = $openfisca_key;
         }
       }
     }
@@ -170,6 +178,10 @@ class OpenFiscaJourneyHandler extends WebformHandlerBase {
     // Create result keys entities with null values to tell OpenFisca
     // to calculate these variables eg. { persons.personA.variable_name: null }.
     foreach ($result_keys as $result_key) {
+      if (in_array($result_key, $paths)) {
+        // This is one of the inputs. Do not NULL it.
+        continue;
+      }
       // The result_key will be in the format
       // variable_entity.entity_key.variable_name
       // eg. persons.personA.age
@@ -323,26 +335,24 @@ class OpenFiscaJourneyHandler extends WebformHandlerBase {
    * @throws \Drupal\Core\Entity\EntityMalformedException
    */
   protected function overrideConfirmationUrl(ResponsePayload $response_payload) : ?string {
-    $query_append = $response_payload->getDebugData('query_append') ?: [];
-    $fisca_fields = $response_payload->getDebugData('fisca_fields') ?: [];
-    $query_params = array_merge($fisca_fields, $query_append);
-
     $existing_confirmation_url = $this->getWebform()->getSetting('confirmation_url');
     if (!empty($existing_confirmation_url)) {
       $response_payload->setDebugData('webform_confirmation_url', $existing_confirmation_url);
-
-      $parsed_url = UrlHelper::parse($existing_confirmation_url);
-      if (isset($parsed_url['query'])  && is_array($parsed_url['query'])) {
-        $query_params = array_merge($query_params, $parsed_url['query']);
-      }
     }
+
+    $result_values = $response_payload->getDebugData('result_values') ?: [];
+    $confirmation_url = $this->racContentHelper->findRacRedirectForWebform((string) $this->getWebform()->id(), $result_values);
+
+    $blocks = $this->racContentHelper->findVisibleBlocksForWebform((string) $this->getWebform()->id(), $result_values);
+    $block_ids = implode(',', $blocks);
+    $response_payload->setDebugData('blocks', $block_ids);
+    $query_params = [];
+    $query_params['blocks'] = $block_ids;
 
     $query = http_build_query($query_params);
     $query = urldecode($query);
     $response_payload->setDebugData('query', $query);
 
-    $result_values = $response_payload->getDebugData('result_values') ?: [];
-    $confirmation_url = $this->racContentHelper->findRacRedirectForWebform((string) $this->getWebform()->id(), $result_values);
     // Override webform confirmation URL.
     if (!empty($confirmation_url)) {
       $overridden_confirmation_url = $confirmation_url . '?' . $query;
@@ -439,6 +449,13 @@ class OpenFiscaJourneyHandler extends WebformHandlerBase {
         '#prefix' => '<p>',
         '#suffix' => '</p>',
       ],
+      'blocks' => [
+        '#markup' => $this->t('<strong>Visible blocks:</strong> <pre>@url</pre>', [
+          '@url' => ($response_payload?->getDebugData('blocks') ?? 'NULL'),
+        ]),
+        '#prefix' => '<p>',
+        '#suffix' => '</p>',
+      ],
       'original_confirmation_url' => [
         '#markup' => $this->t('<strong>Original Confirmation URL:</strong> <pre>@url</pre>', [
           '@url' => ($response_payload?->getDebugData('webform_confirmation_url') ?? 'NULL'),
@@ -473,7 +490,7 @@ class OpenFiscaJourneyHandler extends WebformHandlerBase {
   /**
    * Return the debug data from the last API calculation to OpenFisca.
    *
-   * @return array<string, \Drupal\webform_openfisca\OpenFisca\Payload|null>
+   * @return array
    *   The data array with 2 keys if debug mode is enabled:
    *   - request
    *   - response

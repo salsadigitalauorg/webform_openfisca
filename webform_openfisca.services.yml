@@ -14,7 +14,7 @@ services:
 
   webform_openfisca.rac_helper:
     class: Drupal\webform_openfisca\RacContentHelper
-    arguments: ['@entity_type.manager']
+    arguments: ['@entity_type.manager', '@entity_field.manager']
 
   webform_openfisca.webform_form_alter.base:
     abstract: true

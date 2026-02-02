@@ -1,0 +1,54 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.paragraph.block_rac_elements.field_block_rules
+    - field.field.paragraph.block_rac_elements.field_block_webform
+    - field.field.paragraph.block_rac_elements.field_operator
+    - paragraphs.paragraphs_type.block_rac_elements
+  module:
+    - paragraphs
+    - webform
+id: paragraph.block_rac_elements.default
+targetEntityType: paragraph
+bundle: block_rac_elements
+mode: default
+content:
+  field_block_rules:
+    type: paragraphs
+    weight: 2
+    region: content
+    settings:
+      title: Paragraph
+      title_plural: Paragraphs
+      edit_mode: open
+      closed_mode: summary
+      autocollapse: none
+      closed_mode_threshold: 0
+      add_mode: dropdown
+      form_display_mode: default
+      default_paragraph_type: ''
+      features:
+        collapse_edit_all: collapse_edit_all
+        duplicate: duplicate
+    third_party_settings: {  }
+  field_block_webform:
+    type: webform_entity_reference_autocomplete
+    weight: 0
+    region: content
+    settings:
+      match_limit: 10
+      match_operator: CONTAINS
+      size: 60
+      placeholder: ''
+      default_data: true
+    third_party_settings: {  }
+  field_operator:
+    type: options_select
+    weight: 1
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+hidden:
+  created: true
+  status: true

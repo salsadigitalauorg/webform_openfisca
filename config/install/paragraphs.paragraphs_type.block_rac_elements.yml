@@ -1,0 +1,9 @@
+langcode: en
+status: true
+dependencies: {  }
+id: block_rac_elements
+label: 'Block RAC Elements'
+icon_uuid: null
+icon_default: null
+description: ''
+behavior_plugins: {  }
