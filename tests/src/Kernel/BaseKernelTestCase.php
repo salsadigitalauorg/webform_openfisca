@@ -4,9 +4,14 @@ declare(strict_types=1);
 
 namespace Drupal\Tests\webform_openfisca\Kernel;
 
+use Drupal\block_content\Entity\BlockContent;
+use Drupal\block_content\Entity\BlockContentType;
+use Drupal\field\Entity\FieldConfig;
+use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\node\NodeInterface;
 use Drupal\paragraphs\Entity\Paragraph;
+use Drupal\paragraphs\Entity\ParagraphsType;
 use Drupal\Tests\node\Traits\NodeCreationTrait;
 use Drupal\Tests\user\Traits\UserCreationTrait;
 use Symfony\Component\HttpFoundation\Request;
@@ -187,6 +192,260 @@ abstract class BaseKernelTestCase extends KernelTestBase {
     $http_kernel = $this->container->get('http_kernel');
     $request = Request::create($path);
     return $http_kernel->handle($request);
+  }
+
+  /**
+   * Set up block content modules for RAC block testing.
+   */
+  protected function setUpBlockContentModules(): void {
+    $this->enableModules(['block_content']);
+    $this->installEntitySchema('block_content');
+
+    // Create block content type.
+    $block_type = BlockContentType::create([
+      'id' => 'rac_block',
+      'label' => 'RAC Block',
+    ]);
+    $block_type->save();
+
+    // Create the paragraph types for block RAC elements.
+    $this->createBlockRacParagraphTypes();
+
+    // Create field for block content to reference paragraphs.
+    $this->createBlockRacParagraphField();
+  }
+
+  /**
+   * Create paragraph types for block RAC elements.
+   */
+  protected function createBlockRacParagraphTypes(): void {
+    // Create 'block_rac_elements' paragraph type.
+    $paragraph_type = ParagraphsType::create([
+      'id' => 'block_rac_elements',
+      'label' => 'Block RAC Elements',
+    ]);
+    $paragraph_type->save();
+
+    // Create fields for block_rac_elements paragraph.
+    // field_block_webform - string field for webform ID.
+    FieldStorageConfig::create([
+      'field_name' => 'field_block_webform',
+      'entity_type' => 'paragraph',
+      'type' => 'string',
+    ])->save();
+    FieldConfig::create([
+      'field_name' => 'field_block_webform',
+      'entity_type' => 'paragraph',
+      'bundle' => 'block_rac_elements',
+      'label' => 'Block Webform',
+    ])->save();
+
+    // field_operator - string field for AND/OR/XOR.
+    FieldStorageConfig::create([
+      'field_name' => 'field_operator',
+      'entity_type' => 'paragraph',
+      'type' => 'string',
+    ])->save();
+    FieldConfig::create([
+      'field_name' => 'field_operator',
+      'entity_type' => 'paragraph',
+      'bundle' => 'block_rac_elements',
+      'label' => 'Operator',
+    ])->save();
+
+    // field_block_rules - entity reference to rule group paragraphs.
+    FieldStorageConfig::create([
+      'field_name' => 'field_block_rules',
+      'entity_type' => 'paragraph',
+      'type' => 'entity_reference_revisions',
+      'settings' => [
+        'target_type' => 'paragraph',
+      ],
+      'cardinality' => -1,
+    ])->save();
+    FieldConfig::create([
+      'field_name' => 'field_block_rules',
+      'entity_type' => 'paragraph',
+      'bundle' => 'block_rac_elements',
+      'label' => 'Block Rules',
+    ])->save();
+
+    // Create 'block_rac_rule_group' paragraph type for rule groups.
+    $rule_group_type = ParagraphsType::create([
+      'id' => 'block_rac_rule_group',
+      'label' => 'Block RAC Rule Group',
+    ]);
+    $rule_group_type->save();
+
+    // field_rules_operator - string field for inner operator.
+    FieldStorageConfig::create([
+      'field_name' => 'field_rules_operator',
+      'entity_type' => 'paragraph',
+      'type' => 'string',
+    ])->save();
+    FieldConfig::create([
+      'field_name' => 'field_rules_operator',
+      'entity_type' => 'paragraph',
+      'bundle' => 'block_rac_rule_group',
+      'label' => 'Rules Operator',
+    ])->save();
+
+    // Note: field_rac_paragraphs is created on block_rac_rule_group in
+    // createBlockRacParagraphField() to match block content's field name.
+
+    // Create 'block_rac_rule' paragraph type for individual rules.
+    $rule_type = ParagraphsType::create([
+      'id' => 'block_rac_rule',
+      'label' => 'Block RAC Rule',
+    ]);
+    $rule_type->save();
+
+    // field_block_variable - string field.
+    FieldStorageConfig::create([
+      'field_name' => 'field_block_variable',
+      'entity_type' => 'paragraph',
+      'type' => 'string',
+    ])->save();
+    FieldConfig::create([
+      'field_name' => 'field_block_variable',
+      'entity_type' => 'paragraph',
+      'bundle' => 'block_rac_rule',
+      'label' => 'Block Variable',
+    ])->save();
+
+    // field_block_value - string field.
+    FieldStorageConfig::create([
+      'field_name' => 'field_block_value',
+      'entity_type' => 'paragraph',
+      'type' => 'string',
+    ])->save();
+    FieldConfig::create([
+      'field_name' => 'field_block_value',
+      'entity_type' => 'paragraph',
+      'bundle' => 'block_rac_rule',
+      'label' => 'Block Value',
+    ])->save();
+
+    // field_rule_block_operator - string field.
+    FieldStorageConfig::create([
+      'field_name' => 'field_rule_block_operator',
+      'entity_type' => 'paragraph',
+      'type' => 'string',
+    ])->save();
+    FieldConfig::create([
+      'field_name' => 'field_rule_block_operator',
+      'entity_type' => 'paragraph',
+      'bundle' => 'block_rac_rule',
+      'label' => 'Rule Block Operator',
+    ])->save();
+  }
+
+  /**
+   * Create paragraph reference field on block content.
+   */
+  protected function createBlockRacParagraphField(): void {
+    // Create field_rac_paragraphs on block_content.
+    FieldStorageConfig::create([
+      'field_name' => 'field_rac_paragraphs',
+      'entity_type' => 'block_content',
+      'type' => 'entity_reference_revisions',
+      'settings' => [
+        'target_type' => 'paragraph',
+      ],
+      'cardinality' => -1,
+    ])->save();
+    FieldConfig::create([
+      'field_name' => 'field_rac_paragraphs',
+      'entity_type' => 'block_content',
+      'bundle' => 'rac_block',
+      'label' => 'RAC Paragraphs',
+    ])->save();
+
+    // Create same field name on paragraph entity type for rule groups.
+    // The RacContentHelper::findRulesForBlock() expects the rule group
+    // paragraph to have a field with the same name as the block's field.
+    FieldStorageConfig::create([
+      'field_name' => 'field_rac_paragraphs',
+      'entity_type' => 'paragraph',
+      'type' => 'entity_reference_revisions',
+      'settings' => [
+        'target_type' => 'paragraph',
+      ],
+      'cardinality' => -1,
+    ])->save();
+    FieldConfig::create([
+      'field_name' => 'field_rac_paragraphs',
+      'entity_type' => 'paragraph',
+      'bundle' => 'block_rac_rule_group',
+      'label' => 'RAC Paragraphs',
+    ])->save();
+  }
+
+  /**
+   * Create a block content with RAC visibility rules.
+   *
+   * @param string $webform_id
+   *   The webform ID to associate with.
+   * @param string $label
+   *   The block label.
+   * @param array $rule_groups
+   *   Array of rule groups. Each group has:
+   *   - 'operator': The inner operator (AND/OR).
+   *   - 'rules': Array of rules with 'variable', 'value', 'operator'.
+   * @param string $parent_operator
+   *   The outer operator (AND/OR/XOR).
+   * @param bool $published
+   *   Whether the paragraph should be published.
+   *
+   * @return \Drupal\block_content\Entity\BlockContent
+   *   The created block content.
+   *
+   * @throws \Drupal\Core\Entity\EntityStorageException
+   */
+  protected function createRacBlockContent(string $webform_id, string $label, array $rule_groups = [], string $parent_operator = 'AND', bool $published = TRUE): BlockContent {
+    $block_rules = [];
+
+    foreach ($rule_groups as $group) {
+      $rules = [];
+      foreach ($group['rules'] ?? [] as $rule) {
+        $rule_paragraph = Paragraph::create([
+          'type' => 'block_rac_rule',
+          'field_block_variable' => $rule['variable'] ?? '',
+          'field_block_value' => $rule['value'] ?? '',
+          'field_rule_block_operator' => $rule['operator'] ?? 'equal',
+        ]);
+        $rule_paragraph->save();
+        $rules[] = $rule_paragraph;
+      }
+
+      // Rule group paragraph uses field_rac_paragraphs (same name as block's
+      // paragraph field) to reference the individual rule paragraphs.
+      $rule_group_paragraph = Paragraph::create([
+        'type' => 'block_rac_rule_group',
+        'field_rules_operator' => $group['operator'] ?? 'AND',
+        'field_rac_paragraphs' => $rules,
+      ]);
+      $rule_group_paragraph->save();
+      $block_rules[] = $rule_group_paragraph;
+    }
+
+    $rac_elements_paragraph = Paragraph::create([
+      'type' => 'block_rac_elements',
+      'status' => $published ? 1 : 0,
+      'field_block_webform' => $webform_id,
+      'field_operator' => [['value' => $parent_operator]],
+      'field_block_rules' => $block_rules,
+    ]);
+    $rac_elements_paragraph->save();
+
+    $block = BlockContent::create([
+      'type' => 'rac_block',
+      'info' => $label,
+      'field_rac_paragraphs' => [$rac_elements_paragraph],
+    ]);
+    $block->save();
+
+    return $block;
   }
 
 }

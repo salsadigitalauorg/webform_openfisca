@@ -64,6 +64,16 @@ JSON;
     $this->assertNull($payload->findKey('persons.Person.benefit_age_pension_maybe_eligible.2024-10-31', ['persons', 'Person', 'benefit_age_pension_maybe_eligible', '2024-10-31']));
     $this->assertNull($payload->findKeyPath('persons.Person.benefit_age_pension_maybe_eligible.2024-10-31', ['persons', 'Person', 'benefit_age_pension_maybe_eligible', '2024-10-31']));
 
+    // Test findKeyPath with parents parameter - this was a bug fix where
+    // the $parents parameter was not being passed to findKey().
+    // When searching for '2024-10-31' within benefit_age_pension_maybe_eligible,
+    // it should find it at that specific path.
+    $this->assertEquals(
+      'persons.Person.benefit_age_pension_maybe_eligible.2024-10-31',
+      $payload->findKeyPath('2024-10-31', ['persons', 'Person', 'benefit_age_pension_maybe_eligible']),
+      'findKeyPath with parents should search within the specified path.'
+    );
+
     $this->assertFalse($payload->hasDebugData('test'));
     $this->assertNull($payload->getDebugData('test'));
     $payload->setDebugData('test', 'test value');
