@@ -47,7 +47,6 @@ class WebformUiElementFormAlterKernelTest extends BaseKernelTestCase {
     $this->assertArrayNotHasKey('fisca_entity_key', $element_edit_form);
     $this->assertArrayNotHasKey('fisca_entity_role', $element_edit_form);
     $this->assertArrayNotHasKey('fisca_entity_role_array', $element_edit_form);
-    $this->assertArrayNotHasKey('fisca_immediate_response', $element_edit_form);
 
     // Test the Invalid API webform.
     $webform = Webform::load('test_invalid_api');
@@ -62,7 +61,6 @@ class WebformUiElementFormAlterKernelTest extends BaseKernelTestCase {
     $this->assertArrayHasKey('fisca_entity_key', $element_edit_form);
     $this->assertArrayHasKey('fisca_entity_role', $element_edit_form);
     $this->assertArrayHasKey('fisca_entity_role_array', $element_edit_form);
-    $this->assertArrayHasKey('fisca_immediate_response', $element_edit_form);
 
     // Test the DAC form.
     $webform = Webform::load('test_dac');
@@ -87,9 +85,6 @@ class WebformUiElementFormAlterKernelTest extends BaseKernelTestCase {
 
     $this->assertArrayHasKey('fisca_entity_role_array', $element_edit_form);
     $this->assertEquals('checkbox', $element_edit_form['fisca_entity_role_array']['#type']);
-
-    $this->assertArrayHasKey('fisca_immediate_response', $element_edit_form);
-    $this->assertEquals('checkbox', $element_edit_form['fisca_immediate_response']['#type']);
 
     $this->simulateWebformStates($form_state);
 

@@ -6,6 +6,7 @@
  */
 
 use Drupal\Core\Access\AccessResult;
+use Drupal\Core\Entity\RevisionableStorageInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\Session\AccountInterface;
@@ -58,7 +59,7 @@ function webform_openfisca_help(string $route_name, RouteMatchInterface $route_m
 /**
  * Implements hook_block_access().
  */
-function webform_openfisca_block_access(BlockInterface $block, $operation, AccountInterface $account) {
+function webform_openfisca_block_access(BlockInterface $block, string $operation, AccountInterface $account) {
   // Only control visibility when viewing blocks.
   if ($operation !== 'view') {
     return AccessResult::neutral();
@@ -139,10 +140,14 @@ function _webform_openfisca_find_block_with_rac_element(BlockContentInterface $b
         continue;
       }
 
+      $paragraph_storage = \Drupal::entityTypeManager()->getStorage('paragraph');
+      // @codeCoverageIgnoreStart - paragraph storage is always revisionable.
+      if (!$paragraph_storage instanceof RevisionableStorageInterface) {
+        continue;
+      }
+      // @codeCoverageIgnoreEnd
       /** @var \Drupal\paragraphs\ParagraphInterface|null $paragraph */
-      $paragraph = \Drupal::entityTypeManager()
-        ->getStorage('paragraph')
-        ->loadRevision($item->target_revision_id);
+      $paragraph = $paragraph_storage->loadRevision($item->target_revision_id);
 
       if ($paragraph instanceof ParagraphInterface && $paragraph->bundle() === 'block_rac_elements') {
         $has_rac_paragraph = TRUE;

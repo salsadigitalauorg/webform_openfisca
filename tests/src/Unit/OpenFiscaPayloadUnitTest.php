@@ -64,6 +64,17 @@ JSON;
     $this->assertNull($payload->findKey('persons.Person.benefit_age_pension_maybe_eligible.2024-10-31', ['persons', 'Person', 'benefit_age_pension_maybe_eligible', '2024-10-31']));
     $this->assertNull($payload->findKeyPath('persons.Person.benefit_age_pension_maybe_eligible.2024-10-31', ['persons', 'Person', 'benefit_age_pension_maybe_eligible', '2024-10-31']));
 
+    // Test findKeyPath with parents parameter - this was a bug fix where
+    // the $parents parameter was not being passed to findKey().
+    // When searching for '2024-10-31' within
+    // benefit_age_pension_maybe_eligible,
+    // it should find it at that specific path.
+    $this->assertEquals(
+      'persons.Person.benefit_age_pension_maybe_eligible.2024-10-31',
+      $payload->findKeyPath('2024-10-31', ['persons', 'Person', 'benefit_age_pension_maybe_eligible']),
+      'findKeyPath with parents should search within the specified path.'
+    );
+
     $this->assertFalse($payload->hasDebugData('test'));
     $this->assertNull($payload->getDebugData('test'));
     $payload->setDebugData('test', 'test value');
@@ -76,6 +87,35 @@ JSON;
     $payload->setDebugData('another-test', 'another test value');
     $payload->unsetAllDebugData();
     $this->assertSame(count($payload->getAllDebugData()), 0);
+  }
+
+  /**
+   * Tests fromJson() when decode returns non-array yields empty payload.
+   *
+   * When Json::decode() returns null or a scalar, the implementation
+   * initialises payload to [] so API consumers get a consistent array.
+   *
+   * @covers \Drupal\webform_openfisca\OpenFisca\Payload::fromJson
+   * @dataProvider dataProviderFromJsonNonArray
+   */
+  public function testFromJsonInvalidJsonDecode(string $json_input, string $description): void {
+    $payload = RequestPayload::fromJson($json_input);
+    $this->assertSame([], $payload->getData(), $description);
+    $this->assertSame('[]', $payload->toJson(), 'toJson() of empty payload should be "[]".');
+  }
+
+  /**
+   * Data provider for testFromJsonInvalidJsonDecode().
+   *
+   * @return array[]
+   *   Keys: description. Values: [json_input, description].
+   */
+  public static function dataProviderFromJsonNonArray(): array {
+    return [
+      'JSON null' => ['null', 'Decoding "null" yields PHP null; payload must be [].'],
+      'JSON number' => ['123', 'Decoding "123" yields scalar; payload must be [].'],
+      'JSON string' => ['"single string"', 'Decoding a JSON string yields scalar; payload must be [].'],
+    ];
   }
 
   /**

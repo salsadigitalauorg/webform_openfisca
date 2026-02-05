@@ -202,7 +202,7 @@ abstract class Payload {
    *   The key path e.g. 'persons.PersonA.salary', or NULL if not found.
    */
   public function findKeyPath(string $key, array $parents = []): ?string {
-    $key_path = $this->findKey($key);
+    $key_path = $this->findKey($key, $parents);
     return is_array($key_path) ? implode('.', $key_path) : NULL;
   }
 

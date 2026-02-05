@@ -4,6 +4,7 @@ description: Adds OpenFisca support for RaC enabled webforms.
 package: Webform
 core_version_requirement: ^10 || ^11
 dependencies:
+  - drupal:options
   - webform:webform
   - webform:webform_ui
   - paragraphs:paragraphs

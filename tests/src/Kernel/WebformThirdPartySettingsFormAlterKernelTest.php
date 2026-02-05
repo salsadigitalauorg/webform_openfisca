@@ -119,12 +119,7 @@ class WebformThirdPartySettingsFormAlterKernelTest extends BaseKernelTestCase {
     $this->assertEquals('javascript', $openfisca_settings_form['fisca_entity_roles']['#mode']);
     $json = $openfisca_settings_form['fisca_entity_roles']['#default_value'];
     $mappings = Json::decode($json);
-    $this->assertEmpty($mappings);
-
-    $mappings = Json::decode($json);
-    $this->assertTrue($mappings['aus_citizen_or_permanent_resident']);
-    $this->assertTrue($mappings['has_disability']);
-    $this->assertArrayNotHasKey('requires_ongoing_support', $mappings);
+    $this->assertEmpty($mappings, 'fisca_entity_roles default is empty for test_dac.');
 
     $openfisca_settings = WebformOpenFiscaSettings::load($webform);
     $this->assertTrue($openfisca_settings->isEnabled());

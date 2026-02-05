@@ -170,11 +170,6 @@ third_party_settings:
               "is_array": false
           }
       }
-    fisca_immediate_response_mapping: |-
-      {
-          "aus_citizen_or_permanent_resident": true,
-          "has_disability": true
-      }
     fisca_return_key: 'persons.personA.disability_allowance_eligible,persons.personA.disability_allowance_benefit,persons.personA.monthly_income_exceeds_limit'
 weight: 0
 open: null

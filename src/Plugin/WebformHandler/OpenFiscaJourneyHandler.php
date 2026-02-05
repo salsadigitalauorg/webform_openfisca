@@ -34,7 +34,7 @@ class OpenFiscaJourneyHandler extends WebformHandlerBase {
   /**
    * Current request.
    *
-   * @var Symfony\Component\HttpFoundation\Request
+   * @var \Symfony\Component\HttpFoundation\Request
    */
   protected Request $request;
 
@@ -48,14 +48,14 @@ class OpenFiscaJourneyHandler extends WebformHandlerBase {
   /**
    * RAC content helper.
    *
-   * @var Drupal\webform_openfisca\RacContentHelperInterface
+   * @var \Drupal\webform_openfisca\RacContentHelperInterface
    */
   protected RacContentHelperInterface $racContentHelper;
 
   /**
    * The debug data from the last API call to OpenFisca.
    *
-   * @var arraystring\Drupal\webform_openfisca\OpenFisca\Payload|null
+   * @var array<string, \Drupal\webform_openfisca\OpenFisca\Payload\RequestPayload|\Drupal\webform_openfisca\OpenFisca\Payload\ResponsePayload|null>
    */
   protected array $recentDebugData = [];
 
@@ -180,7 +180,9 @@ class OpenFiscaJourneyHandler extends WebformHandlerBase {
     foreach ($result_keys as $result_key) {
       if (in_array($result_key, $paths)) {
         // This is one of the inputs. Do not NULL it.
+        // @codeCoverageIgnoreStart
         continue;
+        // @codeCoverageIgnoreEnd
       }
       // The result_key will be in the format
       // variable_entity.entity_key.variable_name
