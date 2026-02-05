@@ -180,7 +180,9 @@ class OpenFiscaJourneyHandler extends WebformHandlerBase {
     foreach ($result_keys as $result_key) {
       if (in_array($result_key, $paths)) {
         // This is one of the inputs. Do not NULL it.
+        // @codeCoverageIgnoreStart
         continue;
+        // @codeCoverageIgnoreEnd
       }
       // The result_key will be in the format
       // variable_entity.entity_key.variable_name
