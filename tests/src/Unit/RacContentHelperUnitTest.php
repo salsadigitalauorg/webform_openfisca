@@ -381,6 +381,36 @@ class RacContentHelperUnitTest extends UnitTestCase {
     );
   }
 
+  /**
+   * Tests compareWithRacRuleValue() uses loose comparison for RAC redirect.
+   *
+   * @covers ::compareWithRacRuleValue
+   * @dataProvider dataProviderCompareWithRacRuleValueLooseComparison
+   */
+  public function testCompareWithRacRuleValueLooseComparison(mixed $value, string $rac_rule_value, bool $expected): void {
+    $result = $this->helper->publicCompareWithRacRuleValue($value, $rac_rule_value);
+    $this->assertSame($expected, $result, sprintf('compareWithRacRuleValue(%s, %s) should be %s.', var_export($value, TRUE), var_export($rac_rule_value, TRUE), $expected ? 'TRUE' : 'FALSE'));
+  }
+
+  /**
+   * Data provider for testCompareWithRacRuleValueLooseComparison().
+   *
+   * @return array[]
+   *   Test data: value, rac_rule_value, expected.
+   */
+  public static function dataProviderCompareWithRacRuleValueLooseComparison(): array {
+    return [
+      'int 100 vs string 100' => [100, '100', TRUE],
+      'string 100 vs string 100' => ['100', '100', TRUE],
+      'bool true vs string 1' => [TRUE, '1', TRUE],
+      'string TRUE vs bool true is false (strict string)' => ['TRUE', '1', FALSE],
+      'bool false vs string 0' => [FALSE, '0', TRUE],
+      'float 200.5 vs string 200.5' => [200.5, '200.5', TRUE],
+      'mismatch int vs string' => [100, '200', FALSE],
+      'empty string vs empty' => ['', '', TRUE],
+    ];
+  }
+
 }
 
 /**
@@ -431,6 +461,21 @@ class TestableRacContentHelper extends RacContentHelper {
    */
   public function publicCompareUsingOperatorWithRacRuleValue(mixed $value, string $rac_rule_value, string $operator): bool {
     return $this->compareUsingOperatorWithRacRuleValue($value, $rac_rule_value, $operator);
+  }
+
+  /**
+   * Public wrapper for compareWithRacRuleValue().
+   *
+   * @param mixed $value
+   *   The value.
+   * @param string $rac_rule_value
+   *   The RAC rule value.
+   *
+   * @return bool
+   *   TRUE if the values are considered equal (loose comparison).
+   */
+  public function publicCompareWithRacRuleValue(mixed $value, string $rac_rule_value): bool {
+    return $this->compareWithRacRuleValue($value, $rac_rule_value);
   }
 
 }

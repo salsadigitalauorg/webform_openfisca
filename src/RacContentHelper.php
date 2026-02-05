@@ -124,7 +124,17 @@ class RacContentHelper implements RacContentHelperInterface {
       if ($paragraphs) {
         $paragraph_entities = $this->entityTypeManager->getStorage('paragraph')->loadMultiple($paragraphs);
         foreach ($paragraph_entities as $paragraph) {
-          $blocks[] = $paragraph->getParentEntity()->id();
+          if (!$paragraph instanceof ParagraphInterface) {
+            continue;
+          }
+          $parent = $paragraph->getParentEntity();
+          // Parent can be NULL when paragraphs are loaded via loadMultiple() in
+          // some environments; skip so we do not trigger invalid ID.
+          // @codeCoverageIgnoreStart - branch depends on Paragraphs runtime.
+          if ($parent !== NULL) {
+            $blocks[] = $parent->id();
+          }
+          // @codeCoverageIgnoreEnd
         }
       }
 
@@ -190,22 +200,26 @@ class RacContentHelper implements RacContentHelperInterface {
       /** @var \Drupal\block_content\BlockContentInterface|null $block */
       $block = $block_content_storage->load($block_id);
 
+      if (!$block instanceof BlockContentInterface) {
+        return NULL;
+      }
+
       // Find the block field name with paragraph type block_rac_elements.
       $field_name = $this->findBlockFieldName($block);
 
-      if (!empty($field_name)) {
-        if (!$block instanceof BlockContentInterface
-          || !$block->hasField($field_name)
-          || !($block->get($field_name) instanceof EntityReferenceFieldItemListInterface)
-          || $block->get($field_name)->isEmpty()
+      if ($field_name !== NULL && $field_name !== '') {
+        $field_name_str = (string) $field_name;
+        if (!$block->hasField($field_name_str)
+          || !($block->get($field_name_str) instanceof EntityReferenceFieldItemListInterface)
+          || $block->get($field_name_str)->isEmpty()
         ) {
           return NULL;
         }
 
-        $paragraph = $block->get($field_name)->entity;
+        $paragraph = $block->get($field_name_str)->entity;
 
         $rac_element_paragraphs = [];
-        if ($paragraph && $paragraph->hasField('field_block_rules')) {
+        if ($paragraph instanceof ParagraphInterface && $paragraph->hasField('field_block_rules')) {
           $rac_element_paragraphs = $paragraph->get('field_block_rules');
           $operator = $paragraph->get('field_operator')->getValue();
         }
@@ -223,7 +237,7 @@ class RacContentHelper implements RacContentHelperInterface {
             continue;
           }
           // Get the field that contains multiple paragraph references.
-          $block_rac_elements_field = $paragraph_entity->get($field_name);
+          $block_rac_elements_field = $paragraph_entity->get($field_name_str);
           $rule_operator = $paragraph_entity->get('field_rules_operator')->value;
 
           if (!$block_rac_elements_field instanceof EntityReferenceFieldItemListInterface || $block_rac_elements_field->isEmpty()) {
@@ -261,6 +275,8 @@ class RacContentHelper implements RacContentHelperInterface {
         $visibility_rule['parent_operator'] = $operator ?? 'AND';
         return $visibility_rule;
       }
+
+      return NULL;
     }
     // @codeCoverageIgnoreStart
     catch (InvalidPluginDefinitionException | PluginNotFoundException) {
@@ -450,8 +466,8 @@ class RacContentHelper implements RacContentHelperInterface {
     foreach ($block_ids as $block_id) {
       // Get the rules for this block.
       $rules = $this->findRulesForBlock($block_id);
-      if (!is_array($rules) || empty($rules)) {
-        // No rules mean the block is always visible.
+      // No rules (or empty rules array) mean the block is always visible.
+      if (!is_array($rules) || empty($rules['rules'] ?? [])) {
         $visible_blocks[] = $block_id;
         continue;
       }

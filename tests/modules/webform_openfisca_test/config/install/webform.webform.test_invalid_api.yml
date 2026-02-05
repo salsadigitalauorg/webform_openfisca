@@ -158,11 +158,6 @@ third_party_settings:
     fisca_parameter_tokens: 'disability_allowance_max_income,income_tax_rate'
     fisca_parameters: '[]'
     fisca_entity_roles: '[]'
-    fisca_immediate_response_mapping: |-
-      {
-          "aus_citizen_or_permanent_resident": true,
-          "has_disability": true
-      }
     fisca_return_key: 'persons.personA.disability_allowance_eligible,persons.personA.disability_allowance_benefit,persons.personA.monthly_income_exceeds_limit'
 weight: 0
 open: null

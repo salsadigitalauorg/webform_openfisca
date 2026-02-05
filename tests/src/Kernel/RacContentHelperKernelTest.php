@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Drupal\Tests\webform_openfisca\Kernel;
 
 use Drupal\entity_test\Entity\EntityTest;
+use Drupal\paragraphs\Entity\Paragraph;
 
 /**
  * Kernel test for the RacContentHelper service.
@@ -133,6 +134,55 @@ class RacContentHelperKernelTest extends BaseKernelTestCase {
   }
 
   /**
+   * Test findVisibleBlocksForWebform() when paragraph has no parent entity.
+   *
+   * @covers ::findVisibleBlocksForWebform
+   * @covers ::findRacBlockContentForWebform
+   */
+  public function testFindVisibleBlocksParagraphWithoutParent(): void {
+    $this->setUpBlockContentModules();
+
+    $orphan_paragraph = Paragraph::create([
+      'type' => 'block_rac_elements',
+      'status' => 1,
+      'field_block_webform' => 'orphan_webform_id',
+    ]);
+    $orphan_paragraph->save();
+
+    /** @var \Drupal\webform_openfisca\RacContentHelper $helper */
+    $helper = $this->container->get('webform_openfisca.rac_helper');
+
+    $visible_blocks = $helper->findVisibleBlocksForWebform('orphan_webform_id', []);
+    $this->assertSame([], $visible_blocks, 'Paragraph without parent should not contribute any block IDs.');
+  }
+
+  /**
+   * Test findRacRedirectForWebform when first RAC node has empty rules.
+   *
+   * Covers the continue branch in findRacContentForWebform when node has
+   * field_rules but isEmpty().
+   *
+   * @covers ::findRacContentForWebform
+   * @covers ::findRacRedirectForWebform
+   */
+  public function testFindRacRedirectForWebformSkipsNodeWithEmptyRules(): void {
+    $page = $this->createTestPage('Redirect page');
+    $this->createRacContent('test_skip_empty', 'Empty rules', []);
+    $this->createRacContent('test_skip_empty', 'With rules', [
+      [
+        'redirect' => $page,
+        'rules' => ['var1' => 'value1'],
+      ],
+    ]);
+
+    /** @var \Drupal\webform_openfisca\RacContentHelper $helper */
+    $helper = $this->container->get('webform_openfisca.rac_helper');
+
+    $redirect = $helper->findRacRedirectForWebform('test_skip_empty', ['var1' => 'value1']);
+    $this->assertEquals($page->toUrl()->toString(), $redirect);
+  }
+
+  /**
    * Test findVisibleBlocksForWebform() with no blocks.
    *
    * @covers ::findVisibleBlocksForWebform
@@ -223,7 +273,8 @@ class RacContentHelperKernelTest extends BaseKernelTestCase {
 
     $matching_values = [
       'var1' => 100,
-      'var2' => 999,  // Does not match.
+    // Does not match.
+      'var2' => 999,
     ];
 
     $visible_blocks = $helper->findVisibleBlocksForWebform('test_webform', $matching_values);
@@ -255,8 +306,10 @@ class RacContentHelperKernelTest extends BaseKernelTestCase {
     ], 'AND');
 
     $matching_values = [
-      'var1' => 100,  // Matches.
-      'var2' => 999,  // Does not match.
+    // Matches.
+      'var1' => 100,
+    // Does not match.
+      'var2' => 999,
     ];
 
     $visible_blocks = $helper->findVisibleBlocksForWebform('test_webform', $matching_values);
@@ -289,16 +342,20 @@ class RacContentHelperKernelTest extends BaseKernelTestCase {
 
     // Only one matches - should be visible.
     $matching_values_one = [
-      'var1' => 100,  // Matches.
-      'var2' => 999,  // Does not match.
+    // Matches.
+      'var1' => 100,
+    // Does not match.
+      'var2' => 999,
     ];
     $visible_blocks = $helper->findVisibleBlocksForWebform('test_webform', $matching_values_one);
     $this->assertContains($block->id(), $visible_blocks, 'Block should be visible when exactly one XOR condition matches.');
 
     // Both match - should NOT be visible.
     $matching_values_both = [
-      'var1' => 100,  // Matches.
-      'var2' => 200,  // Also matches.
+    // Matches.
+      'var1' => 100,
+    // Also matches.
+      'var2' => 200,
     ];
     $visible_blocks = $helper->findVisibleBlocksForWebform('test_webform', $matching_values_both);
     $this->assertNotContains($block->id(), $visible_blocks, 'Block should NOT be visible when multiple XOR conditions match.');
@@ -435,6 +492,36 @@ class RacContentHelperKernelTest extends BaseKernelTestCase {
   }
 
   /**
+   * Test findVisibleBlocksForWebform() skips rule with empty variable.
+   *
+   * Covers the continue in findRulesForBlock when a rule paragraph has
+   * empty field_block_variable or field_block_value.
+   *
+   * @covers ::findVisibleBlocksForWebform
+   * @covers ::findRulesForBlock
+   * @covers ::processRules
+   */
+  public function testFindVisibleBlocksSkipsRuleWithEmptyVariable(): void {
+    $this->setUpBlockContentModules();
+
+    /** @var \Drupal\webform_openfisca\RacContentHelper $helper */
+    $helper = $this->container->get('webform_openfisca.rac_helper');
+
+    $block = $this->createRacBlockContent('test_webform', 'Block with empty rule', [
+      [
+        'operator' => 'AND',
+        'rules' => [
+          ['variable' => '', 'value' => 'ignored', 'operator' => 'equal'],
+          ['variable' => 'var1', 'value' => '100', 'operator' => 'equal'],
+        ],
+      ],
+    ], 'AND');
+
+    $visible_blocks = $helper->findVisibleBlocksForWebform('test_webform', ['var1' => 100]);
+    $this->assertContains($block->id(), $visible_blocks, 'Block should be visible when valid rule matches (empty-variable rule skipped).');
+  }
+
+  /**
    * Test findVisibleBlocksForWebform() with missing variable.
    *
    * @covers ::findVisibleBlocksForWebform
@@ -457,7 +544,8 @@ class RacContentHelperKernelTest extends BaseKernelTestCase {
     ], 'AND');
 
     $matching_values = [
-      'other_var' => 100,  // Different variable.
+    // Different variable.
+      'other_var' => 100,
     ];
 
     $visible_blocks = $helper->findVisibleBlocksForWebform('test_webform', $matching_values);
@@ -481,6 +569,25 @@ class RacContentHelperKernelTest extends BaseKernelTestCase {
 
     $visible_blocks = $helper->findVisibleBlocksForWebform('test_webform', []);
     $this->assertNotContains($block->id(), $visible_blocks, 'Block with unpublished paragraph should not be found.');
+  }
+
+  /**
+   * Test findRulesForBlock() with non-existent block ID returns NULL.
+   *
+   * @covers ::findRulesForBlock
+   */
+  public function testFindRulesForBlockWithNonExistentBlock(): void {
+    $this->setUpBlockContentModules();
+
+    /** @var \Drupal\webform_openfisca\RacContentHelper $helper */
+    $helper = $this->container->get('webform_openfisca.rac_helper');
+
+    $reflection = new \ReflectionClass($helper);
+    $method = $reflection->getMethod('findRulesForBlock');
+    $method->setAccessible(TRUE);
+
+    $result = $method->invoke($helper, 999999);
+    $this->assertNull($result, 'findRulesForBlock should return NULL for non-existent block ID.');
   }
 
   /**
@@ -517,8 +624,10 @@ class RacContentHelperKernelTest extends BaseKernelTestCase {
     $block3 = $this->createRacBlockContent('test_webform', 'Block 3 No Rules', []);
 
     $matching_values = [
-      'var1' => 100,  // Matches block1.
-      'var2' => 999,  // Does not match block2.
+    // Matches block1.
+      'var1' => 100,
+    // Does not match block2.
+      'var2' => 999,
     ];
 
     $visible_blocks = $helper->findVisibleBlocksForWebform('test_webform', $matching_values);
@@ -564,7 +673,8 @@ class RacContentHelperKernelTest extends BaseKernelTestCase {
       'group1_a' => 10,
       'group1_b' => 20,
       'group2_a' => 30,
-      'group2_b' => 999,  // Breaks second group's AND.
+    // Breaks second group's AND.
+      'group2_b' => 999,
     ];
 
     $visible_blocks = $helper->findVisibleBlocksForWebform('test_webform', $matching_values);

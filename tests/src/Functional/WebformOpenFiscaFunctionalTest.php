@@ -14,17 +14,23 @@ class WebformOpenFiscaFunctionalTest extends WebformBrowserTestBase {
 
   /**
    * {@inheritdoc}
+   *
+   * List dependencies (options, entity_reference_revisions) before
+   * webform_openfisca so config that requires them is installed after they are
+   * enabled, avoiding UnmetDependenciesException.
    */
   protected static $modules = [
-    'webform_openfisca',
-    'paragraphs',
-    'webform',
-    'token',
     'node',
     'path',
-    'menu_ui',
     'text',
     'field_ui',
+    'menu_ui',
+    'options',
+    'entity_reference_revisions',
+    'paragraphs',
+    'token',
+    'webform',
+    'webform_openfisca',
   ];
 
   /**
