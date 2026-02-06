@@ -6,7 +6,7 @@
 
 
 
-# Course objectives {#course-objectives}
+# Course objectives
 
 By the end of this course you will be able to:
 
@@ -15,7 +15,7 @@ By the end of this course you will be able to:
 * Set up results page(s)
 * Create multiple blocks and show/ hide them as required based on responses from the OpenFisca API
 
-# About Rules as Code {#about-rules-as-code}
+# About Rules as Code
 
 Rules As Code (RaC) takes legislation, regulations and policies and turns them into machine-readable code so they can be understood and interpreted by computers. RaC helps to reduce ambiguity, reduces the difficulty of interpretation and therefore makes it easier for citizens and organisations to comply with the rules. Importantly, it also leads to greater transparency in rules.
 
@@ -25,7 +25,7 @@ Many governments around the world are exploring and implementing RaC — althoug
 
 France was an early adopter, creating [OpenFisca](https://openfisca.org/en/), an open source rules engine, based on Python.
 
-# The RaC process  {#the-rac-process}
+# The RaC process
 
 At a high level, the Rules as Code process we use follows four stages:
 
@@ -33,7 +33,7 @@ At a high level, the Rules as Code process we use follows four stages:
 
 In this user manual we focus on the final two stages: creating the Drupal webform and creating results pages (with blocks to display customised content).
 
-# Our scenarios/use cases {#our-scenarios/use-cases}
+# Our scenarios/use cases
 
 This manual references two main scenarios/uses cases. The uses cases are:
 
@@ -50,11 +50,11 @@ The ‘Employing a young person in the ACT’ scenario focuses on rules that app
 
 The ‘Disability allowance’ example provides a simplified version of eligibility requirements for a disability allowance.
 
-# About Drupal and Rules as Code {#about-drupal-and-rules-as-code}
+# About Drupal and Rules as Code
 
 Drupal and OpenFisca can work together via the [Webform OpenFisca](https://www.drupal.org/project/webform_openfisca) Drupal module. Salsa Digital created this module to integrate OpenFisca with the Drupal CMS. The module extends webform functionality in a way that it can interact with the OpenFisca API. The module also has a custom RAC content type, which is used by content creators to create redirection rules.
 
-# About the OpenFisca API {#about-the-openfisca-api}
+# About the OpenFisca API
 
 Before we start, we first need to understand the details from the OpenFisca API.
 As an example, for this training manual we’re using a case where we are trying to find out if a person is eligible for disability allowance.
@@ -130,14 +130,14 @@ And the corresponding response could be:
 
 ```
 
-# Analysing the API requirements {#analysing-the-api-requirements}
+# Analysing the API requirements
 
 The payload needs to be analysed and split into many parts, including:
 
 1. Entities
 2. Variables
 
-## 1\. Entities {#1.-entities}
+## 1\. Entities
 
 In this example, there is 1 entity: **Person**
 
@@ -154,7 +154,7 @@ person": {
 
 ```
 
-## 2\. Variables {#2.-variables}
+## 2\. Variables
 
 The variables that are being sent are:
 
@@ -179,7 +179,7 @@ The variables that are being sent are:
 
 **These are the variables that need to be configured in the webform.**
 
-# Creating a webform {#creating-a-webform}
+# Creating a webform
 
 Once you’ve analysed the API, you’re ready to start the process of creating the webform.
 
@@ -339,7 +339,7 @@ And configure conditions like this: ![](assets/build-18.png)
 
 ##
 
-## Exercise: creating a webform {#exercise:-creating-a-webform}
+## Exercise: creating a webform
 
 Let’s create a similar webform, for a different use case. ACT employing young people. [https://www.act.gov.au/community/youth/employing-young-people](https://www.act.gov.au/community/youth/employing-young-people)
 
@@ -359,11 +359,11 @@ Details:
 | 4 | How many hours per week will the child be working? | child\_weekly\_work\_hours |  |
 | 5 | There \<are/are not\> adequate supervision and work and safety standards in place. | child\_adequate\_supervision\_and\_work\_safety |  |
 
-# Creating RaC content {#creating-rac-content}
+# Creating RaC content
 
 The next step is to create Results page(s) now. There are two main ways to show the results returned from the OpenFisca calls — using different result pages and using blocks.
 
-## Creating results page (intro) {#creating-results-page-(intro)}
+## Creating results page (intro)
 
 In our use case, the user can either be eligible or not eligible for disability allowance. So we will create pages for both options.
 
@@ -375,7 +375,7 @@ In our use case, the user can either be eligible or not eligible for disability 
    ![](assets/content-4.jpeg)
 3. Similarly, create another page for not eligible with a title (You are not eligible) and relevant content, and then click **Save**.
 
-# Redirection rules (intro) {#redirection-rules-(intro)}
+# Redirection rules (intro)
 
 The next step is to tell the system that if the return value is 1  go to the “You are eligible” page and if the return value is 0  go to the “You are not eligible” page.
 
@@ -393,7 +393,7 @@ This is how we use it:
 5. If the return variable is 0, go to the page You are not eligible. ![](assets/redirect-10.png)
 6. Save the node.
 
-# Test the webform {#test-the-webform}
+# Test the webform
 
 We are now in a position to test the whole flow.
 
@@ -415,7 +415,7 @@ You will also see that you will be redirected to different result pages.
 
 The content of the results page can be customised as required.
 
-# Tokens {#tokens}
+# Tokens
 
 OpenFisca also has a concept of **Parameters**. A parameter is a property of the legislation that changes over time. Unlike a variable, a parameter is not specific to a specific entity (e.g. person, household).
 
@@ -445,12 +445,12 @@ As you can see, we are using this token here.
 $[webform_openfisca:wo_params:disability_allowance_checker:disability_allowance_benefit]
 ```
 
-## Exercise: creating results pages and redirection rules for the new webform {#exercise:-creating-results-pages-and-redirection-rules-for-the-new-webform}
+## Exercise: creating results pages and redirection rules for the new webform
 
 1. Create  2 pages — you are compliant, and you are not compliant
 2. Create a RAC page for redirection based on the value of persons.personA.act\_child\_work\_compliant
 
-# Results blocks {#results-blocks}
+# Results blocks
 
 Imagine a scenario where the person is not eligible for disability allowance, and we want to provide them with more information about *why* they’re not eligible.
 
@@ -541,7 +541,7 @@ For block creation you can follow the steps below.
 
 As you can see in the screenshot above, the ‘Income exceeds limit’ block we added is showing directly after the results content of ‘You are not eligible’.
 
-## Exercise: creating results blocks {#exercise:-creating-results-blocks}
+## Exercise: creating results blocks
 
 1. Create a block for Not compliant \- because of hours needing to be outside of school hours.
 2. Place the block on the content page that you created for “Not compliant”
@@ -550,7 +550,7 @@ As you can see in the screenshot above, the ‘Income exceeds limit’ block we 
    2. act\_work\_hours\_over=true
    3. child\_adequate\_supervision\_and\_work\_safety=true
 
-# Testing the demo webforms {#testing-the-demo-webforms}
+# Testing the demo webforms
 
 Once you’ve created the webform it’s time for testing (quality assurance). Part of the early business analyst work is to create test cases that the OpenFisca developers use when writing the code. These test cases can be re-used by adding the inputs to the frontend webform.
 
@@ -575,18 +575,18 @@ Add in the required values to the webform and then click on Submit.
 We’re expecting a result of **eligible** and a dollar figure of $200.
 ![](assets/test-4.png)
 
-## Exercise: testing the webform  {#exercise:-testing-the-webform}
+## Exercise: testing the webform
 
 Now test the second scenario from above in the webform. You’re expecting a result of Not eligible with the ‘income too high’ block.
 
-# Conclusion {#conclusion}
+# Conclusion
 
 Rules as Code is a powerful tool for government and citizens. Ideally, RaC would be developed at the same time as the policy itself and can be used to model the impact of policy.
 
 The webform and results configuration can be done by advanced content editors or Drupal developers. Combining OpenFisca and Drupal represents one method to get from legislation/rules to code.
 
 
-# Further references {#further-references}
+# Further references
 
 To find out more about Rules as Code and see examples and resources visit
 [https://www.racguild.org/resources](https://www.racguild.org/resources)
