@@ -339,25 +339,39 @@ And configure conditions like this: ![](assets/build-18.png)
 
 ##
 
-## Exercise: creating a webform
+[//]: # (## Exercise: creating a webform)
 
-Let’s create a similar webform, for a different use case. ACT employing young people. [https://www.act.gov.au/community/youth/employing-young-people](https://www.act.gov.au/community/youth/employing-young-people)
+[//]: # ()
+[//]: # (Let’s create a similar webform, for a different use case. ACT employing young people. [https://www.act.gov.au/community/youth/employing-young-people]&#40;https://www.act.gov.au/community/youth/employing-young-people&#41;)
 
-Details:
+[//]: # ()
+[//]: # (Details:)
 
-1. OpenFisca API endpoint is [https://training-rac.salsadev.au/](https://training-rac.salsadev.au/)
-2. Return variables needed are
-   1. persons.personA.act\_child\_work\_compliant
-   2. persons.personA.act\_work\_hours\_over
-3. Questions:
+[//]: # ()
+[//]: # (1. OpenFisca API endpoint is [https://training-rac.salsadev.au/]&#40;https://training-rac.salsadev.au/&#41;)
 
-| No. | Question | Openfisca variable | Next steps |
-| :---- | :---- | :---- | :---- |
-| 1 | How old is the child? | child\_age | Go to Q2 If age \<=14, show Q4 and 5 |
-| 2 | The child \<is/is not\> currently at school. | child\_currently\_at\_school | If true, show Q3 |
-| 3 | The work \<is/is not\> outside of school hours? | child\_work\_outside\_school\_hours |  |
-| 4 | How many hours per week will the child be working? | child\_weekly\_work\_hours |  |
-| 5 | There \<are/are not\> adequate supervision and work and safety standards in place. | child\_adequate\_supervision\_and\_work\_safety |  |
+[//]: # (2. Return variables needed are)
+
+[//]: # (   1. persons.personA.act\_child\_work\_compliant)
+
+[//]: # (   2. persons.personA.act\_work\_hours\_over)
+
+[//]: # (3. Questions:)
+
+[//]: # ()
+[//]: # (| No. | Question | Openfisca variable | Next steps |)
+
+[//]: # (| :---- | :---- | :---- | :---- |)
+
+[//]: # (| 1 | How old is the child? | child\_age | Go to Q2 If age \<=14, show Q4 and 5 |)
+
+[//]: # (| 2 | The child \<is/is not\> currently at school. | child\_currently\_at\_school | If true, show Q3 |)
+
+[//]: # (| 3 | The work \<is/is not\> outside of school hours? | child\_work\_outside\_school\_hours |  |)
+
+[//]: # (| 4 | How many hours per week will the child be working? | child\_weekly\_work\_hours |  |)
+
+[//]: # (| 5 | There \<are/are not\> adequate supervision and work and safety standards in place. | child\_adequate\_supervision\_and\_work\_safety |  |)
 
 # Creating RaC content
 
@@ -445,10 +459,12 @@ As you can see, we are using this token here.
 $[webform_openfisca:wo_params:disability_allowance_checker:disability_allowance_benefit]
 ```
 
-## Exercise: creating results pages and redirection rules for the new webform
+[//]: # (## Exercise: creating results pages and redirection rules for the new webform)
 
-1. Create  2 pages — you are compliant, and you are not compliant
-2. Create a RAC page for redirection based on the value of persons.personA.act\_child\_work\_compliant
+[//]: # ()
+[//]: # (1. Create  2 pages — you are compliant, and you are not compliant)
+
+[//]: # (2. Create a RAC page for redirection based on the value of persons.personA.act\_child\_work\_compliant)
 
 # Results blocks
 
@@ -541,14 +557,20 @@ For block creation you can follow the steps below.
 
 As you can see in the screenshot above, the ‘Income exceeds limit’ block we added is showing directly after the results content of ‘You are not eligible’.
 
-## Exercise: creating results blocks
+[//]: # (## Exercise: creating results blocks)
 
-1. Create a block for Not compliant \- because of hours needing to be outside of school hours.
-2. Place the block on the content page that you created for “Not compliant”
-3. The query parameters to check would be:
-   1. act\_child\_work\_compliant=false
-   2. act\_work\_hours\_over=true
-   3. child\_adequate\_supervision\_and\_work\_safety=true
+[//]: # ()
+[//]: # (1. Create a block for Not compliant \- because of hours needing to be outside of school hours.)
+
+[//]: # (2. Place the block on the content page that you created for “Not compliant”)
+
+[//]: # (3. The query parameters to check would be:)
+
+[//]: # (   1. act\_child\_work\_compliant=false)
+
+[//]: # (   2. act\_work\_hours\_over=true)
+
+[//]: # (   3. child\_adequate\_supervision\_and\_work\_safety=true)
 
 # Testing the demo webforms
 
