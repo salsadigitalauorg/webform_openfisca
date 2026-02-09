@@ -8,8 +8,6 @@ use Drupal\block\BlockInterface;
 use Drupal\block_content\Entity\BlockContent;
 use Drupal\Core\Session\AnonymousUserSession;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage;
-use Symfony\Component\HttpFoundation\Session\Session;
 
 /**
  * Kernel test for webform_openfisca_block_access and RAC paragraph detection.
@@ -21,13 +19,6 @@ use Symfony\Component\HttpFoundation\Session\Session;
 class WebformOpenFiscaBlockAccessKernelTest extends BaseKernelTestCase {
 
   /**
-   * RequestStack variable.
-   *
-   * @var \Symfony\Component\HttpFoundation\RequestStack
-   */
-  protected $requestStack;
-
-  /**
    * {@inheritdoc}
    */
   protected function setUp(): void {
@@ -35,12 +26,6 @@ class WebformOpenFiscaBlockAccessKernelTest extends BaseKernelTestCase {
     $this->enableModules(['block', 'block_content']);
     $this->installEntitySchema('block_content');
     $this->setUpBlockContentModules();
-
-    // Manually set up a mock session for the request.
-    $request = $this->requestStack->getCurrentRequest();
-    $session = new Session(new MockArraySessionStorage());
-    $request->setSession($session);
-
     $this->setCurrentUser(new AnonymousUserSession());
   }
 
@@ -73,9 +58,11 @@ class WebformOpenFiscaBlockAccessKernelTest extends BaseKernelTestCase {
     $block_plugin = $this->createBlockPluginMock('block_content:' . $block_content->uuid());
 
     $request = Request::create('/', 'GET', []);
+    $session = new AnonymousUserSession();
+    $request->setSession($session);
     $this->container->get('request_stack')->push($request);
 
-    $result = \webform_openfisca_block_access($block_plugin, 'view', new AnonymousUserSession());
+    $result = \webform_openfisca_block_access($block_plugin, 'view', $session);
 
     $this->assertTrue($result->isForbidden(), 'Block with RAC paragraph and ID not in ?blocks= must be forbidden.');
     $this->assertTrue($result->getCacheContexts() !== NULL && in_array('url.query_args:blocks', $result->getCacheContexts(), TRUE));
