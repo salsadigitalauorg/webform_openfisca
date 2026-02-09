@@ -21,6 +21,13 @@ use Symfony\Component\HttpFoundation\Session\Session;
 class WebformOpenFiscaBlockAccessKernelTest extends BaseKernelTestCase {
 
   /**
+   * RequestStack variable.
+   *
+   * @var \Symphony\Component\HttpFoundation\RequestStack
+   */
+  protected $requestStack;
+
+  /**
    * {@inheritdoc}
    */
   protected function setUp(): void {
