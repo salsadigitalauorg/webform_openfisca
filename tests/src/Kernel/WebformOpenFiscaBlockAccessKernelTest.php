@@ -26,6 +26,12 @@ class WebformOpenFiscaBlockAccessKernelTest extends BaseKernelTestCase {
     $this->enableModules(['block', 'block_content']);
     $this->installEntitySchema('block_content');
     $this->setUpBlockContentModules();
+
+    // Manually set up a mock session for the request.
+    $request = $this->requestStack->getCurrentRequest();
+    $session = new Session(new MockArraySessionStorage());
+    $request->setSession($session);
+
     $this->setCurrentUser(new AnonymousUserSession());
   }
 
