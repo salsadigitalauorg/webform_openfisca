@@ -23,7 +23,7 @@ class WebformOpenFiscaBlockAccessKernelTest extends BaseKernelTestCase {
   /**
    * RequestStack variable.
    *
-   * @var \Symphony\Component\HttpFoundation\RequestStack
+   * @var \Symfony\Component\HttpFoundation\RequestStack
    */
   protected $requestStack;
 
