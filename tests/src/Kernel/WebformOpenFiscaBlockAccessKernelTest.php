@@ -8,6 +8,9 @@ use Drupal\block\BlockInterface;
 use Drupal\block_content\Entity\BlockContent;
 use Drupal\Core\Session\AnonymousUserSession;
 use Symfony\Component\HttpFoundation\Request;
+use Drupal\Core\Http\RequestStack;
+use Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage;
+use Symfony\Component\HttpFoundation\Session\Session;
 
 /**
  * Kernel test for webform_openfisca_block_access and RAC paragraph detection.
@@ -17,6 +20,11 @@ use Symfony\Component\HttpFoundation\Request;
  * @covers ::_webform_openfisca_find_block_with_rac_element
  */
 class WebformOpenFiscaBlockAccessKernelTest extends BaseKernelTestCase {
+
+  /**
+   * @var \Symfony\Component\HttpFoundation\RequestStack
+   */
+  protected $requestStack;
 
   /**
    * {@inheritdoc}
