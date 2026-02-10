@@ -7,7 +7,9 @@ namespace Drupal\Tests\webform_openfisca\Kernel;
 use Drupal\block\BlockInterface;
 use Drupal\block_content\Entity\BlockContent;
 use Drupal\Core\Session\AnonymousUserSession;
+use Symfony\Component\HttpFoundation\Session\Session;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Session\Storage\MockFileSessionStorage;
 
 /**
  * Kernel test for webform_openfisca_block_access and RAC paragraph detection.
@@ -58,6 +60,8 @@ class WebformOpenFiscaBlockAccessKernelTest extends BaseKernelTestCase {
     $block_plugin = $this->createBlockPluginMock('block_content:' . $block_content->uuid());
 
     $request = Request::create('/', 'GET', []);
+    $session = new Session(new MockFileSessionStorage());
+    $request->setSession($session);
     $this->container->get('request_stack')->push($request);
 
     $result = \webform_openfisca_block_access($block_plugin, 'view', new AnonymousUserSession());
@@ -74,6 +78,8 @@ class WebformOpenFiscaBlockAccessKernelTest extends BaseKernelTestCase {
     $block_plugin = $this->createBlockPluginMock('block_content:' . $block_content->uuid());
 
     $request = Request::create('/', 'GET', ['blocks' => (string) $block_content->id()]);
+    $session = new Session(new MockFileSessionStorage());
+    $request->setSession($session);
     $this->container->get('request_stack')->push($request);
 
     $result = \webform_openfisca_block_access($block_plugin, 'view', new AnonymousUserSession());
@@ -94,6 +100,8 @@ class WebformOpenFiscaBlockAccessKernelTest extends BaseKernelTestCase {
     $block_plugin = $this->createBlockPluginMock('block_content:' . $block_without_rac->uuid());
 
     $request = Request::create('/', 'GET', []);
+    $session = new Session(new MockFileSessionStorage());
+    $request->setSession($session);
     $this->container->get('request_stack')->push($request);
 
     $result = \webform_openfisca_block_access($block_plugin, 'view', new AnonymousUserSession());
@@ -109,6 +117,8 @@ class WebformOpenFiscaBlockAccessKernelTest extends BaseKernelTestCase {
     $block_plugin = $this->createBlockPluginMock('block_content:' . $block_content->uuid());
 
     $request = Request::create('/', 'GET', []);
+    $session = new Session(new MockFileSessionStorage());
+    $request->setSession($session);
     $this->container->get('request_stack')->push($request);
 
     $result = \webform_openfisca_block_access($block_plugin, 'configure', new AnonymousUserSession());
