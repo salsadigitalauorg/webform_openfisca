@@ -1,6 +1,6 @@
 (function (Drupal, drupalSettings) {
   Drupal.behaviors.openFiscaCheckboxPopup = {
-    attach (context, settings) {
+    attach(context, settings) {
       // Ensure we only attach once per context.
       const checkboxes = context.querySelectorAll(
         'input[name="third_party_settings[webform_openfisca][fisca_enabled]"]',
