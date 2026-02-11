@@ -408,7 +408,7 @@ In our use case, the user can either be eligible or not eligible for disability 
    ![](assets/content-1.jpeg)
    ![](assets/content-2.jpeg)
    ![](assets/content-3.jpeg)
-2. Add an relevant title (You are eligible) and accompanying content and then click **Save**.
+2. Add a relevant title (You are eligible) and accompanying content and then click **Save**.
    ![](assets/content-4.jpeg)
 3. Similarly, create another page for not eligible with a title (You are not eligible) and relevant content, and then click **Save**.
 
@@ -442,7 +442,7 @@ Payload:
 
 ![](assets/debug-2.png)
 
-Response:![](assets/debug-3.png)
+Response:\![](assets/debug-3.png)
 
 Results:
 
@@ -456,7 +456,7 @@ The content of the results page can be customised as required.
 
 OpenFisca also has a concept of **Parameters**. A parameter is a property of the legislation that changes over time. Unlike a variable, a parameter is not specific to a specific entity (e.g. person, household).
 
-In our use case, one of the parameters would be the disability allowance benefit. ![][image60]
+In our use case, one of the parameters would be the disability allowance benefit.\ ![](assets/tokens-4.png)
 
 The module allows us to expose certain parameters as tokens as well, so that they can be shown in the result pages. This can improve the user experience by giving the user as much information as possible when showing results.
 
@@ -511,7 +511,7 @@ So, before we start this exercise, the website builder/developer for the website
 
 ![](assets/block-1.png)
 
-This points to the paragraph **Block RAC Elements.**
+This points to the paragraph **Block RAC Elements.**\
 ![](assets/block-2.png)
 
 
@@ -553,18 +553,18 @@ For block creation you can follow the steps below.
 
    The variables need to be fully qualified. So persons.personA.disability\_allowance\_eligible and not disability\_allowance\_eligible
 
-   This interface can cater for a complex set of conditions, when we want to check for operators other than \=
+   This interface can cater for a complex set of conditions, when we want to check for operators other than \= \
    ![](assets/block-11.png)
 
-   We can add multiple conditions, which need to be an ORed or XORed (instead of AND)
+   We can add multiple conditions, which need to be an ORed or XORed (instead of AND)\
 
    ![](assets/block-12.png)
 
-   We can also add multiple sets of conditions, and use AND/ OR/ XOR between them.
+   We can also add multiple sets of conditions, and use AND/ OR/ XOR between them.\
    ![](assets/block-13.png)
 
 7. Save the Block.
-8. Now, let’s place the block. Go to Block layout![][image77]
+8. Now, let’s place the block. Go to Block layout \
 
 ![](assets/block-14.jpeg) ![](assets/block-15.jpeg)
 
@@ -599,7 +599,7 @@ As you can see in the screenshot above, the ‘Income exceeds limit’ block we 
 
 Once you’ve created the webform it’s time for testing (quality assurance). Part of the early business analyst work is to create test cases that the OpenFisca developers use when writing the code. These test cases can be re-used by adding the inputs to the frontend webform.
 
-Below is a screenshot of test cases prepared for the ACT.
+Below is a screenshot of test cases prepared for the ACT use case.
 
 ![](assets/test-1.png)
 
@@ -620,9 +620,10 @@ Add in the required values to the webform and then click on Submit.
 We’re expecting a result of **eligible** and a dollar figure of $200.
 ![](assets/test-4.png)
 
-## Exercise: testing the webform
+[//]: # (## Exercise: testing the webform)
 
-Now test the second scenario from above in the webform. You’re expecting a result of Not eligible with the ‘income too high’ block.
+[//]: # ()
+[//]: # (Now test the second scenario from above in the webform. You’re expecting a result of Not eligible with the ‘income too high’ block.)
 
 # Conclusion
 
