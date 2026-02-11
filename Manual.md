@@ -228,7 +228,7 @@ Once you’ve analysed the API, you’re ready to start the process of creating 
 7. Click "Add handler"
    ![](assets/create-webform-6.png)
 
-8. Click "Add handler" against the OpenFisca Journey handler - this step will ensure that the webform goes through OpenFisca processing. ![](assets/create-webform-7.png)
+8. Click "Add handler" against the OpenFisca Journey handler - this step will ensure that the webform goes through OpenFisca processing.\ ![](assets/create-webform-7.png)
 
 9. Click Save
    ![](assets/create-webform-8.png)
@@ -277,7 +277,9 @@ need to be fully qualified.
 In our case, (for now) they are:
 
 ```
-persons.personA.disability_allowance_eligiblepersons.personA.disability_allowance_benefitpersons.personA.monthly_income_exceeds_limit
+persons.personA.disability_allowance_eligible
+persons.personA.disability_allowance_benefit
+persons.personA.monthly_income_exceeds_limit
 ```
 
 We will come back later and update this value once we start working on block visibility.
