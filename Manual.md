@@ -254,7 +254,7 @@ You can disable  the saving of submission data in the “General Settings” on 
 ![](assets/create-webform-12.png)
 
 When **Enable debug mode** is checked, the result page will show debug information like the screenshot below:
- ![](assets/debug-1.png)
+ ![](assets/debug-1.png)\
 This information can help when you’re testing to see if the webform is returning the result you expect.
 
 When **Log OpenFisca calculation** is checked, this information is sent for DB logging.
@@ -356,6 +356,7 @@ We will come back later and update this value once we start working on block vis
 
 And configure conditions like this:\
 ![](assets/build-18.png)
+
 40. The form is now created. Below is a screenshot of what it looks like in the frontend of the website.
     ![](assets/build-19.png)
 
