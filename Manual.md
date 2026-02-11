@@ -230,7 +230,7 @@ Once you’ve analysed the API, you’re ready to start the process of creating 
 
 8. Click "Add handler" against the OpenFisca Journey handler - this step will ensure that the webform goes through OpenFisca processing.\
    ![](assets/create-webform-7.png)
-9. Click Save
+9. Click Save\
    ![](assets/create-webform-8.png)
 
 10. Now we need to add details of the OpenFisca API. Click "General"
@@ -318,7 +318,7 @@ We will come back later and update this value once we start working on block vis
 27.  Let’s name the field aus\_citizen\_or\_permanent\_resident
     ![](assets/build-5.jpeg)
 
-28. Add the options for the field. Please note that in this case, we are using prefix and suffix for the field to improve the UX of the webform.
+28. Add the options for the field. Please note that in this case, we are using prefix and suffix for the field to improve the UX of the webform.\
      ![](assets/build-6.png)
 
 29. Now, we need to associate it to an OpenFisca variable. Scroll down and click this dropdown.
@@ -352,11 +352,11 @@ We will come back later and update this value once we start working on block vis
 38. We will follow the same process and add the 2 more return variables we need.
     disability\_allowance\_benefit and monthly\_income\_exceeds\_limit
 
-39. You may or may not want to add conditional visibility options for the form. E.g. if the user says that they are NOT an AUS citizen or resident, we might want to show them a “You are not eligible” message and not show them the Submit button. For this, you can add a markup like this
+39. You may or may not want to add conditional visibility options for the form. E.g. if the user says that they are NOT an AUS citizen or resident, we might want to show them a “You are not eligible” message and not show them the Submit button. For this, you can add a markup like this\
 ![](assets/build-17.png)
 
-And configure conditions like this: ![](assets/build-18.png)
-
+And configure conditions like this:\
+![](assets/build-18.png)
 40. The form is now created. Below is a screenshot of what it looks like in the frontend of the website.
     ![](assets/build-19.png)
 
