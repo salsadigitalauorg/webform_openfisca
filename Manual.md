@@ -26,7 +26,6 @@
 * [Tokens](#tokens)
 * [Results blocks](#results-blocks)
 * [Testing the demo webforms](#testing-the-demo-webforms)
-  * [Exercise: testing the webform](#exercise-testing-the-webform)
 * [Conclusion](#conclusion)
 * [Further references](#further-references)
 <!-- TOC -->
@@ -560,7 +559,7 @@ For block creation you can follow the steps below.
    This interface can cater for a complex set of conditions, when we want to check for operators other than \= \
    ![](assets/block-11.png)
 
-   We can add multiple conditions, which need to be an ORed or XORed (instead of AND)\
+   We can add multiple conditions, which need to be an ORed or XORed (instead of AND)
 
    ![](assets/block-12.png)
 
