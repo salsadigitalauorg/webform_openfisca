@@ -325,10 +325,10 @@ We will come back later and update this value once we start working on block vis
 30. When you click the dropdown, you will see a list of variables defined in the OpenFisca API, which was defined earlier.
     ![](assets/build-8.png)
 
-31. Select the appropriate variable from the dropdown
+31. Select the appropriate variable from the dropdown\
     ![](assets/build-11.jpeg)
 
-32. Next, we need to enter the entity name. Click the "Fisca entity key" field.
+32. Next, we need to enter the entity name. Click the "Fisca entity key" field.\
     ![](assets/build-12.png)
 
 33. Type PersonA
