@@ -527,7 +527,7 @@ Let’s start with use case 1 mentioned above:
 You are not eligible because your income exceeds a minimum amount (defined as a parameter in OpenFisca). Response from OpenFisca would have these values:
 
 1. disability\_allowance\_eligible=0
-   2. monthly\_income\_exceeds\_limit=1
+2. monthly\_income\_exceeds\_limit=1
 
 **Note**:
 
