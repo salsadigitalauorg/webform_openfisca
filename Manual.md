@@ -4,7 +4,32 @@
 
 # Rules as Code Webform OpenFisca Drupal module User manual
 
+<!-- TOC -->
 
+* [Rules as Code Webform OpenFisca Drupal module User manual](#rules-as-code-webform-openfisca-drupal-module-user-manual)
+* [Course objectives](#course-objectives)
+* [About Rules as Code](#about-rules-as-code)
+* [The RaC process](#the-rac-process)
+* [Our scenarios/use cases](#our-scenariosuse-cases)
+* [About Drupal and Rules as Code](#about-drupal-and-rules-as-code)
+* [About the OpenFisca API](#about-the-openfisca-api)
+* [Analysing the API requirements](#analysing-the-api-requirements)
+  * [1\. Entities](#1-entities)
+  * [2\. Variables](#2-variables)
+* [Creating a webform](#creating-a-webform)
+
+
+* [Creating RaC content](#creating-rac-content)
+  * [Creating results page (intro)](#creating-results-page-intro)
+* [Redirection rules (intro)](#redirection-rules-intro)
+* [Test the webform](#test-the-webform)
+* [Tokens](#tokens)
+* [Results blocks](#results-blocks)
+* [Testing the demo webforms](#testing-the-demo-webforms)
+  * [Exercise: testing the webform](#exercise-testing-the-webform)
+* [Conclusion](#conclusion)
+* [Further references](#further-references)
+<!-- TOC -->
 
 # Course objectives
 
@@ -19,11 +44,11 @@ By the end of this course you will be able to:
 
 Rules As Code (RaC) takes legislation, regulations and policies and turns them into machine-readable code so they can be understood and interpreted by computers. RaC helps to reduce ambiguity, reduces the difficulty of interpretation and therefore makes it easier for citizens and organisations to comply with the rules. Importantly, it also leads to greater transparency in rules.
 
-For a full list of benefits, see the OECD’s [Cracking the code: Rulemaking for humans and machines](https://www.oecd-ilibrary.org/deliver/3afe6ba5-en.pdf?itemId=%2Fcontent%2Fpaper%2F3afe6ba5-en&mimeType=pdf){:target="_blank"} (p.39 includes a benefits table).
+For a full list of benefits, see the OECD’s <a href="https://www.oecd-ilibrary.org/deliver/3afe6ba5-en.pdf?itemId=%2Fcontent%2Fpaper%2F3afe6ba5-en&mimeType=pdf" target="_blank">Cracking the code: Rulemaking for humans and machines</a> (p.39 includes a benefits table).
 
 Many governments around the world are exploring and implementing RaC — although it’s still an emerging field.
 
-France was an early adopter, creating [OpenFisca](https://openfisca.org/en/), an open source rules engine, based on Python.
+France was an early adopter, creating <a href="https://openfisca.org/en/" target="_blank">OpenFisca</a>, an open source rules engine, based on Python.
 
 # The RaC process
 
@@ -52,7 +77,7 @@ The ‘Disability allowance’ example provides a simplified version of eligibil
 
 # About Drupal and Rules as Code
 
-Drupal and OpenFisca can work together via the [Webform OpenFisca](https://www.drupal.org/project/webform_openfisca) Drupal module. Salsa Digital created this module to integrate OpenFisca with the Drupal CMS. The module extends webform functionality in a way that it can interact with the OpenFisca API. The module also has a custom RAC content type, which is used by content creators to create redirection rules.
+Drupal and OpenFisca can work together via the <a href="https://www.drupal.org/project/webform_openfisca" target="_blank">Webform OpenFisca</a> Drupal module. Salsa Digital created this module to integrate OpenFisca with the Drupal CMS. The module extends webform functionality in a way that it can interact with the OpenFisca API. The module also has a custom RAC content type, which is used by content creators to create redirection rules.
 
 # About the OpenFisca API
 
@@ -203,9 +228,7 @@ Once you’ve analysed the API, you’re ready to start the process of creating 
 7. Click "Add handler"
    ![](assets/create-webform-6.png)
 
-8. Click "Add handler" against the OpenFisca Journey handler
-   This step will ensure that the webform goes through OpenFisca processing.
-   ![](assets/create-webform-7.png)
+8. Click "Add handler" against the OpenFisca Journey handler - this step will ensure that the webform goes through OpenFisca processing. ![](assets/create-webform-7.png)
 
 9. Click Save
    ![](assets/create-webform-8.png)
