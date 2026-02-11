@@ -331,19 +331,19 @@ We will come back later and update this value once we start working on block vis
 32. Next, we need to enter the entity name. Click the "Fisca entity key" field.\
     ![](assets/build-12.png)
 
-33. Type PersonA
+33. Type PersonA\
     ![](assets/build-13.jpeg)
 
 34. Next we go ahead and add all the other variables to the webform.
 
 35. Now we need to add the return variables as hidden fields.
-     So we search for "hidden" and click "Add element"
+     So we search for "hidden" and click "Add element"\
     ![](assets/build-14.png)
 
-36. This is the return variable if the person qualifies for disability allowance or not.
+36. This is the return variable if the person qualifies for disability allowance or not.\
     ![](assets/build-15.png)
 
-37. We will associate the OpenFisca variable to this as well:
+37. We will associate the OpenFisca variable to this as well:\
     ![](assets/build-16.png)
 
 
