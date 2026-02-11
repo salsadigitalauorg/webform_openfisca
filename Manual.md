@@ -4,7 +4,31 @@
 
 # Rules as Code Webform OpenFisca Drupal module User manual
 
+<!-- TOC -->
 
+* [Rules as Code Webform OpenFisca Drupal module User manual](#rules-as-code-webform-openfisca-drupal-module-user-manual)
+* [Course objectives](#course-objectives)
+* [About Rules as Code](#about-rules-as-code)
+* [The RaC process](#the-rac-process)
+* [Our scenarios/use cases](#our-scenariosuse-cases)
+* [About Drupal and Rules as Code](#about-drupal-and-rules-as-code)
+* [About the OpenFisca API](#about-the-openfisca-api)
+* [Analysing the API requirements](#analysing-the-api-requirements)
+  * [1\. Entities](#1-entities)
+  * [2\. Variables](#2-variables)
+* [Creating a webform](#creating-a-webform)
+
+
+* [Creating RaC content](#creating-rac-content)
+  * [Creating results page (intro)](#creating-results-page-intro)
+* [Redirection rules (intro)](#redirection-rules-intro)
+* [Test the webform](#test-the-webform)
+* [Tokens](#tokens)
+* [Results blocks](#results-blocks)
+* [Testing the demo webforms](#testing-the-demo-webforms)
+* [Conclusion](#conclusion)
+* [Further references](#further-references)
+<!-- TOC -->
 
 # Course objectives
 
@@ -203,11 +227,9 @@ Once you’ve analysed the API, you’re ready to start the process of creating 
 7. Click "Add handler"
    ![](assets/create-webform-6.png)
 
-8. Click "Add handler" against the OpenFisca Journey handler
-   This step will ensure that the webform goes through OpenFisca processing.
+8. Click "Add handler" against the OpenFisca Journey handler - this step will ensure that the webform goes through OpenFisca processing.\
    ![](assets/create-webform-7.png)
-
-9. Click Save
+9. Click Save\
    ![](assets/create-webform-8.png)
 
 10. Now we need to add details of the OpenFisca API. Click "General"
@@ -232,7 +254,7 @@ You can disable  the saving of submission data in the “General Settings” on 
 ![](assets/create-webform-12.png)
 
 When **Enable debug mode** is checked, the result page will show debug information like the screenshot below:
- ![](assets/debug-1.png)
+ ![](assets/debug-1.png)\
 This information can help when you’re testing to see if the webform is returning the result you expect.
 
 When **Log OpenFisca calculation** is checked, this information is sent for DB logging.
@@ -254,7 +276,9 @@ need to be fully qualified.
 In our case, (for now) they are:
 
 ```
-persons.personA.disability_allowance_eligiblepersons.personA.disability_allowance_benefitpersons.personA.monthly_income_exceeds_limit
+persons.personA.disability_allowance_eligible
+persons.personA.disability_allowance_benefit
+persons.personA.monthly_income_exceeds_limit
 ```
 
 We will come back later and update this value once we start working on block visibility.
@@ -293,7 +317,7 @@ We will come back later and update this value once we start working on block vis
 27.  Let’s name the field aus\_citizen\_or\_permanent\_resident
     ![](assets/build-5.jpeg)
 
-28. Add the options for the field. Please note that in this case, we are using prefix and suffix for the field to improve the UX of the webform.
+28. Add the options for the field. Please note that in this case, we are using prefix and suffix for the field to improve the UX of the webform.\
      ![](assets/build-6.png)
 
 29. Now, we need to associate it to an OpenFisca variable. Scroll down and click this dropdown.
@@ -302,35 +326,36 @@ We will come back later and update this value once we start working on block vis
 30. When you click the dropdown, you will see a list of variables defined in the OpenFisca API, which was defined earlier.
     ![](assets/build-8.png)
 
-31. Select the appropriate variable from the dropdown
+31. Select the appropriate variable from the dropdown\
     ![](assets/build-11.jpeg)
 
-32. Next, we need to enter the entity name. Click the "Fisca entity key" field.
+32. Next, we need to enter the entity name. Click the "Fisca entity key" field.\
     ![](assets/build-12.png)
 
-33. Type PersonA
+33. Type PersonA\
     ![](assets/build-13.jpeg)
 
 34. Next we go ahead and add all the other variables to the webform.
 
 35. Now we need to add the return variables as hidden fields.
-     So we search for "hidden" and click "Add element"
+     So we search for "hidden" and click "Add element"\
     ![](assets/build-14.png)
 
-36. This is the return variable if the person qualifies for disability allowance or not.
+36. This is the return variable if the person qualifies for disability allowance or not.\
     ![](assets/build-15.png)
 
-37. We will associate the OpenFisca variable to this as well:
+37. We will associate the OpenFisca variable to this as well:\
     ![](assets/build-16.png)
 
 
 38. We will follow the same process and add the 2 more return variables we need.
     disability\_allowance\_benefit and monthly\_income\_exceeds\_limit
 
-39. You may or may not want to add conditional visibility options for the form. E.g. if the user says that they are NOT an AUS citizen or resident, we might want to show them a “You are not eligible” message and not show them the Submit button. For this, you can add a markup like this
+39. You may or may not want to add conditional visibility options for the form. E.g. if the user says that they are NOT an AUS citizen or resident, we might want to show them a “You are not eligible” message and not show them the Submit button. For this, you can add a markup like this\
 ![](assets/build-17.png)
 
-And configure conditions like this: ![](assets/build-18.png)
+And configure conditions like this:\
+![](assets/build-18.png)
 
 40. The form is now created. Below is a screenshot of what it looks like in the frontend of the website.
     ![](assets/build-19.png)
@@ -385,7 +410,7 @@ In our use case, the user can either be eligible or not eligible for disability 
    ![](assets/content-1.jpeg)
    ![](assets/content-2.jpeg)
    ![](assets/content-3.jpeg)
-2. Add an relevant title (You are eligible) and accompanying content and then click **Save**.
+2. Add a relevant title (You are eligible) and accompanying content and then click **Save**.
    ![](assets/content-4.jpeg)
 3. Similarly, create another page for not eligible with a title (You are not eligible) and relevant content, and then click **Save**.
 
@@ -419,7 +444,9 @@ Payload:
 
 ![](assets/debug-2.png)
 
-Response:![](assets/debug-3.png)
+Response:
+
+![](assets/debug-3.png)
 
 Results:
 
@@ -433,8 +460,9 @@ The content of the results page can be customised as required.
 
 OpenFisca also has a concept of **Parameters**. A parameter is a property of the legislation that changes over time. Unlike a variable, a parameter is not specific to a specific entity (e.g. person, household).
 
-In our use case, one of the parameters would be the disability allowance benefit. ![][image60]
+In our use case, one of the parameters would be the disability allowance benefit.
 
+![](assets/tokens-4.png)
 The module allows us to expose certain parameters as tokens as well, so that they can be shown in the result pages. This can improve the user experience by giving the user as much information as possible when showing results.
 
 You will need to enable the module [Token Filter](https://www.drupal.org/project/token_filter) and then add tokens on the page to show more details.
@@ -488,7 +516,7 @@ So, before we start this exercise, the website builder/developer for the website
 
 ![](assets/block-1.png)
 
-This points to the paragraph **Block RAC Elements.**
+This points to the paragraph **Block RAC Elements.**\
 ![](assets/block-2.png)
 
 
@@ -500,7 +528,7 @@ Let’s start with use case 1 mentioned above:
 You are not eligible because your income exceeds a minimum amount (defined as a parameter in OpenFisca). Response from OpenFisca would have these values:
 
 1. disability\_allowance\_eligible=0
-   2. monthly\_income\_exceeds\_limit=1
+2. monthly\_income\_exceeds\_limit=1
 
 **Note**:
 
@@ -530,18 +558,18 @@ For block creation you can follow the steps below.
 
    The variables need to be fully qualified. So persons.personA.disability\_allowance\_eligible and not disability\_allowance\_eligible
 
-   This interface can cater for a complex set of conditions, when we want to check for operators other than \=
+   This interface can cater for a complex set of conditions, when we want to check for operators other than \= \
    ![](assets/block-11.png)
 
    We can add multiple conditions, which need to be an ORed or XORed (instead of AND)
 
    ![](assets/block-12.png)
 
-   We can also add multiple sets of conditions, and use AND/ OR/ XOR between them.
+   We can also add multiple sets of conditions, and use AND/ OR/ XOR between them.\
    ![](assets/block-13.png)
 
 7. Save the Block.
-8. Now, let’s place the block. Go to Block layout![][image77]
+8. Now, let’s place the block. Go to Block layout
 
 ![](assets/block-14.jpeg) ![](assets/block-15.jpeg)
 
@@ -576,7 +604,7 @@ As you can see in the screenshot above, the ‘Income exceeds limit’ block we 
 
 Once you’ve created the webform it’s time for testing (quality assurance). Part of the early business analyst work is to create test cases that the OpenFisca developers use when writing the code. These test cases can be re-used by adding the inputs to the frontend webform.
 
-Below is a screenshot of test cases prepared for the ACT.
+Below is a screenshot of test cases prepared for the ACT use case.
 
 ![](assets/test-1.png)
 
@@ -597,9 +625,10 @@ Add in the required values to the webform and then click on Submit.
 We’re expecting a result of **eligible** and a dollar figure of $200.
 ![](assets/test-4.png)
 
-## Exercise: testing the webform
+[//]: # (## Exercise: testing the webform)
 
-Now test the second scenario from above in the webform. You’re expecting a result of Not eligible with the ‘income too high’ block.
+[//]: # ()
+[//]: # (Now test the second scenario from above in the webform. You’re expecting a result of Not eligible with the ‘income too high’ block.)
 
 # Conclusion
 
