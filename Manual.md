@@ -44,11 +44,11 @@ By the end of this course you will be able to:
 
 Rules As Code (RaC) takes legislation, regulations and policies and turns them into machine-readable code so they can be understood and interpreted by computers. RaC helps to reduce ambiguity, reduces the difficulty of interpretation and therefore makes it easier for citizens and organisations to comply with the rules. Importantly, it also leads to greater transparency in rules.
 
-For a full list of benefits, see the OECD’s <a href="https://www.oecd-ilibrary.org/deliver/3afe6ba5-en.pdf?itemId=%2Fcontent%2Fpaper%2F3afe6ba5-en&mimeType=pdf" target="_blank">Cracking the code: Rulemaking for humans and machines</a> (p.39 includes a benefits table).
+For a full list of benefits, see the OECD’s [Cracking the code: Rulemaking for humans and machines](https://www.oecd-ilibrary.org/deliver/3afe6ba5-en.pdf?itemId=%2Fcontent%2Fpaper%2F3afe6ba5-en&mimeType=pdf) (p.39 includes a benefits table).
 
 Many governments around the world are exploring and implementing RaC — although it’s still an emerging field.
 
-France was an early adopter, creating <a href="https://openfisca.org/en/" target="_blank">OpenFisca</a>, an open source rules engine, based on Python.
+France was an early adopter, creating [OpenFisca](https://openfisca.org/en/), an open source rules engine, based on Python.
 
 # The RaC process
 
@@ -77,7 +77,7 @@ The ‘Disability allowance’ example provides a simplified version of eligibil
 
 # About Drupal and Rules as Code
 
-Drupal and OpenFisca can work together via the <a href="https://www.drupal.org/project/webform_openfisca" target="_blank">Webform OpenFisca</a> Drupal module. Salsa Digital created this module to integrate OpenFisca with the Drupal CMS. The module extends webform functionality in a way that it can interact with the OpenFisca API. The module also has a custom RAC content type, which is used by content creators to create redirection rules.
+Drupal and OpenFisca can work together via the [Webform OpenFisca](https://www.drupal.org/project/webform_openfisca) Drupal module. Salsa Digital created this module to integrate OpenFisca with the Drupal CMS. The module extends webform functionality in a way that it can interact with the OpenFisca API. The module also has a custom RAC content type, which is used by content creators to create redirection rules.
 
 # About the OpenFisca API
 
