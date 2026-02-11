@@ -568,7 +568,7 @@ For block creation you can follow the steps below.
    ![](assets/block-13.png)
 
 7. Save the Block.
-8. Now, let’s place the block. Go to Block layout \
+8. Now, let’s place the block. Go to Block layout
 
 ![](assets/block-14.jpeg) ![](assets/block-15.jpeg)
 
