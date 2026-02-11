@@ -444,8 +444,9 @@ Payload:
 
 ![](assets/debug-2.png)
 
-Response:\![](assets/debug-3.png)
+Response:
 
+![](assets/debug-3.png)
 Results:
 
 ![](assets/debug-4.png)
@@ -458,8 +459,9 @@ The content of the results page can be customised as required.
 
 OpenFisca also has a concept of **Parameters**. A parameter is a property of the legislation that changes over time. Unlike a variable, a parameter is not specific to a specific entity (e.g. person, household).
 
-In our use case, one of the parameters would be the disability allowance benefit.\ ![](assets/tokens-4.png)
+In our use case, one of the parameters would be the disability allowance benefit.
 
+![](assets/tokens-4.png)
 The module allows us to expose certain parameters as tokens as well, so that they can be shown in the result pages. This can improve the user experience by giving the user as much information as possible when showing results.
 
 You will need to enable the module [Token Filter](https://www.drupal.org/project/token_filter) and then add tokens on the page to show more details.
