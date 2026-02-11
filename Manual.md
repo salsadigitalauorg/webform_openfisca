@@ -19,7 +19,7 @@ By the end of this course you will be able to:
 
 Rules As Code (RaC) takes legislation, regulations and policies and turns them into machine-readable code so they can be understood and interpreted by computers. RaC helps to reduce ambiguity, reduces the difficulty of interpretation and therefore makes it easier for citizens and organisations to comply with the rules. Importantly, it also leads to greater transparency in rules.
 
-For a full list of benefits, see the OECD’s [Cracking the code: Rulemaking for humans and machines](https://www.oecd-ilibrary.org/deliver/3afe6ba5-en.pdf?itemId=%2Fcontent%2Fpaper%2F3afe6ba5-en&mimeType=pdf) (p.39 includes a benefits table).
+For a full list of benefits, see the OECD’s [Cracking the code: Rulemaking for humans and machines](https://www.oecd-ilibrary.org/deliver/3afe6ba5-en.pdf?itemId=%2Fcontent%2Fpaper%2F3afe6ba5-en&mimeType=pdf){:target="_blank"} (p.39 includes a benefits table).
 
 Many governments around the world are exploring and implementing RaC — although it’s still an emerging field.
 
