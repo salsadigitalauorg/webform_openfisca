@@ -5,6 +5,7 @@
  * Tokens for Webform OpenFisca.
  */
 
+use Drupal\Component\Utility\Xss;
 use Drupal\Core\Render\BubbleableMetadata;
 use Drupal\Core\Render\Markup;
 use Drupal\webform\WebformInterface;
@@ -118,7 +119,7 @@ function webform_openfisca_tokens(string $type, array $tokens, array $data, arra
         $replacement = reset($parameter['values']);
       }
       // Replace the token with a safe markup.
-      $replacements[$original] = Markup::create($replacement);
+      $replacements[$original] = Markup::create(Xss::filter($replacement));
     }
   }
 
