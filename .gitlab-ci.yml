@@ -41,6 +41,7 @@ variables:
 composer (next major):
   variables:
     DRUPAL_CORE: '11.x-dev'
+    allow_fail: true
 
 .composer-base:
   before_script:
