@@ -43,6 +43,10 @@ composer (next major):
     DRUPAL_CORE: '11.x-dev'
     allow_fail: true
 
+phpunit (next major):
+  variables:
+    allow_fail: true
+
 .composer-base:
   before_script:
     - apt-get update && apt-get install -qy --no-install-recommends jq
