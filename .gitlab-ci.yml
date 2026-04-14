@@ -39,7 +39,8 @@ variables:
 # Allow next major composer check to fail (temporarily).
 ################
 composer (next major):
-  allow_failure: true
+  variables:
+    DRUPAL_CORE: '11.x-dev'
 
 .composer-base:
   before_script:
