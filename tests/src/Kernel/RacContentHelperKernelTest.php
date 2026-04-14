@@ -584,7 +584,9 @@ class RacContentHelperKernelTest extends BaseKernelTestCase {
 
     $reflection = new \ReflectionClass($helper);
     $method = $reflection->getMethod('findRulesForBlock');
-    $method->setAccessible(TRUE);
+    if (PHP_VERSION_ID < 80100) {
+      $method->setAccessible(TRUE);
+    }
 
     $result = $method->invoke($helper, 999999);
     $this->assertNull($result, 'findRulesForBlock should return NULL for non-existent block ID.');

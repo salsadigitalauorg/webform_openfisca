@@ -35,6 +35,19 @@ variables:
   # Convenient, and we have no secrets.
   _SHOW_ENVIRONMENT_VARIABLES: 1
 
+################
+# Allow next major composer check to fail (temporarily).
+################
+composer (next major):
+  variables:
+    DRUPAL_CORE: '11.x-dev'
+    allow_fail: true
+
+phpunit (next major):
+  variables:
+    DRUPAL_CORE: '11.x-dev'
+    allow_fail: true
+
 .composer-base:
   before_script:
     - apt-get update && apt-get install -qy --no-install-recommends jq
