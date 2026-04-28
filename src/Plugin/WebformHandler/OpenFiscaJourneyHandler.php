@@ -12,6 +12,7 @@ use Drupal\webform_openfisca\OpenFisca\ClientFactoryInterface as OpenFiscaClient
 use Drupal\webform_openfisca\OpenFisca\Payload\ResponsePayload;
 use Drupal\webform_openfisca\OpenFisca\Payload\RequestPayload;
 use Drupal\webform_openfisca\RacContentHelperInterface;
+use Drupal\webform_openfisca\SessionStore\OpenFiscaSessionStoreInterface;
 use Drupal\webform_openfisca\WebformOpenFiscaSettings;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -53,6 +54,13 @@ class OpenFiscaJourneyHandler extends WebformHandlerBase {
   protected RacContentHelperInterface $racContentHelper;
 
   /**
+   * Session store for OpenFisca calculation results.
+   *
+   * @var \Drupal\webform_openfisca\SessionStore\OpenFiscaSessionStoreInterface
+   */
+  protected OpenFiscaSessionStoreInterface $sessionStore;
+
+  /**
    * The debug data from the last API call to OpenFisca.
    *
    * @var array<string, \Drupal\webform_openfisca\OpenFisca\Payload\RequestPayload|\Drupal\webform_openfisca\OpenFisca\Payload\ResponsePayload|null>
@@ -67,6 +75,9 @@ class OpenFiscaJourneyHandler extends WebformHandlerBase {
     $instance->request = $container->get('request_stack')->getCurrentRequest();
     $instance->openfiscaClientFactory = $container->get('webform_openfisca.openfisca_client_factory');
     $instance->racContentHelper = $container->get('webform_openfisca.rac_helper');
+    /** @var \Drupal\webform_openfisca\SessionStore\OpenFiscaSessionStoreInterface $session_store */
+    $session_store = $container->get('webform_openfisca.session_store');
+    $instance->sessionStore = $session_store;
     return $instance;
   }
 
@@ -362,6 +373,29 @@ class OpenFiscaJourneyHandler extends WebformHandlerBase {
 
       $response_payload->setDebugData('rac_redirect', $confirmation_url);
       $response_payload->setDebugData('overridden_confirmation_url', $overridden_confirmation_url);
+    }
+
+    // Persist the calculation outputs and confirmation-URL query parameters to
+    // the user's session so they can be consumed by tokens on downstream pages
+    // without depending on URL query strings.
+    $openfisca_settings = WebformOpenFiscaSettings::load($this->getWebform());
+    if ($openfisca_settings->isSessionPersistenceEnabled()) {
+      $session_values = [
+        'result_values' => $result_values,
+        'fisca_fields' => $response_payload->getDebugData('fisca_fields') ?: [],
+        'blocks' => $block_ids,
+        'total_benefits' => $response_payload->getDebugData('total_benefits') ?: 0,
+        'rac_redirect' => $confirmation_url ?? '',
+      ];
+      $query_append = $response_payload->getDebugData('query_append') ?: [];
+      if (is_array($query_append)) {
+        $session_values += $query_append;
+      }
+      $this->sessionStore->setMultiple(
+        (string) $this->getWebform()->id(),
+        $session_values,
+        $openfisca_settings->getSessionTtlSeconds(),
+      );
     }
 
     return $confirmation_url;
