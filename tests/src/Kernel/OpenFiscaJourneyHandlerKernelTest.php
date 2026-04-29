@@ -270,16 +270,18 @@ class OpenFiscaJourneyHandlerKernelTest extends BaseKernelTestCase {
     $webform->setThirdPartySetting('webform_openfisca', 'fisca_session_ttl_seconds', 0);
     $webform->save();
 
-    // Pre-seed the bucket so we can prove it is *not* refreshed by submitForm.
-    /** @var \Drupal\webform_openfisca\SessionStore\OpenFiscaSessionStoreInterface $session_store */
-    $session_store = \Drupal::service('webform_openfisca.session_store');
-    $session_store->set((string) $webform->id(), 'sentinel', 'pre-existing', 3600);
-
     $webform_submission = $this->prepareWebformSubmission((string) $webform->id());
     /** @var \Drupal\Core\Form\FormInterface $form_object */
     $form_object = NULL;
     $form_state = new FormState();
+    // Build the form first so the form-alter hook's clear-on-add fires now,
+    // then seed the bucket — the assertion proves submitForm() does not
+    // overwrite or touch it when persistence is disabled.
     $webform_submission_form = $this->reloadWebformSubmissionForm($webform_submission, $form_object, $form_state, 'add');
+
+    /** @var \Drupal\webform_openfisca\SessionStore\OpenFiscaSessionStoreInterface $session_store */
+    $session_store = \Drupal::service('webform_openfisca.session_store');
+    $session_store->set((string) $webform->id(), 'sentinel', 'pre-existing', 3600);
 
     $values = [
       'aus_citizen_or_permanent_resident' => 'true',

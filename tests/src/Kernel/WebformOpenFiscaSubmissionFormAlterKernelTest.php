@@ -94,7 +94,10 @@ class WebformOpenFiscaSubmissionFormAlterKernelTest extends BaseKernelTestCase {
 
     $form = [];
     $form_state = new FormState();
-    // Default form object is NULL, which is not WebformSubmissionForm.
+    // Plant any non-WebformSubmissionForm callable object so the hook's
+    // instanceof check fails cleanly. addBuildInfo avoids the
+    // "Undefined array key 'callback_object'" warning under PHP 8.4 strict.
+    $form_state->addBuildInfo('callback_object', new \stdClass());
     webform_openfisca_webform_submission_form_alter($form, $form_state);
 
     $this->assertTrue(

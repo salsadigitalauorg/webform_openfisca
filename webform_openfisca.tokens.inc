@@ -106,10 +106,19 @@ function webform_openfisca_tokens(string $type, array $tokens, array $data, arra
         if (!is_array($value)) {
           continue;
         }
-        $exists = FALSE;
-        $value = NestedArray::getValue($value, $segments, $exists);
-        if (!$exists) {
-          continue;
+        // Support both flat arrays whose keys are full dotted names (e.g.
+        // result_values['persons.personA.age'] => 42, the canonical shape
+        // the journey handler writes) and truly nested arrays.
+        $flat_key = implode('.', $segments);
+        if (array_key_exists($flat_key, $value)) {
+          $value = $value[$flat_key];
+        }
+        else {
+          $exists = FALSE;
+          $value = NestedArray::getValue($value, $segments, $exists);
+          if (!$exists) {
+            continue;
+          }
         }
       }
       if ($value === NULL || is_array($value) || is_object($value)) {
