@@ -133,6 +133,22 @@ class OpenFiscaSessionStoreUnitTest extends UnitTestCase {
   }
 
   /**
+   * Tests that clearing an unknown webform id is a silent no-op.
+   *
+   * Covers the branch where SESSION_KEY is present but the requested
+   * webform has no bucket of its own.
+   */
+  public function testClearUnknownWebformIsNoOp(): void {
+    $this->store->set('form_a', 'x', 1, 3600);
+
+    // form_b has no bucket; the clear() should hit the !isset early-return.
+    $this->store->clear('form_b');
+
+    // form_a's bucket must still be intact.
+    $this->assertSame(1, $this->store->get('form_a', 'x'));
+  }
+
+  /**
    * Tests that clearing the only bucket removes the SESSION_KEY entirely.
    */
   public function testClearLastBucketRemovesSessionKey(): void {
@@ -170,6 +186,31 @@ class OpenFiscaSessionStoreUnitTest extends UnitTestCase {
     $store->set('form_a', 'x', 1, 3600);
     $this->assertNull($store->get('form_a', 'x'));
     $this->assertSame([], $store->getAll('form_a'));
+    // No exception thrown.
+    $store->clear('form_a');
+    $store->clearAll();
+  }
+
+  /**
+   * Tests that the store no-ops when a request exists but has no session.
+   *
+   * Covers the second branch of getSession()'s null guard, which the
+   * empty-stack test cannot reach.
+   */
+  public function testRequestWithoutSession(): void {
+    $time = $this->createMock(TimeInterface::class);
+    $time->method('getRequestTime')->willReturn($this->now);
+
+    $request_stack = new RequestStack();
+    // A bare Request has no session bound until setSession() is called.
+    $request_stack->push(new Request());
+
+    $store = new OpenFiscaSessionStore($request_stack, $time);
+
+    $store->set('form_a', 'x', 1, 3600);
+    $this->assertNull($store->get('form_a', 'x'));
+    $this->assertSame([], $store->getAll('form_a'));
+    $this->assertFalse($store->has('form_a', 'x'));
     // No exception thrown.
     $store->clear('form_a');
     $store->clearAll();
