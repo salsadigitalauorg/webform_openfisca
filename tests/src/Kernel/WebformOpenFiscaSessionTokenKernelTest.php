@@ -71,6 +71,25 @@ class WebformOpenFiscaSessionTokenKernelTest extends BaseKernelTestCase {
       'other: ',
       $token_service->replace('other: [webform_openfisca:wo_session:other_form:total_benefits]')
     );
+
+    // Malformed token: empty webform id and key (just the prefix) → empty.
+    $this->assertEquals(
+      'malformed: ',
+      $token_service->replace('malformed: [webform_openfisca:wo_session:]')
+    );
+
+    // Malformed token: leading dot in the key path (head segment empty) →
+    // empty.
+    $this->assertEquals(
+      'leading-dot: ',
+      $token_service->replace('leading-dot: [webform_openfisca:wo_session:test_dac:.foo]')
+    );
+
+    // Dot path traversed against a scalar value → empty.
+    $this->assertEquals(
+      'scalar-traverse: ',
+      $token_service->replace('scalar-traverse: [webform_openfisca:wo_session:test_dac:total_benefits.x]')
+    );
   }
 
   /**

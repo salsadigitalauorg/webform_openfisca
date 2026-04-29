@@ -133,6 +133,20 @@ class OpenFiscaSessionStoreUnitTest extends UnitTestCase {
   }
 
   /**
+   * Tests that clearing the only bucket removes the SESSION_KEY entirely.
+   */
+  public function testClearLastBucketRemovesSessionKey(): void {
+    $this->store->set('only', 'x', 1, 3600);
+    $this->assertTrue($this->session->has(OpenFiscaSessionStoreInterface::SESSION_KEY));
+
+    $this->store->clear('only');
+    $this->assertFalse(
+      $this->session->has(OpenFiscaSessionStoreInterface::SESSION_KEY),
+      'When the last bucket is cleared, the session key should be removed entirely.',
+    );
+  }
+
+  /**
    * Tests clearAll().
    */
   public function testClearAll(): void {
