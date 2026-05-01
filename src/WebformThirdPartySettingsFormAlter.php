@@ -130,7 +130,7 @@ class WebformThirdPartySettingsFormAlter extends WebformFormAlterBase {
       '#min' => 0,
       '#step' => 1,
       '#title' => $this->t('Session retention (seconds)'),
-      '#description' => $this->t("How long calculation results are retained in the user's session and exposed via the <code>[webform_openfisca:wo_session:@id:&lt;key&gt;]</code> token. Default: 14400 (4 hours). Set to 0 to disable session persistence.", ['@id' => $webform->id()]),
+      '#description' => $this->t("How long calculation results are retained in the user's session (and the parallel browser cookie used as a fallback) and exposed via the <code>[webform_openfisca:wo_session:@id:&lt;key&gt;]</code> token. Default: 14400 (4 hours). Set to 0 to disable persistence.", ['@id' => $webform->id()]),
       '#default_value' => $openfisca_settings->getSessionTtlSeconds(),
       '#weight' => -5,
     ];

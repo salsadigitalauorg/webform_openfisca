@@ -119,7 +119,28 @@ class OpenFiscaSessionStore implements OpenFiscaSessionStoreInterface {
   }
 
   /**
-   * Read and validate a webform's bucket, clearing it if expired.
+   * Read and validate a webform's bucket.
+   *
+   * Tries the server-side session first, then falls back to the browser
+   * cookie mirror written by the journey handler. The browser cookie has
+   * no `_meta` envelope; expiry is enforced by the cookie's Max-Age.
+   *
+   * @param string $webform_id
+   *   The webform id.
+   *
+   * @return array{data: array<string, mixed>}|null
+   *   The bucket when found and non-expired, NULL otherwise.
+   */
+  protected function readBucket(string $webform_id): ?array {
+    $bucket = $this->readBucketFromSession($webform_id);
+    if ($bucket !== NULL) {
+      return $bucket;
+    }
+    return $this->readBucketFromCookie($webform_id);
+  }
+
+  /**
+   * Read the bucket from the server-side PHP session.
    *
    * @param string $webform_id
    *   The webform id.
@@ -127,7 +148,7 @@ class OpenFiscaSessionStore implements OpenFiscaSessionStoreInterface {
    * @return array{_meta: array{written_at: int, ttl: int}, data: array<string, mixed>}|null
    *   The bucket when valid and non-expired, NULL otherwise.
    */
-  protected function readBucket(string $webform_id): ?array {
+  protected function readBucketFromSession(string $webform_id): ?array {
     $session = $this->getSession();
     if ($session === NULL || !$session->has(self::SESSION_KEY)) {
       return NULL;
@@ -144,6 +165,35 @@ class OpenFiscaSessionStore implements OpenFiscaSessionStoreInterface {
       return NULL;
     }
     return $bucket;
+  }
+
+  /**
+   * Read the bucket from the browser cookie mirror.
+   *
+   * The browser drops the cookie automatically once Max-Age elapses, so
+   * no server-side TTL re-check is needed here. Malformed JSON is treated
+   * as a missing cookie.
+   *
+   * @param string $webform_id
+   *   The webform id.
+   *
+   * @return array{data: array<string, mixed>}|null
+   *   The bucket data when present and parseable, NULL otherwise.
+   */
+  protected function readBucketFromCookie(string $webform_id): ?array {
+    $request = $this->requestStack->getCurrentRequest();
+    if ($request === NULL) {
+      return NULL;
+    }
+    $cookie_value = $request->cookies->get('wo_session_' . $webform_id);
+    if (!is_string($cookie_value) || $cookie_value === '') {
+      return NULL;
+    }
+    $data = json_decode($cookie_value, TRUE);
+    if (!is_array($data)) {
+      return NULL;
+    }
+    return ['data' => $data];
   }
 
   /**

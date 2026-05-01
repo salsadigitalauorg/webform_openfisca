@@ -192,6 +192,96 @@ class OpenFiscaSessionStoreUnitTest extends UnitTestCase {
   }
 
   /**
+   * Tests cookie fallback when the server-side session lacks the bucket.
+   *
+   * The browser cookie wo_session_<id> is consulted only when the session
+   * has no entry for the webform.
+   */
+  public function testCookieFallbackWhenSessionMissing(): void {
+    $time = $this->createMock(TimeInterface::class);
+    $time->method('getRequestTime')->willReturnCallback(fn () => $this->now);
+
+    $request = new Request();
+    // Session present but empty: no bucket for form_a.
+    $request->setSession(new Session(new MockArraySessionStorage()));
+    // Browser cookie carries the bucket data.
+    $request->cookies->set('wo_session_form_a', json_encode([
+      'total_benefits' => 42,
+      'result_values' => ['persons.personA.age' => 30],
+    ]));
+
+    $stack = new RequestStack();
+    $stack->push($request);
+
+    $store = new OpenFiscaSessionStore($stack, $time);
+
+    // Fallback kicks in for get(), getAll() and has().
+    $this->assertSame(42, $store->get('form_a', 'total_benefits'));
+    $this->assertTrue($store->has('form_a', 'total_benefits'));
+    $this->assertSame([
+      'total_benefits' => 42,
+      'result_values' => ['persons.personA.age' => 30],
+    ], $store->getAll('form_a'));
+    // Missing key still returns the supplied default.
+    $this->assertSame('fallback', $store->get('form_a', 'missing', 'fallback'));
+  }
+
+  /**
+   * Tests that the session takes precedence over the cookie mirror.
+   *
+   * When both a server-side session bucket and a browser cookie exist,
+   * the session value must win.
+   */
+  public function testSessionTakesPrecedenceOverCookie(): void {
+    // Populate the session bucket via the store under test.
+    $this->store->set('form_a', 'total_benefits', 100, 3600);
+
+    // Build a fresh store backed by the same session, but with a browser
+    // cookie carrying a different value the session should outrank.
+    $session = new Session(new MockArraySessionStorage());
+    // Copy the session bucket onto the new session.
+    $session->set(
+      OpenFiscaSessionStoreInterface::SESSION_KEY,
+      $this->session->get(OpenFiscaSessionStoreInterface::SESSION_KEY),
+    );
+
+    $request = new Request();
+    $request->setSession($session);
+    $request->cookies->set('wo_session_form_a', json_encode(['total_benefits' => 999]));
+    $stack = new RequestStack();
+    $stack->push($request);
+
+    $time = $this->createMock(TimeInterface::class);
+    $time->method('getRequestTime')->willReturnCallback(fn () => $this->now);
+
+    $store = new OpenFiscaSessionStore($stack, $time);
+    $this->assertSame(
+      100,
+      $store->get('form_a', 'total_benefits'),
+      'Session value must win over cookie value when both are present.',
+    );
+  }
+
+  /**
+   * Tests that malformed cookie JSON is treated as a missing cookie.
+   */
+  public function testMalformedCookieIsIgnored(): void {
+    $time = $this->createMock(TimeInterface::class);
+    $time->method('getRequestTime')->willReturnCallback(fn () => $this->now);
+
+    $request = new Request();
+    $request->setSession(new Session(new MockArraySessionStorage()));
+    $request->cookies->set('wo_session_form_a', 'not-json');
+
+    $stack = new RequestStack();
+    $stack->push($request);
+
+    $store = new OpenFiscaSessionStore($stack, $time);
+    $this->assertNull($store->get('form_a', 'total_benefits'));
+    $this->assertSame([], $store->getAll('form_a'));
+  }
+
+  /**
    * Tests that the store no-ops when a request exists but has no session.
    *
    * Covers the second branch of getSession()'s null guard, which the

@@ -396,9 +396,84 @@ class OpenFiscaJourneyHandler extends WebformHandlerBase {
         $session_values,
         $openfisca_settings->getSessionTtlSeconds(),
       );
+
+      // Mirror the bucket into a browser-readable cookie that shares the
+      // session TTL. The cookie acts as a fallback for the wo_session token
+      // when the server-side session is unavailable on the destination page.
+      // Cookie values are user-tamperable and sent on every request — be
+      // mindful of PII when configuring webforms that hit this handler.
+      $this->mirrorBucketToCookie(
+        (string) $this->getWebform()->id(),
+        $session_values,
+        $openfisca_settings->getSessionTtlSeconds(),
+      );
     }
 
     return $confirmation_url;
+  }
+
+  /**
+   * Write a non-HttpOnly cookie that mirrors the session bucket.
+   *
+   * Shares the bucket TTL with the browser via Max-Age; the browser
+   * deletes it on expiry. Payloads larger than the conservative 4KB
+   * browser cookie limit are skipped silently with a warning so the
+   * server-side session remains the source of truth.
+   *
+   * @param string $webform_id
+   *   The webform id (becomes part of the cookie name).
+   * @param array<string, mixed> $bucket
+   *   The same payload written to the session store.
+   * @param int $ttl_seconds
+   *   How long the cookie should live, in seconds.
+   */
+  protected function mirrorBucketToCookie(string $webform_id, array $bucket, int $ttl_seconds): void {
+    if ($ttl_seconds <= 0) {
+      return;
+    }
+    $name = 'wo_session_' . $webform_id;
+    $payload = json_encode($bucket);
+    if ($payload === FALSE) {
+      // @codeCoverageIgnoreStart
+      return;
+      // @codeCoverageIgnoreEnd
+    }
+    if (strlen($payload) > 4000) {
+      $this->getLogger('webform_openfisca')->warning(
+        'Skipped wo_session cookie for webform %id: encoded payload (@bytes bytes) exceeds the 4KB browser cookie limit. The bucket is still available on the server side via the wo_session token.',
+        ['%id' => $webform_id, '@bytes' => strlen($payload)],
+      );
+      return;
+    }
+    setcookie($name, $payload, [
+      'expires' => time() + $ttl_seconds,
+      'path' => '/',
+      'secure' => $this->request->isSecure(),
+      'httponly' => FALSE,
+      'samesite' => 'Lax',
+    ]);
+  }
+
+  /**
+   * Expire the wo_session_<id> cookie on the next response.
+   *
+   * Called by the form-alter hook when a fresh submission journey begins,
+   * so a new submission cannot inherit a stale browser-mirrored bucket.
+   *
+   * @param string $webform_id
+   *   The webform id whose cookie should be cleared.
+   */
+  public static function clearMirrorCookie(string $webform_id): void {
+    $name = 'wo_session_' . $webform_id;
+    /** @var \Symfony\Component\HttpFoundation\Request|null $request */
+    $request = \Drupal::requestStack()->getCurrentRequest();
+    setcookie($name, '', [
+      'expires' => time() - 3600,
+      'path' => '/',
+      'secure' => $request !== NULL && $request->isSecure(),
+      'httponly' => FALSE,
+      'samesite' => 'Lax',
+    ]);
   }
 
   /**

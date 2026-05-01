@@ -15,6 +15,7 @@ use Drupal\block_content\BlockContentInterface;
 use Drupal\paragraphs\ParagraphInterface;
 use Drupal\webform\WebformSubmissionForm;
 use Drupal\webform\WebformSubmissionInterface;
+use Drupal\webform_openfisca\Plugin\WebformHandler\OpenFiscaJourneyHandler;
 use Drupal\webform_openfisca\WebformOpenFiscaSettings;
 
 /**
@@ -66,6 +67,7 @@ function webform_openfisca_webform_submission_form_alter(array &$form, FormState
     return;
   }
   \Drupal::service('webform_openfisca.session_store')->clear((string) $webform->id());
+  OpenFiscaJourneyHandler::clearMirrorCookie((string) $webform->id());
 }
 
 /**
