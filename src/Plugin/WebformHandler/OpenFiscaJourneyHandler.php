@@ -429,6 +429,8 @@ class OpenFiscaJourneyHandler extends WebformHandlerBase {
 
     $fisca_fields = $response_payload?->getDebugData('fisca_fields') ?: [];
     $result_values = $response_payload?->getDebugData('result_values') ?: [];
+    $query_append = $response_payload?->getDebugData('query_append') ?: [];
+    $session_bucket = $this->sessionStore->getAll((string) $webform->id());
 
     $build = [
       'label' => [
@@ -474,6 +476,21 @@ class OpenFiscaJourneyHandler extends WebformHandlerBase {
       'fisca_fields' => [
         '#markup' => $this->t('<strong>Fisca fields:</strong> <br/> <pre>@values</pre>', [
           '@values' => OpenFiscaHelper::jsonEncodePretty($fisca_fields),
+        ]),
+        '#prefix' => '<p>',
+        '#suffix' => '</p>',
+      ],
+      'query_append' => [
+        '#markup' => $this->t('<strong>Query append (period, change, total_benefit and _nil-mapped field values):</strong> <br/> <pre>@values</pre>', [
+          '@values' => OpenFiscaHelper::jsonEncodePretty($query_append),
+        ]),
+        '#prefix' => '<p>',
+        '#suffix' => '</p>',
+      ],
+      'session_bucket' => [
+        '#markup' => $this->t('<strong>Session store bucket (readable via [webform_openfisca:wo_session:@id:&lt;key&gt;]):</strong> <br/> <pre>@values</pre>', [
+          '@id' => $webform->id(),
+          '@values' => OpenFiscaHelper::jsonEncodePretty($session_bucket),
         ]),
         '#prefix' => '<p>',
         '#suffix' => '</p>',
