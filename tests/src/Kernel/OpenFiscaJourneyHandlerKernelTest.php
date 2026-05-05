@@ -296,7 +296,9 @@ class OpenFiscaJourneyHandlerKernelTest extends BaseKernelTestCase {
     ]);
     $response_payload->setDebugData('fisca_fields', [
       'has_disability' => TRUE,
-      'aus_citizen_or_permanent_resident' => TRUE,
+      'aus_citizen_or_permanent_resident' => FALSE,
+      'what_is_your_monthly_income_' => '500',
+      'disability_allowance_benefit' => 0,
     ]);
     $response_payload->setDebugData('total_benefits', 0);
     $response_payload->setDebugData('query_append', [
@@ -324,8 +326,21 @@ class OpenFiscaJourneyHandlerKernelTest extends BaseKernelTestCase {
     ], $persisted['result_values']);
     $this->assertEquals([
       'has_disability' => TRUE,
-      'aus_citizen_or_permanent_resident' => TRUE,
+      'aus_citizen_or_permanent_resident' => FALSE,
+      'what_is_your_monthly_income_' => '500',
+      'disability_allowance_benefit' => 0,
     ], $persisted['fisca_fields']);
+    // Labels mirror the fisca_fields keys. Select elements with #options
+    // resolve via option label and keep their #field_prefix/#field_suffix
+    // so output matches [webform_submission:values:<key>]. The textfield
+    // value is wrapped with its own prefix/suffix. The hidden benefit field
+    // has no prefix/suffix so the value passes through as a string.
+    $this->assertEquals([
+      'has_disability' => 'I do have a disability.',
+      'aus_citizen_or_permanent_resident' => 'I am not an Australian citizen or permanent resident.',
+      'what_is_your_monthly_income_' => 'My monthly income is $500.',
+      'disability_allowance_benefit' => '0',
+    ], $persisted['fisca_fields_labels']);
     $this->assertSame(0, $persisted['total_benefits']);
     $this->assertSame($no_benefit->toUrl()->toString(), $persisted['rac_redirect']);
     $this->assertArrayHasKey('blocks', $persisted);
@@ -334,6 +349,47 @@ class OpenFiscaJourneyHandlerKernelTest extends BaseKernelTestCase {
     $this->assertSame(static::PERIOD, $persisted['period']);
     $this->assertSame(1, $persisted['change']);
     $this->assertSame(0, $persisted['total_benefit']);
+  }
+
+  /**
+   * Direct coverage for buildFiscaFieldsLabels() edge cases.
+   *
+   * Exercises branches that the integration test cannot cover with the
+   * test_dac fixture alone: '1'/'0' option keys, Yes/No fallback when no
+   * options, and unresolvable element keys.
+   */
+  public function testBuildFiscaFieldsLabelsCoersBooleanShapesAndFallsBack(): void {
+    $webform = Webform::load('test_dac');
+    /** @var \Drupal\webform_openfisca\Plugin\WebformHandler\OpenFiscaJourneyHandler $handler */
+    $handler = $webform->getHandler('openfisca_journey_handler');
+
+    // Inject a synthetic element with '1'/'0'-keyed options so the test
+    // proves the bool→'1'/'0' candidate works (the fixture only exercises
+    // the 'true'/'false' variant).
+    $webform->setElementProperties('alt_keyed_yes_no', [
+      '#type' => 'select',
+      '#title' => 'Alt-keyed yes/no',
+      '#options' => ['1' => 'yep', '0' => 'nope'],
+    ]);
+
+    $reflection = new \ReflectionMethod($handler, 'buildFiscaFieldsLabels');
+    $reflection->setAccessible(TRUE);
+
+    $labels = $reflection->invoke($handler, [
+      // Bool against '1'/'0'-keyed options.
+      'alt_keyed_yes_no' => FALSE,
+      // Bool against an element that has no options at all → Yes/No fallback.
+      'disability_allowance_benefit' => TRUE,
+      // Key with no matching webform element → bool falls back to Yes/No.
+      'no_such_element' => FALSE,
+      // Null is unrepresentable.
+      'unset_thing' => NULL,
+    ]);
+
+    $this->assertSame('nope', $labels['alt_keyed_yes_no']);
+    $this->assertSame('Yes', $labels['disability_allowance_benefit']);
+    $this->assertSame('No', $labels['no_such_element']);
+    $this->assertSame('', $labels['unset_thing']);
   }
 
   /**

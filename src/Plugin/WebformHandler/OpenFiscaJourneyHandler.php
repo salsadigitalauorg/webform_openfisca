@@ -380,9 +380,11 @@ class OpenFiscaJourneyHandler extends WebformHandlerBase {
     // without depending on URL query strings.
     $openfisca_settings = WebformOpenFiscaSettings::load($this->getWebform());
     if ($openfisca_settings->isSessionPersistenceEnabled()) {
+      $fisca_fields = $response_payload->getDebugData('fisca_fields') ?: [];
       $session_values = [
         'result_values' => $result_values,
-        'fisca_fields' => $response_payload->getDebugData('fisca_fields') ?: [],
+        'fisca_fields' => $fisca_fields,
+        'fisca_fields_labels' => $this->buildFiscaFieldsLabels($fisca_fields),
         'blocks' => $block_ids,
         'total_benefits' => $response_payload->getDebugData('total_benefits') ?: 0,
         'rac_redirect' => $confirmation_url ?? '',
@@ -410,6 +412,97 @@ class OpenFiscaJourneyHandler extends WebformHandlerBase {
     }
 
     return $confirmation_url;
+  }
+
+  /**
+   * Build label-resolved counterparts for the fisca_fields bucket entry.
+   *
+   * For each key in $fisca_fields, look up the corresponding webform element
+   * and resolve a human-readable label:
+   * - When the element exposes #options, match the value (with bool→string
+   *   coercion for both '1'/'0' and 'true'/'false' shapes) and use the
+   *   matching option label.
+   * - For bare booleans on elements without options, fall back to Yes/No.
+   * - All other scalars are stringified as-is.
+   *
+   * Resolved labels are wrapped in the element's #field_prefix / #field_suffix
+   * so consumers get parity with [webform_submission:values:<key>] output
+   * (e.g. "I do have a disability." rather than just "do").
+   *
+   * @param array<string, mixed> $fisca_fields
+   *   The fisca_fields bucket about to be written to the session store.
+   *
+   * @return array<string, string>
+   *   Labels keyed identically to $fisca_fields. Empty string when the value
+   *   cannot be resolved to a presentable label.
+   */
+  protected function buildFiscaFieldsLabels(array $fisca_fields): array {
+    $webform = $this->getWebform();
+    $labels = [];
+    foreach ($fisca_fields as $key => $value) {
+      $element = $webform->getElement((string) $key) ?: NULL;
+      $label_value = $this->resolveFiscaFieldLabel(is_array($element) ? $element : NULL, $value);
+      if ($label_value === '') {
+        $labels[$key] = '';
+        continue;
+      }
+      $prefix = is_array($element) && isset($element['#field_prefix']) ? (string) $element['#field_prefix'] : '';
+      $suffix = is_array($element) && isset($element['#field_suffix']) ? (string) $element['#field_suffix'] : '';
+      $labels[$key] = $prefix . $label_value . $suffix;
+    }
+    return $labels;
+  }
+
+  /**
+   * Resolve a single fisca_fields value to its display label.
+   *
+   * @param array<string, mixed>|null $element
+   *   The webform element definition, or NULL when the key has no element
+   *   (e.g. computed fields written back from the OpenFisca response).
+   * @param mixed $value
+   *   The stored value.
+   *
+   * @return string
+   *   The label text, or empty string when nothing presentable resolves.
+   */
+  protected function resolveFiscaFieldLabel(?array $element, mixed $value): string {
+    if ($element !== NULL && isset($element['#options']) && is_array($element['#options'])) {
+      foreach (self::fiscaFieldLookupCandidates($value) as $candidate) {
+        if (array_key_exists($candidate, $element['#options'])) {
+          return (string) $element['#options'][$candidate];
+        }
+      }
+    }
+    if (is_bool($value)) {
+      return $value ? (string) $this->t('Yes') : (string) $this->t('No');
+    }
+    if ($value === NULL || is_array($value) || is_object($value)) {
+      return '';
+    }
+    return (string) $value;
+  }
+
+  /**
+   * Candidate lookup keys for matching a value against #options.
+   *
+   * Booleans are tried as both 'true'/'false' (Webform's string-keyed
+   * convention) and '1'/'0' (numeric checkbox convention) so the lookup
+   * works regardless of how the form authored its options.
+   *
+   * @param mixed $value
+   *   The value being resolved.
+   *
+   * @return array<int, string>
+   *   Ordered list of candidate keys to probe in the element's #options.
+   */
+  protected static function fiscaFieldLookupCandidates(mixed $value): array {
+    if (is_bool($value)) {
+      return [$value ? 'true' : 'false', $value ? '1' : '0'];
+    }
+    if (is_int($value) || is_float($value) || is_string($value)) {
+      return [(string) $value];
+    }
+    return [];
   }
 
   /**
