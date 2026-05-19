@@ -237,7 +237,7 @@ class RacContentHelper implements RacContentHelperInterface {
             continue;
           }
           // Get the field that contains multiple paragraph references.
-          $block_rac_elements_field = $paragraph_entity->get($field_name_str);
+          $block_rac_elements_field = $paragraph_entity->get('field_block_rac_element');
           $rule_operator = $paragraph_entity->get('field_rules_operator')->value;
 
           if (!$block_rac_elements_field instanceof EntityReferenceFieldItemListInterface || $block_rac_elements_field->isEmpty()) {
