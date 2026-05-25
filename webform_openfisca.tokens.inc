@@ -87,6 +87,7 @@ function webform_openfisca_tokens(string $type, array $tokens, array $data, arra
   if (!empty($session_tokens)) {
     $session_store = \Drupal::service('webform_openfisca.session_store');
     // Reading session-scoped data must vary the cache by session.
+    $bubbleable_metadata->addCacheableDependency(['session']);
     $bubbleable_metadata->addCacheContexts(['session']);
     foreach ($session_tokens as $name => $original) {
       // Default replacement is empty string.
