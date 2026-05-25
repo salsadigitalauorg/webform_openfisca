@@ -109,6 +109,9 @@ class WebformOpenFiscaSessionTokenKernelTest extends BaseKernelTestCase {
     );
 
     $this->assertContains('session', $bubbleable->getCacheContexts());
+    // Session-scoped tokens must be uncacheable so re-submissions within the
+    // same session don't serve stale values from render cache.
+    $this->assertSame(0, $bubbleable->getCacheMaxAge());
   }
 
   /**

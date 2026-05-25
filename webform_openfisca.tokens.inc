@@ -86,9 +86,11 @@ function webform_openfisca_tokens(string $type, array $tokens, array $data, arra
   $session_tokens = $token->findWithPrefix($tokens, 'wo_session');
   if (!empty($session_tokens)) {
     $session_store = \Drupal::service('webform_openfisca.session_store');
-    // Reading session-scoped data must vary the cache by session.
-    $bubbleable_metadata->addCacheableDependency(['session']);
+    // Session-scoped tokens reflect transient per-user data that the form
+    // re-submits at any time; cache by session and disable render caching so
+    // a re-submission within the same session never serves stale values.
     $bubbleable_metadata->addCacheContexts(['session']);
+    $bubbleable_metadata->setCacheMaxAge(0);
     foreach ($session_tokens as $name => $original) {
       // Default replacement is empty string.
       $replacements[$original] = '';
