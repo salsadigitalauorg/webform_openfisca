@@ -5,6 +5,7 @@
  * Tokens for Webform OpenFisca.
  */
 
+use Drupal\Component\Utility\NestedArray;
 use Drupal\Component\Utility\Xss;
 use Drupal\Core\Render\BubbleableMetadata;
 use Drupal\Core\Render\Markup;
@@ -24,6 +25,12 @@ function webform_openfisca_token_info() : array {
   $info['tokens']['webform_openfisca']['wo_rounded'] = [
     'name' => t('Webform OpenFisca: rounded and beautified numbers'),
     'description' => t('Numbers, rounded and commas added. Example usage: [current-page:wo_rounded:53789.23232] OR [current-page:wo_rounded:current-page:query:abc]'),
+    'dynamic' => TRUE,
+  ];
+
+  $info['tokens']['webform_openfisca']['wo_session'] = [
+    'name' => t('Webform OpenFisca: session value'),
+    'description' => t('Read a value the OpenFisca handler stored in the user session. Usage: [webform_openfisca:wo_session:&lt;webform_id&gt;:&lt;key&gt;]. Nested arrays can be reached with dot paths, e.g. [webform_openfisca:wo_session:my_form:result_values.persons.personA.age].'),
     'dynamic' => TRUE,
   ];
 
@@ -72,6 +79,55 @@ function webform_openfisca_tokens(string $type, array $tokens, array $data, arra
         $value = (float) $token->replace('[' . $name . ']');
       }
       $replacements[$original] = number_format((float) $value ?: 0, 2, '.', ',');
+    }
+  }
+
+  // [wo_session] tokens.
+  $session_tokens = $token->findWithPrefix($tokens, 'wo_session');
+  if (!empty($session_tokens)) {
+    $session_store = \Drupal::service('webform_openfisca.session_store');
+    // Session-scoped tokens reflect transient per-user data that the form
+    // re-submits at any time; cache by session and disable render caching so
+    // a re-submission within the same session never serves stale values.
+    $bubbleable_metadata->addCacheContexts(['session']);
+    $bubbleable_metadata->setCacheMaxAge(0);
+    foreach ($session_tokens as $name => $original) {
+      // Default replacement is empty string.
+      $replacements[$original] = '';
+      // Expected shape: <webform_id>:<key>[.<nested>.<path>].
+      [$webform_id, $key_path] = array_pad(explode(':', $name, 2), 2, NULL);
+      if (empty($webform_id) || empty($key_path)) {
+        continue;
+      }
+      $segments = explode('.', $key_path);
+      $head = array_shift($segments);
+      if ($head === '') {
+        continue;
+      }
+      $value = $session_store->get($webform_id, $head);
+      if ($segments !== []) {
+        if (!is_array($value)) {
+          continue;
+        }
+        // Support both flat arrays whose keys are full dotted names (e.g.
+        // result_values['persons.personA.age'] => 42, the canonical shape
+        // the journey handler writes) and truly nested arrays.
+        $flat_key = implode('.', $segments);
+        if (array_key_exists($flat_key, $value)) {
+          $value = $value[$flat_key];
+        }
+        else {
+          $exists = FALSE;
+          $value = NestedArray::getValue($value, $segments, $exists);
+          if (!$exists) {
+            continue;
+          }
+        }
+      }
+      if ($value === NULL || is_array($value) || is_object($value)) {
+        continue;
+      }
+      $replacements[$original] = Markup::create(Xss::filter((string) $value));
     }
   }
 

@@ -12,6 +12,7 @@ use Drupal\webform_openfisca\OpenFisca\ClientFactoryInterface as OpenFiscaClient
 use Drupal\webform_openfisca\OpenFisca\Payload\ResponsePayload;
 use Drupal\webform_openfisca\OpenFisca\Payload\RequestPayload;
 use Drupal\webform_openfisca\RacContentHelperInterface;
+use Drupal\webform_openfisca\SessionStore\OpenFiscaSessionStoreInterface;
 use Drupal\webform_openfisca\WebformOpenFiscaSettings;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -53,6 +54,13 @@ class OpenFiscaJourneyHandler extends WebformHandlerBase {
   protected RacContentHelperInterface $racContentHelper;
 
   /**
+   * Session store for OpenFisca calculation results.
+   *
+   * @var \Drupal\webform_openfisca\SessionStore\OpenFiscaSessionStoreInterface
+   */
+  protected OpenFiscaSessionStoreInterface $sessionStore;
+
+  /**
    * The debug data from the last API call to OpenFisca.
    *
    * @var array<string, \Drupal\webform_openfisca\OpenFisca\Payload\RequestPayload|\Drupal\webform_openfisca\OpenFisca\Payload\ResponsePayload|null>
@@ -67,6 +75,9 @@ class OpenFiscaJourneyHandler extends WebformHandlerBase {
     $instance->request = $container->get('request_stack')->getCurrentRequest();
     $instance->openfiscaClientFactory = $container->get('webform_openfisca.openfisca_client_factory');
     $instance->racContentHelper = $container->get('webform_openfisca.rac_helper');
+    /** @var \Drupal\webform_openfisca\SessionStore\OpenFiscaSessionStoreInterface $session_store */
+    $session_store = $container->get('webform_openfisca.session_store');
+    $instance->sessionStore = $session_store;
     return $instance;
   }
 
@@ -364,7 +375,198 @@ class OpenFiscaJourneyHandler extends WebformHandlerBase {
       $response_payload->setDebugData('overridden_confirmation_url', $overridden_confirmation_url);
     }
 
+    // Persist the calculation outputs and confirmation-URL query parameters to
+    // the user's session so they can be consumed by tokens on downstream pages
+    // without depending on URL query strings.
+    $openfisca_settings = WebformOpenFiscaSettings::load($this->getWebform());
+    if ($openfisca_settings->isSessionPersistenceEnabled()) {
+      $fisca_fields = $response_payload->getDebugData('fisca_fields') ?: [];
+      $session_values = [
+        'result_values' => $result_values,
+        'fisca_fields' => $fisca_fields,
+        'fisca_fields_labels' => $this->buildFiscaFieldsLabels($fisca_fields),
+        'blocks' => $block_ids,
+        'total_benefits' => $response_payload->getDebugData('total_benefits') ?: 0,
+        'rac_redirect' => $confirmation_url ?? '',
+      ];
+      $query_append = $response_payload->getDebugData('query_append') ?: [];
+      if (is_array($query_append)) {
+        $session_values += $query_append;
+      }
+      $this->sessionStore->setMultiple(
+        (string) $this->getWebform()->id(),
+        $session_values,
+        $openfisca_settings->getSessionTtlSeconds(),
+      );
+
+      // Mirror the bucket into a browser-readable cookie that shares the
+      // session TTL. The cookie acts as a fallback for the wo_session token
+      // when the server-side session is unavailable on the destination page.
+      // Cookie values are user-tamperable and sent on every request — be
+      // mindful of PII when configuring webforms that hit this handler.
+      $this->mirrorBucketToCookie(
+        (string) $this->getWebform()->id(),
+        $session_values,
+        $openfisca_settings->getSessionTtlSeconds(),
+      );
+    }
+
     return $confirmation_url;
+  }
+
+  /**
+   * Build label-resolved counterparts for the fisca_fields bucket entry.
+   *
+   * For each key in $fisca_fields, look up the corresponding webform element
+   * and resolve a human-readable label:
+   * - When the element exposes #options, match the value (with bool→string
+   *   coercion for both '1'/'0' and 'true'/'false' shapes) and use the
+   *   matching option label.
+   * - For bare booleans on elements without options, fall back to Yes/No.
+   * - All other scalars are stringified as-is.
+   *
+   * Resolved labels are wrapped in the element's #field_prefix / #field_suffix
+   * so consumers get parity with [webform_submission:values:<key>] output
+   * (e.g. "I do have a disability." rather than just "do").
+   *
+   * @param array<string, mixed> $fisca_fields
+   *   The fisca_fields bucket about to be written to the session store.
+   *
+   * @return array<string, string>
+   *   Labels keyed identically to $fisca_fields. Empty string when the value
+   *   cannot be resolved to a presentable label.
+   */
+  protected function buildFiscaFieldsLabels(array $fisca_fields): array {
+    $webform = $this->getWebform();
+    $labels = [];
+    foreach ($fisca_fields as $key => $value) {
+      $element = $webform->getElement((string) $key) ?: NULL;
+      $label_value = $this->resolveFiscaFieldLabel(is_array($element) ? $element : NULL, $value);
+      if ($label_value === '') {
+        $labels[$key] = '';
+        continue;
+      }
+      $prefix = is_array($element) && isset($element['#field_prefix']) ? (string) $element['#field_prefix'] : '';
+      $suffix = is_array($element) && isset($element['#field_suffix']) ? (string) $element['#field_suffix'] : '';
+      $labels[$key] = $prefix . $label_value . $suffix;
+    }
+    return $labels;
+  }
+
+  /**
+   * Resolve a single fisca_fields value to its display label.
+   *
+   * @param array<string, mixed>|null $element
+   *   The webform element definition, or NULL when the key has no element
+   *   (e.g. computed fields written back from the OpenFisca response).
+   * @param mixed $value
+   *   The stored value.
+   *
+   * @return string
+   *   The label text, or empty string when nothing presentable resolves.
+   */
+  protected function resolveFiscaFieldLabel(?array $element, mixed $value): string {
+    if ($element !== NULL && isset($element['#options']) && is_array($element['#options'])) {
+      foreach (self::fiscaFieldLookupCandidates($value) as $candidate) {
+        if (array_key_exists($candidate, $element['#options'])) {
+          return (string) $element['#options'][$candidate];
+        }
+      }
+    }
+    if (is_bool($value)) {
+      return $value ? (string) $this->t('Yes') : (string) $this->t('No');
+    }
+    if ($value === NULL || is_array($value) || is_object($value)) {
+      return '';
+    }
+    return (string) $value;
+  }
+
+  /**
+   * Candidate lookup keys for matching a value against #options.
+   *
+   * Booleans are tried as both 'true'/'false' (Webform's string-keyed
+   * convention) and '1'/'0' (numeric checkbox convention) so the lookup
+   * works regardless of how the form authored its options.
+   *
+   * @param mixed $value
+   *   The value being resolved.
+   *
+   * @return array<int, string>
+   *   Ordered list of candidate keys to probe in the element's #options.
+   */
+  protected static function fiscaFieldLookupCandidates(mixed $value): array {
+    if (is_bool($value)) {
+      return [$value ? 'true' : 'false', $value ? '1' : '0'];
+    }
+    if (is_int($value) || is_float($value) || is_string($value)) {
+      return [(string) $value];
+    }
+    return [];
+  }
+
+  /**
+   * Write a non-HttpOnly cookie that mirrors the session bucket.
+   *
+   * Shares the bucket TTL with the browser via Max-Age; the browser
+   * deletes it on expiry. Payloads larger than the conservative 4KB
+   * browser cookie limit are skipped silently with a warning so the
+   * server-side session remains the source of truth.
+   *
+   * @param string $webform_id
+   *   The webform id (becomes part of the cookie name).
+   * @param array<string, mixed> $bucket
+   *   The same payload written to the session store.
+   * @param int $ttl_seconds
+   *   How long the cookie should live, in seconds.
+   */
+  protected function mirrorBucketToCookie(string $webform_id, array $bucket, int $ttl_seconds): void {
+    if ($ttl_seconds <= 0) {
+      return;
+    }
+    $name = 'wo_session_' . $webform_id;
+    $payload = json_encode($bucket);
+    if ($payload === FALSE) {
+      // @codeCoverageIgnoreStart
+      return;
+      // @codeCoverageIgnoreEnd
+    }
+    if (strlen($payload) > 4000) {
+      $this->getLogger('webform_openfisca')->warning(
+        'Skipped wo_session cookie for webform %id: encoded payload (@bytes bytes) exceeds the 4KB browser cookie limit. The bucket is still available on the server side via the wo_session token.',
+        ['%id' => $webform_id, '@bytes' => strlen($payload)],
+      );
+      return;
+    }
+    setcookie($name, $payload, [
+      'expires' => time() + $ttl_seconds,
+      'path' => '/',
+      'secure' => $this->request->isSecure(),
+      'httponly' => FALSE,
+      'samesite' => 'Lax',
+    ]);
+  }
+
+  /**
+   * Expire the wo_session_<id> cookie on the next response.
+   *
+   * Called by the form-alter hook when a fresh submission journey begins,
+   * so a new submission cannot inherit a stale browser-mirrored bucket.
+   *
+   * @param string $webform_id
+   *   The webform id whose cookie should be cleared.
+   */
+  public static function clearMirrorCookie(string $webform_id): void {
+    $name = 'wo_session_' . $webform_id;
+    /** @var \Symfony\Component\HttpFoundation\Request|null $request */
+    $request = \Drupal::requestStack()->getCurrentRequest();
+    setcookie($name, '', [
+      'expires' => time() - 3600,
+      'path' => '/',
+      'secure' => $request !== NULL && $request->isSecure(),
+      'httponly' => FALSE,
+      'samesite' => 'Lax',
+    ]);
   }
 
   /**
@@ -395,6 +597,8 @@ class OpenFiscaJourneyHandler extends WebformHandlerBase {
 
     $fisca_fields = $response_payload?->getDebugData('fisca_fields') ?: [];
     $result_values = $response_payload?->getDebugData('result_values') ?: [];
+    $query_append = $response_payload?->getDebugData('query_append') ?: [];
+    $session_bucket = $this->sessionStore->getAll((string) $webform->id());
 
     $build = [
       'label' => [
@@ -440,6 +644,21 @@ class OpenFiscaJourneyHandler extends WebformHandlerBase {
       'fisca_fields' => [
         '#markup' => $this->t('<strong>Fisca fields:</strong> <br/> <pre>@values</pre>', [
           '@values' => OpenFiscaHelper::jsonEncodePretty($fisca_fields),
+        ]),
+        '#prefix' => '<p>',
+        '#suffix' => '</p>',
+      ],
+      'query_append' => [
+        '#markup' => $this->t('<strong>Query append (period, change, total_benefit and _nil-mapped field values):</strong> <br/> <pre>@values</pre>', [
+          '@values' => OpenFiscaHelper::jsonEncodePretty($query_append),
+        ]),
+        '#prefix' => '<p>',
+        '#suffix' => '</p>',
+      ],
+      'session_bucket' => [
+        '#markup' => $this->t('<strong>Session store bucket (readable via [webform_openfisca:wo_session:@id:&lt;key&gt;]):</strong> <br/> <pre>@values</pre>', [
+          '@id' => $webform->id(),
+          '@values' => OpenFiscaHelper::jsonEncodePretty($session_bucket),
         ]),
         '#prefix' => '<p>',
         '#suffix' => '</p>',

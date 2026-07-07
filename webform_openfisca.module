@@ -13,6 +13,10 @@ use Drupal\Core\Session\AccountInterface;
 use Drupal\block\BlockInterface;
 use Drupal\block_content\BlockContentInterface;
 use Drupal\paragraphs\ParagraphInterface;
+use Drupal\webform\WebformSubmissionForm;
+use Drupal\webform\WebformSubmissionInterface;
+use Drupal\webform_openfisca\Plugin\WebformHandler\OpenFiscaJourneyHandler;
+use Drupal\webform_openfisca\WebformOpenFiscaSettings;
 
 /**
  * Implements hook_webform_third_party_settings_form_alter().
@@ -30,6 +34,40 @@ function webform_openfisca_form_webform_ui_element_form_alter(array &$form, Form
   /** @var \Drupal\webform_openfisca\WebformUiElementFormAlter $alter_service */
   $alter_service = \Drupal::service('webform_openfisca.webform_form_alter.ui_element');
   $alter_service->alterForm($form, $form_state);
+}
+
+/**
+ * Implements hook_webform_submission_form_alter().
+ *
+ * Clears the OpenFisca session bucket for the webform when a brand-new
+ * submission journey begins, so stale results from a previous run are not
+ * surfaced as tokens.
+ */
+function webform_openfisca_webform_submission_form_alter(array &$form, FormStateInterface $form_state) : void {
+  $form_object = $form_state->getFormObject();
+  if (!$form_object instanceof WebformSubmissionForm) {
+    return;
+  }
+  if ($form_object->getOperation() !== 'add') {
+    return;
+  }
+  $submission = $form_object->getEntity();
+  if (!$submission instanceof WebformSubmissionInterface || !$submission->isNew()) {
+    return;
+  }
+  // Only act on the very first build of the form (initial GET); skip rebuilds
+  // triggered by AJAX or multi-page navigation.
+  if ($form_state->isProcessingInput() || $form_state->isRebuilding()) {
+    return;
+  }
+
+  $webform = $submission->getWebform();
+  $openfisca_settings = WebformOpenFiscaSettings::load($webform);
+  if (!$openfisca_settings->isEnabled()) {
+    return;
+  }
+  \Drupal::service('webform_openfisca.session_store')->clear((string) $webform->id());
+  OpenFiscaJourneyHandler::clearMirrorCookie((string) $webform->id());
 }
 
 /**

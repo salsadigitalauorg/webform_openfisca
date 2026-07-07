@@ -366,7 +366,7 @@ abstract class BaseKernelTestCase extends KernelTestBase {
     ]));
 
     $this->saveConfigEntityOnce(FieldStorageConfig::create([
-      'field_name' => 'field_rac_paragraphs',
+      'field_name' => 'field_block_rac_element',
       'entity_type' => 'paragraph',
       'type' => 'entity_reference_revisions',
       'settings' => [
@@ -375,10 +375,10 @@ abstract class BaseKernelTestCase extends KernelTestBase {
       'cardinality' => -1,
     ]));
     $this->saveConfigEntityOnce(FieldConfig::create([
-      'field_name' => 'field_rac_paragraphs',
+      'field_name' => 'field_block_rac_element',
       'entity_type' => 'paragraph',
       'bundle' => 'block_rac_rule_group',
-      'label' => 'RAC Paragraphs',
+      'label' => 'Block RAC element',
     ]));
   }
 
@@ -419,12 +419,12 @@ abstract class BaseKernelTestCase extends KernelTestBase {
         $rules[] = $rule_paragraph;
       }
 
-      // Rule group paragraph uses field_rac_paragraphs (same name as block's
-      // paragraph field) to reference the individual rule paragraphs.
+      // Rule group paragraph uses field_block_rac_element to reference the
+      // individual rule paragraphs (matches production config).
       $rule_group_paragraph = Paragraph::create([
         'type' => 'block_rac_rule_group',
         'field_rules_operator' => $group['operator'] ?? 'AND',
-        'field_rac_paragraphs' => $rules,
+        'field_block_rac_element' => $rules,
       ]);
       $rule_group_paragraph->save();
       $block_rules[] = $rule_group_paragraph;

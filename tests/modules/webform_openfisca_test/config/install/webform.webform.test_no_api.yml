@@ -10,6 +10,7 @@ third_party_settings:
     fisca_logging_mode: true
     fisca_api_endpoint: ''
     fisca_api_authorization_header: ''
+    fisca_session_ttl_seconds: 0
     fisca_field_mappings: |-
       {
           "what_is_your_monthly_income_": "persons.personA.monthly_income",

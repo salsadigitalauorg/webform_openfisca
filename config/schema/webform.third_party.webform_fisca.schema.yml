@@ -35,3 +35,6 @@ webform.settings.third_party.webform_openfisca:
     fisca_entity_roles:
       type: string
       label: 'JSON encoded entity roles'
+    fisca_session_ttl_seconds:
+      type: integer
+      label: 'Session retention TTL (seconds)'

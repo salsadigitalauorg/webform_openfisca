@@ -75,6 +75,10 @@ class WebformOpenFiscaSettingsUnitTest extends OpenFiscaHelperUnitTest {
     $this->assertEquals('persons.personA.disability_allowance_eligible,persons.personA.disability_allowance_benefit,persons.personA.monthly_income_exceeds_limit', $openfisca_settings->getPlainReturnKeys());
     $this->assertEquals(['persons.personA.disability_allowance_eligible', 'persons.personA.disability_allowance_benefit', 'persons.personA.monthly_income_exceeds_limit'], $openfisca_settings->getReturnKeys());
 
+    // Session persistence: fixture omits the setting, so the default applies.
+    $this->assertSame(14400, $openfisca_settings->getSessionTtlSeconds());
+    $this->assertTrue($openfisca_settings->isSessionPersistenceEnabled());
+
     $json = Json::decode($openfisca_settings->getJsonEntityRoles());
     $this->assertEmpty($json);
     $this->assertEmpty($openfisca_settings->getEntityRoles());
@@ -105,6 +109,10 @@ class WebformOpenFiscaSettingsUnitTest extends OpenFiscaHelperUnitTest {
     $this->assertFalse($openfisca_settings->hasApiAuthorizationHeader());
     $client = $openfisca_settings->getOpenFiscaClient($factory);
     $this->assertEmpty($client->getBaseUri());
+
+    // Session persistence disabled via fixture (fisca_session_ttl_seconds: 0).
+    $this->assertSame(0, $openfisca_settings->getSessionTtlSeconds());
+    $this->assertFalse($openfisca_settings->isSessionPersistenceEnabled());
   }
 
 }

@@ -114,6 +114,13 @@ class WebformOpenFiscaSettings {
   protected array $entityRoles = [];
 
   /**
+   * TTL (in seconds) for results stored in the user's session.
+   *
+   * 0 disables session persistence. Default: 14400 (4 hours).
+   */
+  protected int $sessionTtlSeconds = 14400;
+
+  /**
    * Constructs a new \Drupal\webform_openfisca\WebformOpenFiscaSettings object.
    *
    * @param \Drupal\webform\WebformInterface $webform
@@ -145,6 +152,8 @@ class WebformOpenFiscaSettings {
     $this->jsonEntityRoles = $webform->getThirdPartySetting('webform_openfisca', 'fisca_entity_roles', '[]');
     $entity_roles = Json::decode($this->jsonEntityRoles);
     $this->entityRoles = is_array($entity_roles) ? $entity_roles : [];
+
+    $this->sessionTtlSeconds = max(0, (int) $webform->getThirdPartySetting('webform_openfisca', 'fisca_session_ttl_seconds', 14400));
   }
 
   /**
@@ -413,6 +422,26 @@ class WebformOpenFiscaSettings {
   public function getEntityRole(string $field_name) : array|false {
     $entity_role = $this->entityRoles[$field_name] ?? FALSE;
     return is_array($entity_role) ? $entity_role : FALSE;
+  }
+
+  /**
+   * Get the session TTL in seconds.
+   *
+   * @return int
+   *   The TTL. 0 disables session persistence.
+   */
+  public function getSessionTtlSeconds() : int {
+    return $this->sessionTtlSeconds;
+  }
+
+  /**
+   * Check whether session persistence is enabled.
+   *
+   * @return bool
+   *   TRUE when the TTL is greater than zero.
+   */
+  public function isSessionPersistenceEnabled() : bool {
+    return $this->sessionTtlSeconds > 0;
   }
 
   /**

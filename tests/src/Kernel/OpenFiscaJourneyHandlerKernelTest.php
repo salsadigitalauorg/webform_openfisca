@@ -12,6 +12,8 @@ use Drupal\webform\WebformInterface;
 use Drupal\webform\WebformSubmissionInterface;
 use Drupal\webform_openfisca\OpenFisca\Payload\RequestPayload;
 use Drupal\webform_openfisca\OpenFisca\Payload\ResponsePayload;
+use Symfony\Component\HttpFoundation\Session\Session;
+use Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage;
 
 /**
  * Tests the OpenFiscaJourneyHandler class.
@@ -32,6 +34,13 @@ class OpenFiscaJourneyHandlerKernelTest extends BaseKernelTestCase {
     $this->setupWebformOpenFiscaTest();
     // Set the period query so that the request payload does not change.
     \Drupal::request()->query->set('period', static::PERIOD);
+
+    // Attach an in-memory session so the session store can read and write
+    // (KernelTestBase does not bind one by default).
+    $request = \Drupal::request();
+    if (!$request->hasSession()) {
+      $request->setSession(new Session(new MockArraySessionStorage()));
+    }
   }
 
   /**
@@ -223,6 +232,210 @@ class OpenFiscaJourneyHandlerKernelTest extends BaseKernelTestCase {
     $this->assertEquals($disability_benefit->toUrl()->toString(), $response->getDebugData('rac_redirect'), sprintf('rac_redirect is not "%s".', $disability_benefit->toUrl()->toString()));
     $this->assertTrue($response->hasDebugData('overridden_confirmation_url'), 'overridden_confirmation_url must be set.');
     $this->assertEquals($disability_benefit->toUrl()->toString() . '?what_is_your_monthly_income_=100&has_disability=1&requires_ongoing_support=1&requires_ongoing_supervision_or_treatment=1&disability_allowance_eligible=1&aus_citizen_or_permanent_resident=1&disability_allowance_benefit=1&monthly_income_exceeds_limit=0&total_benefit=1', $response->getDebugData('overridden_confirmation_url'), 'overridden_confirmation_url is not expected.');
+
+    // The handler must have persisted the calculation outputs and the
+    // confirmation-URL query parameters into the session store, keyed by
+    // webform id, with the configured TTL (default 14400).
+    /** @var \Drupal\webform_openfisca\SessionStore\OpenFiscaSessionStoreInterface $session_store */
+    $session_store = \Drupal::service('webform_openfisca.session_store');
+    $persisted = $session_store->getAll((string) $webform->id());
+    $this->assertNotSame([], $persisted, 'Session store should contain values for the webform after submitForm().');
+    $this->assertArrayHasKey('result_values', $persisted);
+    $this->assertArrayHasKey('fisca_fields', $persisted);
+    $this->assertArrayHasKey('blocks', $persisted);
+    $this->assertArrayHasKey('total_benefits', $persisted);
+    $this->assertArrayHasKey('rac_redirect', $persisted);
+    $this->assertSame(1, $persisted['total_benefits']);
+    $this->assertSame($disability_benefit->toUrl()->toString(), $persisted['rac_redirect']);
+    $this->assertEquals([
+      'persons.personA.disability_allowance_eligible' => TRUE,
+      'persons.personA.disability_allowance_benefit' => 1,
+      'persons.personA.monthly_income_exceeds_limit' => FALSE,
+    ], $persisted['result_values']);
+    // query_append keys (period, change, total_benefit and field values) are
+    // merged in alongside the canonical keys.
+    $this->assertArrayHasKey('period', $persisted);
+    $this->assertSame(static::PERIOD, $persisted['period']);
+    $this->assertArrayHasKey('total_benefit', $persisted);
+  }
+
+  /**
+   * Tests the session-write block in overrideConfirmationUrl() in isolation.
+   *
+   * The full submitForm() flow goes through the OpenFisca API client, which
+   * locally short-circuits to a NULL response when the fixture middleware
+   * cannot resolve the payload — leaving the session-write block uncovered.
+   * This test invokes overrideConfirmationUrl() directly via reflection with
+   * a hand-built ResponsePayload, exercising every line in that block
+   * (result_values + fisca_fields + blocks + total_benefits + rac_redirect
+   * are written, and the query_append keys are merged in).
+   */
+  public function testOverrideConfirmationUrlPersistsToSession(): void {
+    $this->setUpRacContentModules();
+
+    $webform = Webform::load('test_dac');
+
+    // RAC redirect target so findRacRedirectForWebform() returns a URL.
+    $no_benefit = $this->createTestPage('No Benefit');
+    $this->createRacContent('test_dac', 'Test RAC', [
+      [
+        'redirect' => $no_benefit,
+        'rules' => [
+          'persons.personA.disability_allowance_benefit' => 0,
+          'persons.personA.disability_allowance_eligible' => 0,
+        ],
+      ],
+    ]);
+
+    // Build a ResponsePayload with the same shape determineBenefits would
+    // have written (result_values, fisca_fields, total_benefits, query_append).
+    $response_payload = new ResponsePayload();
+    $response_payload->setDebugData('result_values', [
+      'persons.personA.disability_allowance_eligible' => FALSE,
+      'persons.personA.disability_allowance_benefit' => 0,
+    ]);
+    $response_payload->setDebugData('fisca_fields', [
+      'has_disability' => TRUE,
+      'aus_citizen_or_permanent_resident' => FALSE,
+      'what_is_your_monthly_income_' => '500',
+      'disability_allowance_benefit' => 0,
+    ]);
+    $response_payload->setDebugData('total_benefits', 0);
+    $response_payload->setDebugData('query_append', [
+      'period' => static::PERIOD,
+      'change' => 1,
+      'total_benefit' => 0,
+    ]);
+
+    /** @var \Drupal\webform_openfisca\Plugin\WebformHandler\OpenFiscaJourneyHandler $handler */
+    $handler = $webform->getHandler('openfisca_journey_handler');
+    $reflection = new \ReflectionMethod($handler, 'overrideConfirmationUrl');
+    $reflection->setAccessible(TRUE);
+    $confirmation_url = $reflection->invoke($handler, $response_payload);
+
+    $this->assertSame($no_benefit->toUrl()->toString(), $confirmation_url);
+
+    /** @var \Drupal\webform_openfisca\SessionStore\OpenFiscaSessionStoreInterface $session_store */
+    $session_store = \Drupal::service('webform_openfisca.session_store');
+    $persisted = $session_store->getAll((string) $webform->id());
+
+    // Canonical keys from the $session_values literal.
+    $this->assertEquals([
+      'persons.personA.disability_allowance_eligible' => FALSE,
+      'persons.personA.disability_allowance_benefit' => 0,
+    ], $persisted['result_values']);
+    $this->assertEquals([
+      'has_disability' => TRUE,
+      'aus_citizen_or_permanent_resident' => FALSE,
+      'what_is_your_monthly_income_' => '500',
+      'disability_allowance_benefit' => 0,
+    ], $persisted['fisca_fields']);
+    // Labels mirror the fisca_fields keys. Select elements with #options
+    // resolve via option label and keep their #field_prefix/#field_suffix
+    // so output matches [webform_submission:values:<key>]. The textfield
+    // value is wrapped with its own prefix/suffix. The hidden benefit field
+    // has no prefix/suffix so the value passes through as a string.
+    $this->assertEquals([
+      'has_disability' => 'I do have a disability.',
+      'aus_citizen_or_permanent_resident' => 'I am not an Australian citizen or permanent resident.',
+      'what_is_your_monthly_income_' => 'My monthly income is $500.',
+      'disability_allowance_benefit' => '0',
+    ], $persisted['fisca_fields_labels']);
+    $this->assertSame(0, $persisted['total_benefits']);
+    $this->assertSame($no_benefit->toUrl()->toString(), $persisted['rac_redirect']);
+    $this->assertArrayHasKey('blocks', $persisted);
+
+    // query_append keys are merged in alongside the canonical keys.
+    $this->assertSame(static::PERIOD, $persisted['period']);
+    $this->assertSame(1, $persisted['change']);
+    $this->assertSame(0, $persisted['total_benefit']);
+  }
+
+  /**
+   * Direct coverage for buildFiscaFieldsLabels() edge cases.
+   *
+   * Exercises branches that the integration test cannot cover with the
+   * test_dac fixture alone: '1'/'0' option keys, Yes/No fallback when no
+   * options, and unresolvable element keys.
+   */
+  public function testBuildFiscaFieldsLabelsCoersBooleanShapesAndFallsBack(): void {
+    $webform = Webform::load('test_dac');
+    /** @var \Drupal\webform_openfisca\Plugin\WebformHandler\OpenFiscaJourneyHandler $handler */
+    $handler = $webform->getHandler('openfisca_journey_handler');
+
+    // Inject a synthetic element with '1'/'0'-keyed options so the test
+    // proves the bool→'1'/'0' candidate works (the fixture only exercises
+    // the 'true'/'false' variant).
+    $webform->setElementProperties('alt_keyed_yes_no', [
+      '#type' => 'select',
+      '#title' => 'Alt-keyed yes/no',
+      '#options' => ['1' => 'yep', '0' => 'nope'],
+    ]);
+
+    $reflection = new \ReflectionMethod($handler, 'buildFiscaFieldsLabels');
+    $reflection->setAccessible(TRUE);
+
+    $labels = $reflection->invoke($handler, [
+      // Bool against '1'/'0'-keyed options.
+      'alt_keyed_yes_no' => FALSE,
+      // Bool against an element that has no options at all → Yes/No fallback.
+      'disability_allowance_benefit' => TRUE,
+      // Key with no matching webform element → bool falls back to Yes/No.
+      'no_such_element' => FALSE,
+      // Null is unrepresentable.
+      'unset_thing' => NULL,
+    ]);
+
+    $this->assertSame('nope', $labels['alt_keyed_yes_no']);
+    $this->assertSame('Yes', $labels['disability_allowance_benefit']);
+    $this->assertSame('No', $labels['no_such_element']);
+    $this->assertSame('', $labels['unset_thing']);
+  }
+
+  /**
+   * Test that submitForm() does not persist to the session when TTL is 0.
+   */
+  public function testSubmitFormSkipsSessionWhenTtlIsZero(): void {
+    $this->setUpRacContentModules();
+
+    $webform = Webform::load('test_dac');
+    // Disable session persistence for this webform.
+    $webform->setThirdPartySetting('webform_openfisca', 'fisca_session_ttl_seconds', 0);
+    $webform->save();
+
+    $webform_submission = $this->prepareWebformSubmission((string) $webform->id());
+    /** @var \Drupal\Core\Form\FormInterface $form_object */
+    $form_object = NULL;
+    $form_state = new FormState();
+    // Build the form first so the form-alter hook's clear-on-add fires now,
+    // then seed the bucket — the assertion proves submitForm() does not
+    // overwrite or touch it when persistence is disabled.
+    $webform_submission_form = $this->reloadWebformSubmissionForm($webform_submission, $form_object, $form_state, 'add');
+
+    /** @var \Drupal\webform_openfisca\SessionStore\OpenFiscaSessionStoreInterface $session_store */
+    $session_store = \Drupal::service('webform_openfisca.session_store');
+    $session_store->set((string) $webform->id(), 'sentinel', 'pre-existing', 3600);
+
+    $values = [
+      'aus_citizen_or_permanent_resident' => 'true',
+      'what_is_your_monthly_income_' => '500',
+      'has_disability' => 'true',
+      'requires_ongoing_support' => 'true',
+      'requires_ongoing_supervision_or_treatment' => 'true',
+      'disability_allowance_eligible' => 'null',
+      'disability_allowance_benefit' => '',
+      'monthly_income_exceeds_limit' => '',
+    ];
+    $webform_submission = $this->prepareWebformSubmission($webform, $form_state, $values);
+    /** @var \Drupal\webform_openfisca\Plugin\WebformHandler\OpenFiscaJourneyHandler $handler */
+    $handler = $webform->getHandler('openfisca_journey_handler');
+    $handler->submitForm($webform_submission_form, $form_state, $webform_submission);
+
+    // The pre-existing sentinel should still be present and untouched: the
+    // handler must not have called setMultiple() at all when TTL is 0.
+    $this->assertSame('pre-existing', $session_store->get((string) $webform->id(), 'sentinel'));
+    $this->assertNull($session_store->get((string) $webform->id(), 'result_values'));
+    $this->assertNull($session_store->get((string) $webform->id(), 'total_benefits'));
   }
 
   /**
